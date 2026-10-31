@@ -1,0 +1,56 @@
+name: Build Wasm & deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install clang + lld
+        run: sudo apt-get update && sudo apt-get install -y clang lld
+
+      - name: Build Wasm core
+        run: ./build.sh
+
+      - name: Verify build output
+        run: |
+          test -d web
+          find web -type f -printf '%p (%s bytes)\n'
+          find web -name "*.wasm" -type f -size +0c
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Smoke-test Wasm core
+        run: node tests/core.test.mjs
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
