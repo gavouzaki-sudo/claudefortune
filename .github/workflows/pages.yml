@@ -24,7 +24,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y clang lld
 
       - name: Build Wasm core
-        run: ./build.sh
+        run: bash ./build.sh
 
       - name: Verify build output
         run: |
