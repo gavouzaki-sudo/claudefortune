@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ศาลเจ้าแห่งโชคลาภ — เซียมซี ไพ่ยิปซี สะเดาะเคราะห์ออนไลน์</title>
+  <meta name="description" content="เขย่าเซียมซี เปิดไพ่ยิปซี จุดเทียน ลอยโคมสะเดาะเคราะห์ และแก้ปีชงออนไลน์ เพื่อความบันเทิง">
+  <meta name="theme-color" content="#120a08">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%AE%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Noto+Sans+Thai:wght@400;500;700&family=Noto+Serif+Thai:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-theme="shrine">
+  <div id="ambient" aria-hidden="true"></div>
+
+  <header class="top">
+    <div class="brand">
+      <span class="brand-lantern" aria-hidden="true"></span>
+      <div>
+        <h1>ศาลเจ้าแห่งโชคลาภ</h1>
+        <p class="sub">เซียมซี · ไพ่ยิปซี · สะเดาะเคราะห์ออนไลน์</p>
+      </div>
+    </div>
+    <label class="theme-pick">
+      <span>ธีม</span>
+      <select id="theme" aria-label="เลือกธีมเทศกาล">
+        <option value="auto">ตามเทศกาล (อัตโนมัติ)</option>
+        <option value="shrine">ศาลเจ้า (ปกติ)</option>
+        <option value="songkran">สงกรานต์</option>
+        <option value="halloween">ฮาโลวีน</option>
+        <option value="loy">ลอยกระทง</option>
+        <option value="cny">ตรุษจีน</option>
+        <option value="newyear">ปีใหม่</option>
+      </select>
+    </label>
+  </header>
+
+  <main>
+    <!-- ===== gate / session ===== -->
+    <section id="gate" class="panel gate">
+      <h2 class="title">เริ่มพิธี</h2>
+      <p class="lead">บอกชื่อและปีเกิดเพื่อให้คำทำนายเป็นของคุณโดยเฉพาะ — ข้อมูลทั้งหมดประมวลผลในเครื่องของคุณ ไม่ถูกส่งไปไหน</p>
+      <form id="gate-form" autocomplete="off">
+        <label>ชื่อ หรือ ชื่อเล่น
+          <input id="in-name" type="text" maxlength="60" placeholder="เช่น สมชาย" required>
+        </label>
+        <label>ปีเกิด (พ.ศ. หรือ ค.ศ.)
+          <input id="in-year" type="number" inputmode="numeric" min="1900" max="2700" placeholder="เช่น 2540" required>
+        </label>
+        <label>นักษัตร
+          <select id="in-zodiac">
+            <option value="-1">คำนวณจากปีเกิด</option>
+            <option value="0">ชวด (หนู)</option>
+            <option value="1">ฉลู (วัว)</option>
+            <option value="2">ขาล (เสือ)</option>
+            <option value="3">เถาะ (กระต่าย)</option>
+            <option value="4">มะโรง (งูใหญ่)</option>
+            <option value="5">มะเส็ง (งูเล็ก)</option>
+            <option value="6">มะเมีย (ม้า)</option>
+            <option value="7">มะแม (แพะ)</option>
+            <option value="8">วอก (ลิง)</option>
+            <option value="9">ระกา (ไก่)</option>
+            <option value="10">จอ (สุนัข)</option>
+            <option value="11">กุน (หมู)</option>
+          </select>
+        </label>
+        <button class="btn primary" type="submit">เข้าสู่ศาลเจ้า</button>
+      </form>
+      <p id="gate-error" class="error" role="alert" hidden></p>
+    </section>
+
+    <!-- ===== app ===== -->
+    <div id="app" hidden>
+      <div class="whoami">
+        <span id="who"></span>
+        <button id="btn-change" class="link" type="button">เปลี่ยนข้อมูล</button>
+      </div>
+
+      <nav id="tabs" class="tabs" role="tablist" aria-label="เมนูพิธี">
+        <button role="tab" data-tab="stick" aria-selected="true">เซียมซี</button>
+        <button role="tab" data-tab="tarot" aria-selected="false">ไพ่ยิปซี</button>
+        <button role="tab" data-tab="number" aria-selected="false">เลขมงคล</button>
+        <button role="tab" data-tab="ritual" aria-selected="false">สะเดาะเคราะห์</button>
+        <button role="tab" data-tab="scan" aria-selected="false">สแกนดวง</button>
+        <button role="tab" data-tab="festival" aria-selected="false" id="tab-festival-btn">เทศกาล</button>
+      </nav>
+
+      <!-- ---------- Siamese sticks ---------- -->
+      <section id="tab-stick" class="panel tab" role="tabpanel">
+        <h2 class="title">เสี่ยงเซียมซี</h2>
+        <p class="lead">ตั้งจิตอธิษฐาน แล้วเขย่ากระบอกจนไม้เซียมซีหล่นออกมา — กดปุ่ม ลากเมาส์ หรือเขย่ามือถือก็ได้</p>
+
+        <div class="stick-stage">
+          <div id="cylinder" class="cylinder" aria-label="กระบอกเซียมซี" role="img">
+            <div class="sticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="cyl-body"><span class="cyl-mark">福</span></div>
+          </div>
+          <div id="fallen" class="fallen" aria-hidden="true"><span id="fallen-num">0</span></div>
+        </div>
+
+        <div class="meter" aria-hidden="true"><div id="shake-meter"></div></div>
+        <div class="row center">
+          <button id="btn-shake" class="btn primary" type="button">เขย่าเซียมซี</button>
+          <button id="btn-motion" class="btn ghost" type="button" hidden>เปิดเซ็นเซอร์เขย่ามือถือ</button>
+        </div>
+
+        <article id="stick-result" class="result" hidden aria-live="polite"></article>
+      </section>
+
+      <!-- ---------- Tarot ---------- -->
+      <section id="tab-tarot" class="panel tab" role="tabpanel" hidden>
+        <h2 class="title">ไพ่ยิปซี</h2>
+        <p class="lead">เลือกรูปแบบการเปิดไพ่ ตั้งคำถามในใจ แล้วแตะไพ่แต่ละใบเพื่อพลิกดู</p>
+        <div class="chips" role="radiogroup" aria-label="รูปแบบการเปิดไพ่">
+          <label class="chip"><input type="radio" name="spread" value="1"><span>ไพ่ประจำวัน (1 ใบ)</span></label>
+          <label class="chip"><input type="radio" name="spread" value="3" checked><span>อดีต · ปัจจุบัน · อนาคต (3 ใบ)</span></label>
+          <label class="chip"><input type="radio" name="spread" value="5"><span>ไพ่ 5 ใบ</span></label>
+        </div>
+        <div class="row center">
+          <button id="btn-tarot" class="btn primary" type="button">สับไพ่และจั่ว</button>
+          <button id="btn-flip-all" class="btn ghost" type="button" hidden>พลิกทั้งหมด</button>
+        </div>
+        <div id="tarot-table" class="tarot-table" aria-live="polite"></div>
+      </section>
+
+      <!-- ---------- Lucky numbers ---------- -->
+      <section id="tab-number" class="panel tab" role="tabpanel" hidden>
+        <h2 class="title">เลขมงคลประจำตัว</h2>
+        <p class="lead">คำนวณจากชื่อ ปีเกิด นักษัตร และวันนี้ — <strong>เพื่อความบันเทิงเท่านั้น ไม่ใช่การทำนายผลสลากจริง</strong></p>
+        <div class="chips" role="radiogroup" aria-label="ประเภทเลข">
+          <label class="chip"><input type="radio" name="numcat" value="0" checked><span>เลขท้าย 2 ตัว</span></label>
+          <label class="chip"><input type="radio" name="numcat" value="1"><span>เลขท้าย 3 ตัว</span></label>
+          <label class="chip"><input type="radio" name="numcat" value="2"><span>ครบชุด + เลขวิ่ง</span></label>
+        </div>
+        <div class="row center"><button id="btn-number" class="btn primary" type="button">เปิดเลขมงคล</button></div>
+        <div id="number-out" class="number-out" aria-live="polite"></div>
+        <p id="number-note" class="note"></p>
+      </section>
+
+      <!-- ---------- Rituals ---------- -->
+      <section id="tab-ritual" class="panel tab" role="tabpanel" hidden>
+        <h2 class="title">สะเดาะเคราะห์ออนไลน์</h2>
+        <div class="pills" role="tablist" aria-label="พิธีกรรม">
+          <button class="pill active" data-rit="candle" type="button">จุดเทียนต่อดวง</button>
+          <button class="pill" data-rit="lantern" type="button">ลอยโคมสะเดาะเคราะห์</button>
+          <button class="pill" data-rit="chong" type="button">แก้ปีชง</button>
+        </div>
+
+        <!-- candle -->
+        <div id="rit-candle" class="rit">
+          <p class="lead">แตะค้างหรือกดเมาส์ค้างที่เทียน ยิ่งนานเทียนยิ่งสว่าง ค้างไว้ 4 วินาทีเพื่อปลดล็อกบทสวดและเลขมงคล</p>
+          <div id="candle-wrap" class="candle-wrap" tabindex="0" role="button" aria-label="กดค้างเพื่อจุดเทียน">
+            <svg viewBox="0 0 200 300" class="candle-svg" aria-hidden="true">
+              <defs>
+                <radialGradient id="glowg" cx="50%" cy="50%" r="50%">
+                  <stop offset="0" stop-color="var(--glow)" stop-opacity=".9"/>
+                  <stop offset="1" stop-color="var(--glow)" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="waxg" x1="0" x2="1">
+                  <stop offset="0" stop-color="#d9b98a"/><stop offset=".5" stop-color="#fff1d3"/><stop offset="1" stop-color="#c79c64"/>
+                </linearGradient>
+              </defs>
+              <circle id="candle-glow" cx="100" cy="95" r="95" fill="url(#glowg)" opacity="0"/>
+              <rect x="70" y="140" width="60" height="140" rx="6" fill="url(#waxg)"/>
+              <rect x="62" y="272" width="76" height="14" rx="4" fill="#7a1f16"/>
+              <rect x="98" y="128" width="4" height="16" fill="#2a1a10"/>
+              <g id="flame" class="flame" style="transform-origin:100px 128px">
+                <path d="M100 70 C118 92 120 112 100 128 C80 112 82 92 100 70Z" fill="#ffb347"/>
+                <path d="M100 90 C110 104 110 114 100 126 C90 114 90 104 100 90Z" fill="#fff2b8"/>
+              </g>
+            </svg>
+            <div class="ring"><div id="candle-ring"></div></div>
+          </div>
+          <p id="candle-hint" class="center hint">ยังไม่ได้จุดเทียน</p>
+          <article id="candle-result" class="result" hidden aria-live="polite"></article>
+        </div>
+
+        <!-- lantern -->
+        <div id="rit-lantern" class="rit" hidden>
+          <p class="lead">พิมพ์ความทุกข์ใจหรือความกังวลลงไป แล้วปล่อยโคมให้ลอยขึ้นฟ้า — ข้อความไม่ถูกส่งออกจากเครื่องของคุณ</p>
+          <div id="sky" class="sky" aria-hidden="true"></div>
+          <label class="block">ความในใจของคุณ
+            <textarea id="lantern-text" maxlength="300" rows="3" placeholder="เช่น กังวลเรื่องงาน อยากให้ทุกอย่างดีขึ้น..."></textarea>
+          </label>
+          <div class="row center"><button id="btn-lantern" class="btn primary" type="button">ปล่อยโคมลอยขึ้นฟ้า</button></div>
+          <article id="lantern-result" class="result" hidden aria-live="polite"></article>
+        </div>
+
+        <!-- chong -->
+        <div id="rit-chong" class="rit" hidden>
+          <p class="lead">เลือกนักษัตรและเรื่องที่กังวล เพื่อดูว่าปีนี้ชงหรือไม่ พร้อมวิธีเสริมดวง</p>
+          <div class="grid2">
+            <label>นักษัตร
+              <select id="chong-zodiac"></select>
+            </label>
+            <label>เรื่องที่กังวล
+              <select id="chong-problem">
+                <option value="0">การเงิน</option>
+                <option value="1">ความรัก</option>
+                <option value="2">สุขภาพ</option>
+                <option value="3">การงาน</option>
+              </select>
+            </label>
+          </div>
+          <div class="yantra-wrap"><div id="yantra" class="yantra" aria-hidden="true">
+            <svg viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="94" class="y-ring"/>
+              <circle cx="100" cy="100" r="78" class="y-ring thin"/>
+              <g class="y-spin"><circle cx="100" cy="100" r="62" class="y-ring dash"/></g>
+              <polygon points="100,28 160,132 40,132" class="y-tri"/>
+              <polygon points="100,172 40,68 160,68" class="y-tri"/>
+              <text x="100" y="108" text-anchor="middle" class="y-glyph">นะ</text>
+            </svg>
+          </div></div>
+          <div class="row center"><button id="btn-chong" class="btn primary" type="button">ทำพิธีปัดเป่า</button></div>
+          <article id="chong-result" class="result" hidden aria-live="polite"></article>
+        </div>
+      </section>
+
+      <!-- ---------- Scan ---------- -->
+      <section id="tab-scan" class="panel tab" role="tabpanel" hidden>
+        <h2 class="title">สแกนดวงชะตา</h2>
+        <p class="lead privacy">🔒 ภาพและลายเซ็นถูกประมวลผลในเบราว์เซอร์ของคุณเท่านั้น ไม่มีการอัปโหลดหรือจัดเก็บ และไม่ได้ระบุตัวตนบุคคล — ใช้เพื่อความบันเทิง</p>
+
+        <div class="scan-grid">
+          <div class="card">
+            <h3>สแกนใบหน้า / ลายมือ</h3>
+            <div class="chips small" role="radiogroup" aria-label="ประเภทภาพ">
+              <label class="chip"><input type="radio" name="imgmode" value="0" checked><span>ใบหน้า</span></label>
+              <label class="chip"><input type="radio" name="imgmode" value="1"><span>ลายมือ</span></label>
+            </div>
+            <label class="drop" for="in-image">
+              <input id="in-image" type="file" accept="image/*" capture="environment">
+              <span id="drop-text">แตะเพื่อเลือกหรือถ่ายภาพ</span>
+              <canvas id="img-preview" width="64" height="64" hidden></canvas>
+            </label>
+            <button id="btn-scan" class="btn primary" type="button" disabled>สแกนดวง</button>
+            <article id="scan-result" class="result" hidden aria-live="polite"></article>
+          </div>
+
+          <div class="card">
+            <h3>ลายเซ็นมงคล</h3>
+            <canvas id="sig" class="sig" width="640" height="260" aria-label="พื้นที่เซ็นชื่อ"></canvas>
+            <div class="row">
+              <button id="btn-sig-clear" class="btn ghost" type="button">ล้าง</button>
+              <button id="btn-sig" class="btn primary" type="button">วิเคราะห์ลายเซ็น</button>
+            </div>
+            <article id="sig-result" class="result" hidden aria-live="polite"></article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- Festival ---------- -->
+      <section id="tab-festival" class="panel tab" role="tabpanel" hidden>
+        <h2 id="fest-title" class="title">เทศกาล</h2>
+        <p id="fest-tag" class="lead"></p>
+        <div id="fest-stage" class="fest-stage"></div>
+        <article id="fest-result" class="result" hidden aria-live="polite"></article>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p><strong>ข้อสงวนสิทธิ์:</strong> เว็บนี้จัดทำเพื่อความบันเทิงและวัฒนธรรมความเชื่อเท่านั้น คำทำนายและเลขมงคลไม่ใช่คำแนะนำทางการแพทย์ กฎหมาย หรือการเงิน และไม่รับประกันผลใดๆ การเสี่ยงโชคมีความเสี่ยง โปรดใช้วิจารณญาณ</p>
+    <p>หากรู้สึกท้อแท้หรืออยากทำร้ายตัวเอง โทรสายด่วนสุขภาพจิต <a href="tel:1323">1323</a> ตลอด 24 ชั่วโมง</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <canvas id="fireworks" class="fireworks" aria-hidden="true"></canvas>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
