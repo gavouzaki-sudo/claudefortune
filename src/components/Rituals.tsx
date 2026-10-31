@@ -1,7 +1,21 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Bridge } from '../bridge';
 import type { CandleResult, OfferingResult, RemedyResult } from '../types';
-import { ZODIAC_OPTIONS } from './Gate';
+
+const CHONG_ZODIAC_OPTIONS = [
+  { value: 0, label: "ชวด (หนู)" },
+  { value: 1, label: "ฉลู (วัว)" },
+  { value: 2, label: "ขาล (เสือ)" },
+  { value: 3, label: "เถาะ (กระต่าย)" },
+  { value: 4, label: "มะโรง (งูใหญ่ / มังกร)" },
+  { value: 5, label: "มะเส็ง (งูเล็ก)" },
+  { value: 6, label: "มะเมีย (ม้า)" },
+  { value: 7, label: "มะแม (แพะ)" },
+  { value: 8, label: "วอก (ลิง)" },
+  { value: 9, label: "ระกา (ไก่)" },
+  { value: 10, label: "จอ (สุนัข)" },
+  { value: 11, label: "กุน (หมู / ช้างมงคล)" },
+];
 
 interface RitualsProps {
   bridge: Bridge;
@@ -331,7 +345,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                 value={chongZodiac}
                 onChange={(e) => setChongZodiac(parseInt(e.target.value, 10))}
               >
-                {ZODIAC_OPTIONS.filter((o) => o.value >= 0).map((o) => (
+                {CHONG_ZODIAC_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>

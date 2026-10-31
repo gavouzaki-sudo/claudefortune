@@ -1,54 +1,45 @@
 import React, { useMemo } from 'react';
+import { MYSTICAL_THEMES } from '../data/themes';
 
 interface AmbientProps {
   themeKey: string;
 }
 
-interface AmbientConfig {
-  g: string[];
-  fall: boolean;
-}
-
-const AMBIENT_CONFIG: Record<string, AmbientConfig> = {
-  shrine: { g: ["🏮", "🏮", "✨"], fall: false },
-  songkran: { g: ["💧", "💧", "🌼"], fall: true },
-  halloween: { g: ["🦇", "🦇", "🎃", "👻"], fall: false },
-  loy: { g: ["🪷", "🏮", "✨"], fall: false },
-  cny: { g: ["🧧", "🏮", "🧨"], fall: true },
-  newyear: { g: ["✨", "🎆", "⭐"], fall: true },
-};
-
 export const Ambient: React.FC<AmbientProps> = ({ themeKey }) => {
-  const conf = AMBIENT_CONFIG[themeKey] || AMBIENT_CONFIG.shrine;
+  const currentTheme =
+    MYSTICAL_THEMES.find((t) => t.id === themeKey) || MYSTICAL_THEMES[0];
+
+  const particles = currentTheme.particles;
+  const fall = currentTheme.fall;
 
   const floaters = useMemo(() => {
-    return Array.from({ length: 14 }).map((_, i) => {
-      const d = 16 + Math.random() * 16;
+    return Array.from({ length: 16 }).map((_, i) => {
+      const d = 14 + Math.random() * 16;
       return {
         id: i,
-        char: conf.g[i % conf.g.length],
-        x: Math.random() * 96 + "%",
-        s: 16 + Math.random() * 22 + "px",
-        d: d + "s",
-        delay: -Math.random() * d + "s",
-        sway: Math.round(Math.random() * 80 - 40) + "px",
+        char: particles[i % particles.length],
+        x: Math.random() * 96 + '%',
+        s: 16 + Math.random() * 24 + 'px',
+        d: d + 's',
+        delay: -Math.random() * d + 's',
+        sway: Math.round(Math.random() * 80 - 40) + 'px',
       };
     });
-  }, [conf]);
+  }, [particles]);
 
   return (
     <div id="ambient" aria-hidden="true">
       {floaters.map((f) => (
         <span
           key={f.id}
-          className={`floater ${conf.fall ? "fall" : ""}`}
+          className={`floater ${fall ? 'fall' : ''}`}
           style={
             {
-              "--x": f.x,
-              "--s": f.s,
-              "--d": f.d,
-              "--delay": f.delay,
-              "--sway": f.sway,
+              '--x': f.x,
+              '--s': f.s,
+              '--d': f.d,
+              '--delay': f.delay,
+              '--sway': f.sway,
             } as React.CSSProperties
           }
         >

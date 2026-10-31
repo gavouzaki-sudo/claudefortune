@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bridge } from './bridge';
 import type { UserSession } from './types';
+import { MYSTICAL_THEMES } from './data/themes';
 import { Header } from './components/Header';
 import { Ambient } from './components/Ambient';
 import { Gate } from './components/Gate';
@@ -14,13 +15,21 @@ import { Footer } from './components/Footer';
 import { Toast } from './components/Toast';
 import { Fireworks, type FireworksHandle } from './components/Fireworks';
 
-const FEST_THEME = ["shrine", "songkran", "halloween", "loy", "cny", "newyear"];
+const FEST_INDEX_MAP: Record<string, number> = {
+  shrine: 0,
+  songkran: 1,
+  halloween: 2,
+  loy: 3,
+  cny: 4,
+  newyear: 5,
+};
 
 export const App: React.FC = () => {
   const [bridge, setBridge] = useState<Bridge | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [session, setSession] = useState<UserSession | null>(null);
   const [theme, setTheme] = useState<string>('auto');
+  const [activeThemeId, setActiveThemeId] = useState<string>('shrine');
   const [festivalId, setFestivalId] = useState<number>(0);
   const [tab, setTab] = useState<'stick' | 'tarot' | 'number' | 'ritual' | 'scan' | 'festival'>('stick');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -60,12 +69,19 @@ export const App: React.FC = () => {
           const s = sessionStorage.getItem('shrine.session');
           if (s) {
             const parsed = JSON.parse(s);
-            if (parsed.name && parsed.year) {
-              const z = b.initSession(parsed.name, parsed.year, parsed.zodiac ?? -1);
+            if (parsed.year && (parsed.symbolName || parsed.name)) {
+              const symName = parsed.symbolName || parsed.name;
+              const z = b.initSession(symName, parsed.year, parsed.zodiac ?? -1);
               if (z >= 0) {
                 const info = b.zodiacInfo(z);
                 setSession({
-                  name: parsed.name,
+                  systemId: parsed.systemId || 'thai',
+                  systemName: parsed.systemName || 'ไทย (12 นักษัตร)',
+                  symbolName: symName,
+                  symbolIcon: parsed.symbolIcon || '✨',
+                  element: parsed.element || info.element || 'มงคล',
+                  aura: parsed.aura || info.color || 'ทองคำ',
+                  attribute: parsed.attribute || 'โชคลาภบารมี',
                   year: parsed.year,
                   zodiac: z,
                   info,
@@ -91,18 +107,42 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Update theme and festival ID
+  // Update theme, festival ID, and CSS variables
   useEffect(() => {
     if (!bridge) return;
     const now = new Date();
-    const id =
-      theme === 'auto'
-        ? bridge.festival(now.getMonth() + 1, now.getDate())
-        : Math.max(0, FEST_THEME.indexOf(theme));
 
-    setFestivalId(id);
-    const key = FEST_THEME[id] || 'shrine';
-    document.body.dataset.theme = key;
+    let targetThemeId: string;
+    let targetFestId = 0;
+
+    if (theme === 'auto') {
+      const autoId = bridge.festival(now.getMonth() + 1, now.getDate());
+      targetFestId = autoId;
+      const festKeys = ['shrine', 'songkran', 'halloween', 'loy', 'cny', 'newyear'];
+      targetThemeId = festKeys[autoId] || 'shrine';
+    } else {
+      targetThemeId = theme;
+      targetFestId = FEST_INDEX_MAP[theme] ?? 0;
+    }
+
+    setActiveThemeId(targetThemeId);
+    setFestivalId(targetFestId);
+
+    // Apply data-theme attribute and custom CSS properties
+    document.body.dataset.theme = targetThemeId;
+
+    const matchedTheme = MYSTICAL_THEMES.find((t) => t.id === targetThemeId);
+    if (matchedTheme) {
+      const root = document.documentElement;
+      root.style.setProperty('--bg', matchedTheme.bgColors.bg);
+      root.style.setProperty('--bg2', matchedTheme.bgColors.bg2);
+      root.style.setProperty('--panel', matchedTheme.bgColors.panel);
+      root.style.setProperty('--panel-line', matchedTheme.bgColors.panelLine);
+      root.style.setProperty('--gold', matchedTheme.bgColors.gold);
+      root.style.setProperty('--gold2', matchedTheme.bgColors.gold2);
+      root.style.setProperty('--red', matchedTheme.bgColors.red);
+      root.style.setProperty('--glow', matchedTheme.bgColors.glow);
+    }
 
     try {
       sessionStorage.setItem('shrine.theme', JSON.stringify(theme));
@@ -110,6 +150,15 @@ export const App: React.FC = () => {
       // Ignore
     }
   }, [theme, bridge]);
+
+  const handleRandomTheme = () => {
+    const available = MYSTICAL_THEMES.filter((t) => t.id !== activeThemeId);
+    const chosen = available[Math.floor(Math.random() * available.length)];
+    if (chosen) {
+      setTheme(chosen.id);
+      showToast(`🎲 สลับมิติสู่ธีม: ${chosen.icon} ${chosen.name}`);
+    }
+  };
 
   const handleSessionChange = () => {
     try {
@@ -120,13 +169,17 @@ export const App: React.FC = () => {
     setSession(null);
   };
 
-  const currentThemeKey = FEST_THEME[festivalId] || 'shrine';
   const festInfo = bridge?.festivalInfo(festivalId);
+  const activeThemeObj = MYSTICAL_THEMES.find((t) => t.id === activeThemeId);
 
   return (
     <>
-      <Ambient themeKey={currentThemeKey} />
-      <Header theme={theme} onThemeChange={setTheme} />
+      <Ambient themeKey={activeThemeId} />
+      <Header
+        theme={theme}
+        onThemeChange={setTheme}
+        onRandomTheme={handleRandomTheme}
+      />
 
       <main>
         {loadError && (
@@ -141,20 +194,26 @@ export const App: React.FC = () => {
 
         {!loadError && bridge && session && (
           <div id="app">
-            <div className="whoami">
+            {/* Who Am I Bar */}
+            <div className="whoami mystical-whoami">
+              <div className="whoami-symbol-badge">
+                <span className="badge-icon">{session.symbolIcon}</span>
+                <span className="badge-text">{session.symbolName}</span>
+              </div>
               <span id="who">
-                สวัสดี <b>{session.name}</b> · ปี{session.info.name} ({session.info.animal}) · สีมงคล{session.info.color}
+                ระบบ: <b>{session.systemName}</b> (ปี {session.year}) · ธาตุ: <span className="highlight-pill">{session.element}</span> · ออร่า: <span className="highlight-pill">{session.aura}</span>
               </span>
               <button
                 id="btn-change"
-                className="link"
+                className="link mystical-change-btn"
                 type="button"
                 onClick={handleSessionChange}
               >
-                เปลี่ยนข้อมูล
+                เปลี่ยนระบบ/สัญลักษณ์
               </button>
             </div>
 
+            {/* Navigation Tabs */}
             <nav id="tabs" className="tabs" role="tablist" aria-label="เมนูพิธี">
               <button
                 role="tab"
@@ -162,7 +221,7 @@ export const App: React.FC = () => {
                 aria-selected={tab === 'stick'}
                 onClick={() => setTab('stick')}
               >
-                เซียมซี
+                เสี่ยงเซียมซี
               </button>
               <button
                 role="tab"
@@ -203,7 +262,9 @@ export const App: React.FC = () => {
                 aria-selected={tab === 'festival'}
                 onClick={() => setTab('festival')}
               >
-                {festivalId === 0 ? 'ขอพร' : festInfo?.name || 'เทศกาล'}
+                {activeThemeObj?.category === 'festival'
+                  ? (festivalId === 0 ? 'ขอพร' : festInfo?.name || 'เทศกาล')
+                  : activeThemeObj?.name || 'มิติศักดิ์สิทธิ์'}
               </button>
             </nav>
 

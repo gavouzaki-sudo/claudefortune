@@ -8,7 +8,13 @@ export interface ZodiacInfo {
 }
 
 export interface UserSession {
-  name: string;
+  systemId: string;
+  systemName: string;
+  symbolName: string;
+  symbolIcon: string;
+  element: string;
+  aura: string;
+  attribute: string;
   year: number;
   zodiac: number;
   info: ZodiacInfo;

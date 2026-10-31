@@ -474,3 +474,1208 @@ input:focus, select:focus, textarea:focus, button:focus-visible, .candle-wrap:fo
   }
   #ambient { display: none; }
 }
+
+/* ==========================================================================
+   SUPERNATURAL & REGIONAL THEMES
+   ========================================================================== */
+body[data-theme="thai"] {
+  --bg: #180a06; --bg2: #2a110a; --panel: rgba(40, 18, 10, .86); --panel-line: rgba(245, 197, 66, .42);
+  --ink: #fff6e8; --muted: #d9bf98; --gold: #f5c542; --gold2: #fff4cc; --red: #c0241a; --red2: #7a120c; --glow: #ffaa33;
+}
+body[data-theme="vedic"] {
+  --bg: #1a0c02; --bg2: #2c1505; --panel: rgba(46, 22, 6, .86); --panel-line: rgba(255, 160, 40, .45);
+  --ink: #fff5e8; --muted: #e6be95; --gold: #ff9900; --gold2: #ffe0b2; --red: #d84315; --red2: #87280b; --glow: #ffb300;
+}
+body[data-theme="western"] {
+  --bg: #0a0d1f; --bg2: #131936; --panel: rgba(18, 24, 56, .86); --panel-line: rgba(168, 195, 255, .38);
+  --ink: #f0f4ff; --muted: #b8c7eb; --gold: #a6c8ff; --gold2: #e8f0fe; --red: #5c6bc0; --red2: #283593; --glow: #80d8ff;
+}
+body[data-theme="islamic"] {
+  --bg: #031a14; --bg2: #062920; --panel: rgba(5, 42, 33, .86); --panel-line: rgba(80, 227, 194, .4);
+  --ink: #eafaf6; --muted: #a6d8cc; --gold: #50e3c2; --gold2: #d4faf0; --red: #00897b; --red2: #004d40; --glow: #64ffda;
+}
+body[data-theme="christian"] {
+  --bg: #14081c; --bg2: #220f30; --panel: rgba(35, 16, 50, .86); --panel-line: rgba(224, 178, 255, .42);
+  --ink: #faf0ff; --muted: #d5b8e8; --gold: #e0b2ff; --gold2: #fbf0ff; --red: #8e24aa; --red2: #4a148c; --glow: #ba68c8;
+}
+body[data-theme="egyptian"] {
+  --bg: #1f1604; --bg2: #312307; --panel: rgba(50, 36, 10, .88); --panel-line: rgba(255, 215, 0, .48);
+  --ink: #fffce8; --muted: #dfd099; --gold: #ffd700; --gold2: #fff8d6; --red: #c77800; --red2: #7c4a00; --glow: #ffea75;
+}
+body[data-theme="aztec_mayan"] {
+  --bg: #08170e; --bg2: #0e2617; --panel: rgba(14, 38, 23, .88); --panel-line: rgba(84, 214, 137, .45);
+  --ink: #ecfaef; --muted: #a5d6b2; --gold: #54d689; --gold2: #d8fadc; --red: #2e7d32; --red2: #1b5e20; --glow: #69f0ae;
+}
+body[data-theme="native_american"] {
+  --bg: #1a100a; --bg2: #2a1a11; --panel: rgba(44, 27, 18, .88); --panel-line: rgba(240, 147, 85, .42);
+  --ink: #fdf5f0; --muted: #d9b8a5; --gold: #f09355; --gold2: #ffe2cf; --red: #b85424; --red2: #702f0e; --glow: #ff9e66;
+}
+
+/* ==========================================================================
+   HEADER CONTROLS & RANDOM THEME BUTTON
+   ========================================================================== */
+.mystical-header {
+  gap: 1rem;
+}
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  flex-wrap: wrap;
+}
+.btn-random-theme {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  background: linear-gradient(135deg, rgba(232, 185, 74, 0.22), rgba(179, 38, 30, 0.35));
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  padding: .42rem .95rem;
+  font: inherit;
+  font-size: .84rem;
+  font-weight: 600;
+  color: var(--gold2);
+  cursor: pointer;
+  transition: all .25s ease;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--glow) 30%, transparent);
+}
+.btn-random-theme:hover {
+  transform: translateY(-2px) scale(1.02);
+  background: linear-gradient(135deg, rgba(232, 185, 74, 0.4), rgba(179, 38, 30, 0.55));
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--glow) 55%, transparent);
+}
+.btn-random-theme .dice-icon {
+  font-size: 1.1rem;
+  filter: drop-shadow(0 0 4px var(--glow));
+}
+
+/* ==========================================================================
+   MYSTICAL GATE & 10 ZODIAC SYSTEMS
+   ========================================================================== */
+.mystical-gate {
+  max-width: 820px;
+  margin: 0 auto;
+}
+.gate-header {
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: .5rem;
+}
+
+/* System pills */
+.system-selector-group {
+  margin-bottom: 1.2rem;
+}
+.system-pills {
+  display: flex;
+  gap: .45rem;
+  overflow-x: auto;
+  padding: .3rem 0 .5rem;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.system-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: .86rem;
+  font-weight: 500;
+  padding: .45rem .85rem;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--panel-line);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.system-pill:hover {
+  border-color: var(--gold);
+  color: var(--ink);
+}
+.system-pill.active {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--red) 80%, transparent), color-mix(in srgb, var(--gold) 40%, transparent));
+  color: var(--gold2);
+  border-color: var(--gold);
+  font-weight: 700;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--glow) 35%, transparent);
+}
+.system-pill .pill-icon {
+  font-size: 1rem;
+}
+.system-mythos {
+  font-size: .86rem;
+  color: var(--muted);
+  margin: .4rem 0 0;
+  padding: .5rem .8rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-left: 3px solid var(--gold);
+  border-radius: 4px;
+}
+
+/* Year input */
+.year-input-block {
+  max-width: 440px;
+  margin: 0 auto 1.2rem;
+}
+
+/* Symbol Grid */
+.symbol-grid-group {
+  margin-bottom: 1.2rem;
+}
+.symbol-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+  gap: .55rem;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: .4rem .3rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--panel-line);
+  border-radius: 12px;
+  scrollbar-width: thin;
+}
+.symbol-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: .65rem .45rem;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all .2s ease;
+  font: inherit;
+  text-align: center;
+}
+.symbol-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--panel-line);
+}
+.symbol-card.selected {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--red) 45%, transparent), rgba(0, 0, 0, 0.6));
+  border-color: var(--gold);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--glow) 30%, transparent);
+}
+.symbol-card .symbol-icon {
+  font-size: 1.8rem;
+  margin-bottom: .25rem;
+  line-height: 1.1;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.6));
+}
+.symbol-card .symbol-name {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--gold2);
+  line-height: 1.3;
+}
+.symbol-card .symbol-orig {
+  font-size: .68rem;
+  color: var(--muted);
+  margin-top: .15rem;
+}
+
+/* Preview Card */
+.symbol-preview-card {
+  margin: 1rem 0 1.2rem;
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.45));
+  border: 1px solid var(--gold);
+  box-shadow: 0 4px 25px color-mix(in srgb, var(--glow) 20%, transparent);
+  animation: rise .45s ease both;
+}
+.preview-top {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  margin-bottom: .5rem;
+}
+.preview-symbol-big {
+  font-size: 2.8rem;
+  line-height: 1;
+  flex: none;
+  filter: drop-shadow(0 0 12px var(--glow));
+}
+.preview-title {
+  font-size: 1.35rem;
+  color: var(--gold);
+  margin: 0 0 .2rem;
+}
+.preview-element {
+  display: inline-block;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--panel-line);
+  color: var(--gold2);
+  padding: .15rem .6rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 600;
+  margin-right: .5rem;
+}
+.preview-aura {
+  font-size: .82rem;
+  color: var(--muted);
+}
+.preview-attribute {
+  font-size: .9rem;
+  color: var(--ink);
+  margin: .4rem 0 0;
+  line-height: 1.5;
+}
+.mystical-submit-btn {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  display: block;
+  font-size: 1.05rem;
+  padding: .85rem 1.5rem;
+}
+
+/* Who Am I Bar */
+.mystical-whoami {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .7rem;
+  padding: .6rem 1rem;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  margin: .8rem auto;
+  max-width: 820px;
+  font-size: .88rem;
+}
+.whoami-symbol-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  background: linear-gradient(135deg, var(--red2), var(--red));
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  padding: .2rem .7rem;
+  color: var(--gold2);
+  font-weight: 700;
+}
+.highlight-pill {
+  color: var(--gold2);
+  font-weight: 600;
+}
+.mystical-change-btn {
+  font-size: .82rem;
+  color: var(--gold);
+  border: 1px solid var(--panel-line);
+  padding: .2rem .65rem;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: all .2s;
+}
+.mystical-change-btn:hover {
+  border-color: var(--gold);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ==========================================================================
+   GATE AUDIO CONTROLS & CHANT TOOLBAR
+   ========================================================================== */
+.gate-audio-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .8rem;
+  margin: 0 auto 1.2rem;
+  flex-wrap: wrap;
+}
+
+.audio-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .35rem .95rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: .84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .25s ease;
+  background: rgba(18, 8, 25, 0.85);
+  border: 1.5px solid var(--gold);
+  color: var(--gold2);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+}
+.audio-toggle-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(45, 18, 55, 0.9);
+  box-shadow: 0 0 16px var(--glow);
+}
+.audio-toggle-btn.is-muted {
+  border-color: var(--panel-line);
+  color: var(--muted);
+  opacity: 0.75;
+}
+.audio-toggle-btn.is-playing {
+  border-color: var(--gold);
+  color: #fff6cf;
+}
+.audio-toggle-btn .audio-icon {
+  font-size: 1rem;
+}
+
+.now-chanting-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .32rem .9rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(232, 185, 74, 0.18), rgba(179, 38, 30, 0.28));
+  border: 1px solid var(--gold);
+  color: var(--gold2);
+  font-size: .8rem;
+  font-weight: 600;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--glow) 35%, transparent);
+}
+.now-chanting-pill .now-title {
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.btn-replay-chant {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(232, 185, 74, 0.4);
+  color: var(--gold2);
+  border-radius: 6px;
+  padding: .15rem .45rem;
+  font-size: .72rem;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-replay-chant:hover {
+  background: var(--gold);
+  color: #000;
+}
+
+/* Audio wave bars animation */
+.wave-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  width: 14px;
+}
+.wb {
+  width: 3px;
+  background: var(--gold);
+  border-radius: 2px;
+  animation: wavePulse 1s ease-in-out infinite alternate;
+}
+.wb-1 { height: 40%; animation-delay: 0.1s; }
+.wb-2 { height: 95%; animation-delay: 0.3s; }
+.wb-3 { height: 60%; animation-delay: 0.2s; }
+
+@keyframes wavePulse {
+  0% { height: 25%; }
+  100% { height: 100%; }
+}
+
+/* ==========================================================================
+   CELESTIAL STAGE & DISTRIBUTED ASTROLOGY SYSTEMS
+   ========================================================================== */
+.cosmic-celestial-gate {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 1.5rem 1.2rem;
+  background: radial-gradient(circle at 50% 40%, rgba(30, 14, 38, 0.94), var(--panel));
+  border: 1px solid var(--panel-line);
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+}
+
+.celestial-pill-badge {
+  display: inline-block;
+  padding: .35rem 1.1rem;
+  border-radius: 999px;
+  background: rgba(232, 185, 74, 0.12);
+  border: 1px solid var(--gold);
+  color: var(--gold2);
+  font-size: .85rem;
+  font-weight: 700;
+  margin-bottom: .5rem;
+  letter-spacing: .06em;
+  box-shadow: 0 0 15px color-mix(in srgb, var(--glow) 30%, transparent);
+}
+.celestial-main-title {
+  font-size: clamp(1.4rem, 3.8vw, 2.1rem);
+  text-shadow: 0 0 25px color-mix(in srgb, var(--glow) 60%, transparent);
+  margin-bottom: .3rem;
+}
+.celestial-lead {
+  max-width: 65ch;
+  margin: 0 auto 1.2rem;
+}
+
+.celestial-stage-wrapper {
+  position: relative;
+  width: 100%;
+  margin: 0 auto 1.4rem;
+  border-radius: 24px;
+  background: radial-gradient(ellipse at 50% 50%, #150921 0%, #080310 75%, #030106 100%);
+  border: 1.5px solid var(--panel-line);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.85), 0 10px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.celestial-stage-canvas {
+  position: relative;
+  width: 100%;
+  height: 580px;
+  min-height: 580px;
+}
+@media (max-width: 768px) {
+  .celestial-stage-canvas {
+    height: 620px;
+  }
+}
+
+/* Background orbits */
+.celestial-orbits {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.c-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px dashed rgba(232, 185, 74, 0.18);
+}
+.c-orbit-outer {
+  width: 88%;
+  height: 84%;
+  animation: spin 180s linear infinite;
+}
+.c-orbit-mid {
+  width: 65%;
+  height: 62%;
+  border-color: rgba(255, 255, 255, 0.12);
+  animation: spin 110s linear infinite reverse;
+}
+.c-orbit-inner {
+  width: 40%;
+  height: 38%;
+  border: 1px solid rgba(232, 185, 74, 0.25);
+}
+.c-axis {
+  position: absolute;
+  pointer-events: none;
+}
+.c-axis-h {
+  top: 50%;
+  left: 3%;
+  right: 3%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232, 185, 74, 0.15), transparent);
+}
+.c-axis-v {
+  left: 50%;
+  top: 3%;
+  bottom: 3%;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(232, 185, 74, 0.15), transparent);
+}
+.c-core-radiance {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 110px;
+  height: 110px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 185, 74, 0.3) 0%, transparent 70%);
+  filter: blur(14px);
+}
+
+/* Distributed Astrology Nodes */
+.system-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), z-index 0.2s;
+  user-select: none;
+  touch-action: manipulation;
+}
+.system-node:hover,
+.system-node.is-hovered {
+  transform: translate(-50%, -50%) scale(1.15);
+  z-index: 22;
+}
+.system-node.is-expanded {
+  transform: translate(-50%, -50%) scale(1.22);
+  z-index: 30;
+}
+
+.system-orb {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #251230, #0a040f);
+  border: 2px solid var(--node-halo, var(--gold));
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--node-halo, var(--gold)) 65%, transparent),
+              inset 0 0 10px color-mix(in srgb, var(--node-halo, var(--gold)) 40%, transparent);
+  transition: all 0.3s ease;
+}
+.system-node.is-expanded .system-orb {
+  box-shadow: 0 0 35px var(--node-halo, var(--gold)),
+              inset 0 0 16px var(--node-halo, var(--gold));
+  border-color: #fff6cf;
+}
+.orb-halo-pulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px dashed var(--node-halo, var(--gold));
+  animation: spin 16s linear infinite;
+  opacity: 0.65;
+}
+.system-node.is-expanded .orb-halo-pulse {
+  inset: -9px;
+  opacity: 0.95;
+  animation-duration: 8s;
+  border-color: var(--gold);
+}
+.orb-icon {
+  font-size: 1.65rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+}
+.orb-active-marker {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  font-size: .8rem;
+  color: var(--gold);
+  text-shadow: 0 0 8px var(--glow);
+  animation: pop .8s ease infinite alternate;
+}
+
+.system-tag {
+  margin-top: .35rem;
+  padding: .15rem .55rem;
+  border-radius: 999px;
+  background: rgba(12, 6, 18, 0.88);
+  border: 1px solid var(--node-halo, var(--panel-line));
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.tag-name {
+  font-size: .78rem;
+  color: var(--gold2);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.tag-sub {
+  font-size: .64rem;
+  color: var(--muted);
+  line-height: 1.1;
+}
+
+/* UNSELECTED PORTAL CORE (When no system is expanded) */
+.celestial-unselected-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 290px;
+  max-width: 85%;
+  text-align: center;
+  z-index: 15;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(26, 11, 36, 0.92), rgba(10, 4, 16, 0.94));
+  border: 1.5px solid rgba(232, 185, 74, 0.35);
+  border-radius: 20px;
+  padding: 1.2rem 1.1rem;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 25px color-mix(in srgb, var(--glow) 25%, transparent);
+  backdrop-filter: blur(10px);
+}
+.core-portal-orb {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto .6rem;
+  display: grid;
+  place-items: center;
+}
+.core-portal-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px var(--glow));
+}
+.core-portal-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px dashed var(--gold);
+  animation: spin 20s linear infinite;
+  opacity: 0.8;
+}
+.core-portal-title {
+  font-size: 1.1rem;
+  color: var(--gold2);
+  margin: 0 0 .35rem;
+  font-family: var(--font-display);
+  text-shadow: 0 0 10px var(--glow);
+}
+.core-portal-hint {
+  font-size: .8rem;
+  color: var(--muted);
+  line-height: 1.35;
+  margin: 0;
+}
+.core-portal-hint strong {
+  color: var(--gold);
+}
+
+/* Canvas state when a system is expanded */
+.celestial-stage-canvas.has-expanded-system .system-node:not(.is-expanded) {
+  opacity: 0.18;
+  filter: blur(2px) grayscale(60%);
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.82);
+  transition: all 0.4s ease;
+}
+
+/* ==========================================================================
+   RADIAL CIRCULAR OVERLAY & SATELLITE SYMBOLS
+   ========================================================================== */
+/* ==========================================================================
+   IN-CANVAS RADIAL CIRCULAR MENU & GESTURE DISMISS
+   ========================================================================== */
+.radial-circular-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Seamless celestial aura instead of modal blackout */
+  background: radial-gradient(circle at 50% 50%, rgba(20, 10, 32, 0.45) 0%, rgba(5, 2, 9, 0.65) 100%);
+  backdrop-filter: blur(4px);
+  cursor: grab;
+  user-select: none;
+}
+.radial-circular-overlay.is-dragging {
+  cursor: grabbing;
+}
+
+.radial-drag-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Drag to dismiss gesture hint pill */
+.drag-dismiss-hint-pill {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .3rem .9rem;
+  border-radius: 999px;
+  background: rgba(14, 6, 20, 0.92);
+  border: 1px solid var(--gold);
+  color: var(--gold2);
+  font-size: .78rem;
+  font-weight: 600;
+  pointer-events: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 15px color-mix(in srgb, var(--glow) 35%, transparent);
+  z-index: 50;
+  animation: pulse-glow 2.5s infinite;
+}
+.drag-arrow {
+  display: inline-block;
+  font-size: .85rem;
+  animation: arrowBounce 1.2s ease-in-out infinite;
+}
+@keyframes arrowBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+.drag-dismiss-close-icon {
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  color: var(--gold2);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: .7rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  margin-left: .2rem;
+  transition: all .2s;
+}
+.drag-dismiss-close-icon:hover {
+  background: var(--red);
+  color: #fff;
+}
+
+/* Celestial Center Core Sigil (Organic, in-canvas, non-popup) */
+.radial-menu-center-card.celestial-center-sigil {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  padding: 1rem 1rem .85rem;
+  border-radius: 28px;
+  background: radial-gradient(circle at 50% 30%, rgba(35, 15, 45, 0.96), rgba(12, 4, 18, 0.98));
+  border: 1.5px solid var(--gold);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.92), 0 0 30px color-mix(in srgb, var(--glow) 40%, transparent);
+  text-align: center;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  z-index: 40;
+  backdrop-filter: blur(14px);
+  cursor: grab;
+}
+.radial-menu-center-card.celestial-center-sigil:active {
+  cursor: grabbing;
+}
+
+.radial-center-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  margin-bottom: .25rem;
+}
+.center-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px var(--glow));
+}
+.center-name {
+  font-size: 1.05rem;
+  color: var(--gold2);
+  margin: 0;
+  font-weight: 700;
+  text-shadow: 0 0 10px var(--glow);
+}
+.center-mythos {
+  font-size: .74rem;
+  color: var(--muted);
+  margin: .25rem 0 .5rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Center Chant Audio Preview Box */
+.center-chant-box {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(232, 185, 74, 0.35);
+  border-radius: 12px;
+  padding: .45rem .6rem;
+  margin-bottom: .45rem;
+  text-align: left;
+}
+.chant-name-row {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+}
+.chant-sacred-icon {
+  font-size: .85rem;
+}
+.chant-name-text {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--gold2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chant-mantra-text {
+  font-size: .66rem;
+  color: var(--muted);
+  font-style: italic;
+  margin: .2rem 0 .35rem;
+  line-height: 1.25;
+}
+.btn-chant-play-mini {
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(232, 185, 74, 0.25), rgba(179, 38, 30, 0.35));
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  color: var(--gold2);
+  font-size: .7rem;
+  font-weight: 600;
+  padding: .2rem .4rem;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-chant-play-mini:hover {
+  background: var(--gold);
+  color: #000;
+}
+
+/* Gesture Affordance Handle */
+.sigil-drag-handle {
+  width: 36px;
+  height: 4px;
+  margin: .25rem auto 0;
+  background: rgba(232, 185, 74, 0.3);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.handle-bar {
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* Satellite Tokens in a Ring */
+.radial-symbols-wheel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.radial-symbol-satellite {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  margin-left: -32px;
+  margin-top: -32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 35;
+}
+.radial-symbol-satellite:hover {
+  z-index: 45;
+}
+
+.satellite-token {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #2a1420, #0d050a);
+  border: 2px solid var(--panel-line);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.radial-symbol-satellite:hover .satellite-token {
+  transform: scale(1.15);
+  border-color: var(--gold);
+  box-shadow: 0 0 25px var(--glow);
+}
+.satellite-selected .satellite-token {
+  transform: scale(1.22);
+  border-color: #fff4cc;
+  background: radial-gradient(circle at 35% 35%, var(--red), #36070a);
+  box-shadow: 0 0 30px var(--glow), inset 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+.token-aura {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 1px dashed rgba(232, 185, 74, 0.4);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.satellite-selected .token-aura {
+  opacity: 1;
+  animation: spin 10s linear infinite;
+  border-color: var(--gold);
+}
+.token-icon {
+  font-size: 1.85rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+}
+.satellite-star-badge {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  font-size: .85rem;
+  color: var(--gold);
+  text-shadow: 0 0 10px var(--glow);
+  animation: pop .8s ease infinite alternate;
+}
+
+.satellite-tag {
+  margin-top: .3rem;
+  padding: .15rem .5rem;
+  border-radius: 999px;
+  background: rgba(10, 4, 12, 0.92);
+  border: 1px solid var(--panel-line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  transition: all .2s;
+}
+.satellite-selected .satellite-tag {
+  border-color: var(--gold);
+  background: rgba(26, 12, 6, 0.95);
+}
+.sat-name {
+  font-size: .74rem;
+  font-weight: 700;
+  color: var(--gold2);
+  line-height: 1.2;
+}
+.sat-orig {
+  font-size: .64rem;
+  color: var(--muted);
+  line-height: 1.1;
+}
+
+/* ==========================================================================
+   ALTAR PREVIEW STRIP & CONFIRM ACTION
+   ========================================================================== */
+.altar-preview-strip {
+  margin-top: 1.2rem;
+  padding: 1.1rem 1.4rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(232, 185, 74, 0.08), rgba(20, 8, 25, 0.85));
+  border: 1.5px solid var(--gold);
+  box-shadow: 0 8px 35px color-mix(in srgb, var(--glow) 25%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.altar-strip-main {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex: 1;
+  min-width: 280px;
+}
+.altar-strip-icon-box {
+  position: relative;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--red), #200407);
+  border: 2px solid var(--gold);
+  display: grid;
+  place-items: center;
+  flex: none;
+  box-shadow: 0 0 25px var(--glow), inset 0 0 12px rgba(0, 0, 0, 0.6);
+}
+.symbol-pulse-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px dashed var(--gold);
+  animation: spin 14s linear infinite;
+  opacity: 0.85;
+}
+.big-symbol {
+  font-size: 2.6rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+}
+
+.altar-strip-info {
+  flex: 1;
+}
+.strip-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: .3rem;
+}
+.strip-title {
+  font-size: 1.35rem;
+  color: var(--gold);
+  margin: 0;
+  font-family: var(--font-display);
+}
+.strip-orig {
+  font-size: .92rem;
+  color: var(--gold2);
+  font-weight: 500;
+}
+.strip-system-tag {
+  font-size: .8rem;
+  color: var(--muted);
+}
+
+.strip-pills {
+  display: flex;
+  gap: .45rem;
+  flex-wrap: wrap;
+  margin-bottom: .4rem;
+}
+.pill-badge {
+  font-size: .78rem;
+  font-weight: 600;
+  padding: .15rem .6rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--panel-line);
+}
+.elem-badge {
+  color: var(--gold2);
+  border-color: var(--gold);
+}
+.aura-badge {
+  color: var(--muted);
+}
+.year-badge {
+  color: var(--gold);
+}
+
+.strip-attribute {
+  font-size: .88rem;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.altar-strip-action {
+  flex: none;
+}
+.strip-confirm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  font-size: 1.05rem;
+  padding: .85rem 1.8rem;
+  box-shadow: 0 0 25px color-mix(in srgb, var(--glow) 40%, transparent);
+  transition: all 0.25s ease;
+}
+.strip-confirm-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 35px color-mix(in srgb, var(--glow) 70%, transparent);
+}
+.strip-confirm-btn .arrow-icon {
+  font-size: 1.2rem;
+  transition: transform 0.2s ease;
+}
+.strip-confirm-btn:hover .arrow-icon {
+  transform: translateX(4px);
+}
+
+.animate-scale-up {
+  animation: pop .35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.animate-rise {
+  animation: rise .4s ease both;
+}
+
+@media (max-width: 640px) {
+  .radial-menu-center-card {
+    width: 136px;
+    padding: .45rem .55rem;
+  }
+  .radial-center-badge .center-icon {
+    font-size: 1.15rem;
+  }
+  .radial-center-badge .center-name {
+    font-size: .82rem;
+  }
+  .center-mythos {
+    font-size: .62rem;
+    -webkit-line-clamp: 1;
+    margin: .1rem 0 .2rem;
+  }
+  .center-year-tag {
+    font-size: .64rem;
+    padding: .1rem .35rem;
+  }
+  .radial-symbol-satellite {
+    width: 48px;
+    height: 48px;
+    margin-left: -24px;
+    margin-top: -24px;
+  }
+  .satellite-token {
+    width: 42px;
+    height: 42px;
+  }
+  .satellite-token .token-icon {
+    font-size: 1.35rem;
+  }
+  .satellite-tag {
+    margin-top: .15rem;
+    padding: .08rem .3rem;
+    max-width: 68px;
+    overflow: hidden;
+  }
+  .sat-name {
+    font-size: .6rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60px;
+  }
+  .sat-orig {
+    display: none;
+  }
+}
+
+
