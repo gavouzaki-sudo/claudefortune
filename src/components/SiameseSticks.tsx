@@ -149,7 +149,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast })
   };
 
   return (
-    <section id="tab-stick" className="panel tab" role="tabpanel">
+    <section id="tab-stick" className="ritual-frameless-stage tab" role="tabpanel">
       <h2 className="title">เสี่ยงเซียมซี</h2>
       <p className="lead">
         ตั้งจิตอธิษฐาน แล้วเขย่ากระบอกจนไม้เซียมซีหล่นออกมา — กดปุ่ม ลากเมาส์ หรือเขย่ามือถือก็ได้

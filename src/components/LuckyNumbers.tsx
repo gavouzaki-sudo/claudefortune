@@ -64,7 +64,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast }) =
   let cumulativeDelay = 0;
 
   return (
-    <section id="tab-number" className="panel tab" role="tabpanel">
+    <section id="tab-number" className="ritual-frameless-stage tab" role="tabpanel">
       <h2 className="title">เลขมงคลประจำตัว</h2>
       <p className="lead">
         คำนวณจากชื่อ ปีเกิด นักษัตร และวันนี้ — <strong>เพื่อความบันเทิงเท่านั้น ไม่ใช่การทำนายผลสลากจริง</strong>

@@ -148,7 +148,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   const glowOpacity = (candleLevel / 100).toFixed(3);
 
   return (
-    <section id="tab-ritual" className="panel tab" role="tabpanel">
+    <section id="tab-ritual" className="ritual-frameless-stage tab" role="tabpanel">
       <h2 className="title">สะเดาะเคราะห์ออนไลน์</h2>
       <div className="pills" role="tablist" aria-label="พิธีกรรม">
         <button

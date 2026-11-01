@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({ onGoHome, hasActiveSession }) =>
   };
 
   return (
-    <header className="top mystical-header">
+    <header className={`top mystical-header ${hasActiveSession ? 'header-session-compact' : ''}`}>
       <div
         className="brand"
         onClick={onGoHome}
@@ -52,9 +52,9 @@ export const Header: React.FC<HeaderProps> = ({ onGoHome, hasActiveSession }) =>
             type="button"
             className="btn-header-home-action"
             onClick={onGoHome}
-            title="กลับสู่หน้าหลักเพื่อเลือกอารยธรรมอื่น"
+            title="กลับสู่หน้าหลัก"
           >
-            <span>🏠 หน้าหลัก / เลือกอารยธรรมอื่น</span>
+            <span>🏠 กลับหน้าหลัก</span>
           </button>
         )}
 

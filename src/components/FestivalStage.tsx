@@ -128,7 +128,7 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
   const nextYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
 
   return (
-    <section id="tab-festival" className="panel tab" role="tabpanel">
+    <section id="tab-festival" className="ritual-frameless-stage tab" role="tabpanel">
       <h2 id="fest-title" className="title">
         {festivalId === 0 ? 'ขอพรประจำวัน' : `เทศกาล${info.name}`}
       </h2>

@@ -1,3 +1,5 @@
+export type DivinationTopic = 'stick' | 'tarot' | 'number' | 'ritual' | 'love' | 'scan' | 'festival';
+
 export interface ZodiacInfo {
   id: number;
   name: string;

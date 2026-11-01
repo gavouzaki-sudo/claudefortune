@@ -47,7 +47,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast }) => {
   const positions = SPREAD_POSITIONS[spread] || [];
 
   return (
-    <section id="tab-tarot" className="panel tab" role="tabpanel">
+    <section id="tab-tarot" className="ritual-frameless-stage tab" role="tabpanel">
       <h2 className="title">ไพ่ยิปซี</h2>
       <p className="lead">เลือกรูปแบบการเปิดไพ่ ตั้งคำถามในใจ แล้วแตะไพ่แต่ละใบเพื่อพลิกดู</p>
 

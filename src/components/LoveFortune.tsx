@@ -111,7 +111,7 @@ export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) =>
   };
 
   return (
-    <section id="love-fortune" className="panel love-fortune-panel">
+    <section id="love-fortune" className="ritual-frameless-stage love-fortune-panel">
       <h2 className="title">💖 มณฑลดวงความรัก & คู่แท้แห่งโชคชะตา</h2>
       <p className="lead">
         สดับรับฟังเสียงคลื่นหัวใจใต้เงาจันทร์เพ็ญสีชมพู พร้อมพลังอารยธรรม <b>{session.systemName}</b> ({session.symbolName})
