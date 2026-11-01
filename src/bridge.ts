@@ -49,7 +49,7 @@ export class Bridge {
     this.mem = this.x.memory;
   }
 
-  static async load(url = "/wasm/core.wasm"): Promise<Bridge> {
+  static async load(url = "./wasm/core.wasm"): Promise<Bridge> {
     try {
       const res = await fetch(url);
       if (res.ok) {
