@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - name: Install clang + lld
         run: sudo apt-get update && sudo apt-get install -y clang lld
@@ -26,24 +26,24 @@ jobs:
       - name: Build Wasm core
         run: bash ./build.sh
 
-      - name: Verify build output
-        run: |
-          test -d web
-          find web -type f -printf '%p (%s bytes)\n'
-          find web -name "*.wasm" -type f -size +0c
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Smoke-test Wasm core
-        run: node tests/core.test.mjs
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build web application
+        run: npm run build
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: web
+          path: dist
 
   deploy:
     needs: build

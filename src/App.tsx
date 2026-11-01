@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bridge } from './bridge';
 import type { UserSession } from './types';
 import { MYSTICAL_THEMES } from './data/themes';
+import { detectSmartTheme } from './utils/smartTheme';
 import { Header } from './components/Header';
 import { Ambient } from './components/Ambient';
 import { Gate } from './components/Gate';
@@ -10,7 +11,10 @@ import { Tarot } from './components/Tarot';
 import { LuckyNumbers } from './components/LuckyNumbers';
 import { Rituals } from './components/Rituals';
 import { ScanFortune } from './components/ScanFortune';
+import { LoveFortune } from './components/LoveFortune';
 import { FestivalStage } from './components/FestivalStage';
+import { FortuneCanvasBackground } from './components/FortuneCanvasBackground';
+import { DivinationHub, type DivinationTopic } from './components/DivinationHub';
 import { Footer } from './components/Footer';
 import { Toast } from './components/Toast';
 import { Fireworks, type FireworksHandle } from './components/Fireworks';
@@ -31,7 +35,8 @@ export const App: React.FC = () => {
   const [theme, setTheme] = useState<string>('auto');
   const [activeThemeId, setActiveThemeId] = useState<string>('shrine');
   const [festivalId, setFestivalId] = useState<number>(0);
-  const [tab, setTab] = useState<'stick' | 'tarot' | 'number' | 'ritual' | 'scan' | 'festival'>('stick');
+  const [tab, setTab] = useState<'hub' | DivinationTopic>('hub');
+  const [tarotVariant, setTarotVariant] = useState<0 | 1>(0);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const fireworksRef = useRef<FireworksHandle>(null);
@@ -116,10 +121,8 @@ export const App: React.FC = () => {
     let targetFestId = 0;
 
     if (theme === 'auto') {
-      const autoId = bridge.festival(now.getMonth() + 1, now.getDate());
-      targetFestId = autoId;
-      const festKeys = ['shrine', 'songkran', 'halloween', 'loy', 'cny', 'newyear'];
-      targetThemeId = festKeys[autoId] || 'shrine';
+      targetThemeId = detectSmartTheme();
+      targetFestId = FEST_INDEX_MAP[targetThemeId] ?? 0;
     } else {
       targetThemeId = theme;
       targetFestId = FEST_INDEX_MAP[theme] ?? 0;
@@ -151,15 +154,6 @@ export const App: React.FC = () => {
     }
   }, [theme, bridge]);
 
-  const handleRandomTheme = () => {
-    const available = MYSTICAL_THEMES.filter((t) => t.id !== activeThemeId);
-    const chosen = available[Math.floor(Math.random() * available.length)];
-    if (chosen) {
-      setTheme(chosen.id);
-      showToast(`🎲 สลับมิติสู่ธีม: ${chosen.icon} ${chosen.name}`);
-    }
-  };
-
   const handleSessionChange = () => {
     try {
       sessionStorage.removeItem('shrine.session');
@@ -176,9 +170,8 @@ export const App: React.FC = () => {
     <>
       <Ambient themeKey={activeThemeId} />
       <Header
-        theme={theme}
-        onThemeChange={setTheme}
-        onRandomTheme={handleRandomTheme}
+        onGoHome={session ? handleSessionChange : undefined}
+        hasActiveSession={!!session}
       />
 
       <main>
@@ -189,116 +182,196 @@ export const App: React.FC = () => {
         )}
 
         {!loadError && bridge && !session && (
-          <Gate bridge={bridge} onSessionStart={setSession} />
+          <Gate
+            bridge={bridge}
+            onSessionStart={(s) => {
+              setSession(s);
+              setTab('hub');
+            }}
+          />
         )}
 
         {!loadError && bridge && session && (
           <div id="app">
-            {/* Who Am I Bar */}
-            <div className="whoami mystical-whoami">
-              <div className="whoami-symbol-badge">
-                <span className="badge-icon">{session.symbolIcon}</span>
-                <span className="badge-text">{session.symbolName}</span>
-              </div>
-              <span id="who">
-                ระบบ: <b>{session.systemName}</b> (ปี {session.year}) · ธาตุ: <span className="highlight-pill">{session.element}</span> · ออร่า: <span className="highlight-pill">{session.aura}</span>
-              </span>
-              <button
-                id="btn-change"
-                className="link mystical-change-btn"
-                type="button"
-                onClick={handleSessionChange}
-              >
-                เปลี่ยนระบบ/สัญลักษณ์
-              </button>
-            </div>
+            {/* Background Canvas Scene corresponding to active topic or cosmic for hub */}
+            <FortuneCanvasBackground
+              activeTopic={tab === 'hub' ? 'cosmic' : tab}
+              tarotVariant={tarotVariant}
+              onToggleTarotVariant={() => setTarotVariant((v) => (v === 0 ? 1 : 0))}
+            />
 
-            {/* Navigation Tabs */}
-            <nav id="tabs" className="tabs" role="tablist" aria-label="เมนูพิธี">
-              <button
-                role="tab"
-                data-tab="stick"
-                aria-selected={tab === 'stick'}
-                onClick={() => setTab('stick')}
-              >
-                เสี่ยงเซียมซี
-              </button>
-              <button
-                role="tab"
-                data-tab="tarot"
-                aria-selected={tab === 'tarot'}
-                onClick={() => setTab('tarot')}
-              >
-                ไพ่ยิปซี
-              </button>
-              <button
-                role="tab"
-                data-tab="number"
-                aria-selected={tab === 'number'}
-                onClick={() => setTab('number')}
-              >
-                เลขมงคล
-              </button>
-              <button
-                role="tab"
-                data-tab="ritual"
-                aria-selected={tab === 'ritual'}
-                onClick={() => setTab('ritual')}
-              >
-                สะเดาะเคราะห์
-              </button>
-              <button
-                role="tab"
-                data-tab="scan"
-                aria-selected={tab === 'scan'}
-                onClick={() => setTab('scan')}
-              >
-                สแกนดวง
-              </button>
-              <button
-                role="tab"
-                data-tab="festival"
-                id="tab-festival-btn"
-                aria-selected={tab === 'festival'}
-                onClick={() => setTab('festival')}
-              >
-                {activeThemeObj?.category === 'festival'
-                  ? (festivalId === 0 ? 'ขอพร' : festInfo?.name || 'เทศกาล')
-                  : activeThemeObj?.name || 'มิติศักดิ์สิทธิ์'}
-              </button>
-            </nav>
-
-            {tab === 'stick' && (
-              <SiameseSticks bridge={bridge} onToast={showToast} />
-            )}
-
-            {tab === 'tarot' && (
-              <Tarot bridge={bridge} onToast={showToast} />
-            )}
-
-            {tab === 'number' && (
-              <LuckyNumbers bridge={bridge} onToast={showToast} />
-            )}
-
-            {tab === 'ritual' && (
-              <Rituals
-                bridge={bridge}
-                userZodiac={session.zodiac}
-                onToast={showToast}
+            {/* TAB === 'hub': Dedicated Selection Menu Page */}
+            {tab === 'hub' && (
+              <DivinationHub
+                session={session}
+                onSelectTopic={(selected) => setTab(selected)}
+                onBackToGate={handleSessionChange}
+                festivalName={festInfo?.name}
               />
             )}
 
-            {tab === 'scan' && (
-              <ScanFortune bridge={bridge} onToast={showToast} />
-            )}
+            {/* TAB !== 'hub': Dedicated Divination Room with Navigation & Canvas */}
+            {tab !== 'hub' && (
+              <>
+                {/* Who Am I Bar with Menu and Change Civilization actions */}
+                <div className="whoami mystical-whoami">
+                  <div className="whoami-symbol-badge">
+                    <span className="badge-icon">{session.symbolIcon}</span>
+                    <span className="badge-text">{session.symbolName}</span>
+                  </div>
+                  <span id="who">
+                    ระบบ: <b>{session.systemName}</b> (ปี {session.year}) · ธาตุ: <span className="highlight-pill">{session.element}</span> · ออร่า: <span className="highlight-pill">{session.aura}</span>
+                  </span>
+                  <div className="whoami-actions-group">
+                    <button
+                      type="button"
+                      className="btn-menu-hub-shortcut"
+                      onClick={() => setTab('hub')}
+                      title="กลับสู่เมนูเลือกศาสตร์พยากรณ์และพิธีกรรม"
+                    >
+                      <span>📋 เมนูเลือกพิธี</span>
+                    </button>
+                    <button
+                      id="btn-change"
+                      className="btn-change-session-prominent"
+                      type="button"
+                      onClick={handleSessionChange}
+                      title="กลับสู่หน้าหลักเพื่อเลือกอารยธรรมอื่น"
+                    >
+                      <span>🔄 เลือกอารยธรรมอื่น</span>
+                    </button>
+                  </div>
+                </div>
 
-            {tab === 'festival' && (
-              <FestivalStage
-                bridge={bridge}
-                festivalId={festivalId}
-                onToast={showToast}
-                onLaunchFireworks={(b) => fireworksRef.current?.launch(b)}
-              />
+                {/* Navigation Tabs (Quick Switcher & Return to Hub) */}
+                <nav id="tabs" className="tabs" role="tablist" aria-label="เมนูพิธี">
+                  <button
+                    role="tab"
+                    data-tab="hub"
+                    className="tab-hub-button"
+                    aria-selected={false}
+                    onClick={() => setTab('hub')}
+                  >
+                    📋 เมนูพิธีกรรม
+                  </button>
+                  <button
+                    role="tab"
+                    data-tab="stick"
+                    aria-selected={tab === 'stick'}
+                    onClick={() => setTab('stick')}
+                  >
+                    🏮 เสี่ยงเซียมซี
+                  </button>
+                  <button
+                    role="tab"
+                    data-tab="tarot"
+                    aria-selected={tab === 'tarot'}
+                    onClick={() => setTab('tarot')}
+                  >
+                    🔮 ไพ่ยิปซี
+                  </button>
+                  <button
+                    role="tab"
+                    data-tab="number"
+                    aria-selected={tab === 'number'}
+                    onClick={() => setTab('number')}
+                  >
+                    🪦 เลขมงคล
+                  </button>
+                  <button
+                    role="tab"
+                    data-tab="ritual"
+                    aria-selected={tab === 'ritual'}
+                    onClick={() => setTab('ritual')}
+                  >
+                    🪷 สะเดาะเคราะห์
+                  </button>
+                  <button
+                    role="tab"
+                    data-tab="love"
+                    aria-selected={tab === 'love'}
+                    onClick={() => setTab('love')}
+                  >
+                    💖 ดวงความรัก
+                  </button>
+                  <button
+                    role="tab"
+                    data-tab="scan"
+                    aria-selected={tab === 'scan'}
+                    onClick={() => setTab('scan')}
+                  >
+                    🖐 สแกนดวง
+                  </button>
+                  <button
+                    role="tab"
+                    data-tab="festival"
+                    id="tab-festival-btn"
+                    aria-selected={tab === 'festival'}
+                    onClick={() => setTab('festival')}
+                  >
+                    {activeThemeObj?.category === 'festival'
+                      ? (festivalId === 0 ? '🏮 ไหว้พระขอพร' : `✨ ${festInfo?.name || 'เทศกาล'}`)
+                      : `✨ ${activeThemeObj?.name || 'มิติศักดิ์สิทธิ์'}`}
+                  </button>
+                </nav>
+
+                {tab === 'stick' && (
+                  <SiameseSticks bridge={bridge} onToast={showToast} />
+                )}
+
+                {tab === 'tarot' && (
+                  <Tarot bridge={bridge} onToast={showToast} />
+                )}
+
+                {tab === 'number' && (
+                  <LuckyNumbers bridge={bridge} onToast={showToast} />
+                )}
+
+                {tab === 'ritual' && (
+                  <Rituals
+                    bridge={bridge}
+                    userZodiac={session.zodiac}
+                    onToast={showToast}
+                  />
+                )}
+
+                {tab === 'love' && (
+                  <LoveFortune session={session} onToast={showToast} />
+                )}
+
+                {tab === 'scan' && (
+                  <ScanFortune bridge={bridge} onToast={showToast} />
+                )}
+
+                {tab === 'festival' && (
+                  <FestivalStage
+                    bridge={bridge}
+                    festivalId={festivalId}
+                    onToast={showToast}
+                    onLaunchFireworks={(b) => fireworksRef.current?.launch(b)}
+                  />
+                )}
+
+                {/* Always accessible Return to Hub & Main Gate buttons */}
+                <div className="bottom-home-return-row">
+                  <button
+                    type="button"
+                    className="btn primary btn-return-hub"
+                    onClick={() => setTab('hub')}
+                    title="กลับสู่เมนูเลือกศาสตร์พยากรณ์และพิธีกรรม"
+                  >
+                    <span>📋 กลับสู่เมนูเลือกพิธีกรรม</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn ghost btn-return-home"
+                    onClick={handleSessionChange}
+                    title="กลับสู่หน้าหลักเพื่อเลือกอารยธรรมอื่น"
+                  >
+                    <span>🏠 กลับหน้าหลัก (เลือกอารยธรรมใหม่)</span>
+                  </button>
+                </div>
+              </>
             )}
           </div>
         )}

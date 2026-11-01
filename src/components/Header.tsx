@@ -1,23 +1,42 @@
-import React from 'react';
-import { MYSTICAL_THEMES } from '../data/themes';
+import React, { useState, useEffect } from 'react';
+import { toggleMuteChant, isChantMuted, subscribeChantState } from '../utils/chantAudio';
 
 interface HeaderProps {
-  theme: string;
-  onThemeChange: (newTheme: string) => void;
-  onRandomTheme: () => void;
+  onGoHome?: () => void;
+  hasActiveSession?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  theme,
-  onThemeChange,
-  onRandomTheme,
-}) => {
-  const festivals = MYSTICAL_THEMES.filter((t) => t.category === 'festival');
-  const regions = MYSTICAL_THEMES.filter((t) => t.category === 'region');
+export const Header: React.FC<HeaderProps> = ({ onGoHome, hasActiveSession }) => {
+  const [muted, setMuted] = useState<boolean>(isChantMuted());
+
+  useEffect(() => {
+    const unsub = subscribeChantState(() => {
+      setMuted(isChantMuted());
+    });
+    return () => unsub();
+  }, []);
+
+  const handleToggle = () => {
+    const next = toggleMuteChant();
+    setMuted(next);
+  };
 
   return (
     <header className="top mystical-header">
-      <div className="brand">
+      <div
+        className="brand"
+        onClick={onGoHome}
+        style={{ cursor: onGoHome ? 'pointer' : 'default' }}
+        title={onGoHome ? 'คลิกเพื่อกลับหน้าหลัก / เลือกอารยธรรม' : undefined}
+        role={onGoHome ? 'button' : undefined}
+        tabIndex={onGoHome ? 0 : undefined}
+        onKeyDown={(e) => {
+          if (onGoHome && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            onGoHome();
+          }
+        }}
+      >
         <span className="brand-lantern" aria-hidden="true" />
         <div>
           <h1>ศาลเจ้าแห่งโชคลาภ</h1>
@@ -27,43 +46,30 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      <div className="header-controls">
-        <button
-          type="button"
-          className="btn-random-theme"
-          onClick={onRandomTheme}
-          title="สุ่มธีมเหนือธรรมชาติ"
-          aria-label="สุ่มธีมเหนือธรรมชาติ"
-        >
-          <span className="dice-icon">🎲</span>
-          <span className="btn-text">สุ่มธีมมิติลี้ลับ</span>
-        </button>
-
-        <label className="theme-pick">
-          <span>ธีม</span>
-          <select
-            id="theme"
-            value={theme}
-            onChange={(e) => onThemeChange(e.target.value)}
-            aria-label="เลือกธีมเทศกาลและภูมิภาค"
+      <div className="header-actions-right">
+        {hasActiveSession && onGoHome && (
+          <button
+            type="button"
+            className="btn-header-home-action"
+            onClick={onGoHome}
+            title="กลับสู่หน้าหลักเพื่อเลือกอารยธรรมอื่น"
           >
-            <option value="auto">ตามเทศกาล (อัตโนมัติ)</option>
-            <optgroup label="เทศกาลมงคล">
-              {festivals.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.icon} {t.name}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="ภูมิภาคและอารยธรรมเหนือธรรมชาติ">
-              {regions.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.icon} {t.name}
-                </option>
-              ))}
-            </optgroup>
-          </select>
-        </label>
+            <span>🏠 หน้าหลัก / เลือกอารยธรรมอื่น</span>
+          </button>
+        )}
+
+        {/* Upper-right Audio Speaker Toggle */}
+        <div className="header-audio-control">
+          <button
+            type="button"
+            className={`btn-speaker-icon-only ${muted ? 'is-muted' : 'is-active'}`}
+            onClick={handleToggle}
+            title={muted ? 'เปิดเสียงดนตรี' : 'ปิดเสียงดนตรี'}
+            aria-label={muted ? 'เปิดเสียงดนตรี' : 'ปิดเสียงดนตรี'}
+          >
+            <span className="speaker-icon">{muted ? '🔇' : '🔊'}</span>
+          </button>
+        </div>
       </div>
     </header>
   );

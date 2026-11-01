@@ -71,7 +71,10 @@ export class Bridge {
   }
 
   static async fromBytes(bytes: Uint8Array): Promise<Bridge> {
-    const { instance } = await WebAssembly.instantiate(bytes, {});
+    const result = await WebAssembly.instantiate(bytes, {});
+    const instance = ('instance' in result
+      ? (result as { instance: WebAssembly.Instance }).instance
+      : (result as unknown as WebAssembly.Instance));
     const b = new Bridge(instance);
     b.seed();
     return b;
@@ -80,7 +83,7 @@ export class Bridge {
   /** Mix fresh browser entropy into the Wasm RNG. */
   seed(): void {
     const a = new Uint32Array(4);
-    if (typeof globalThis !== "undefined" && globalThis.crypto?.getRandomValues) {
+    if (typeof globalThis !== "undefined" && typeof globalThis.crypto?.getRandomValues === "function") {
       crypto.getRandomValues(a);
     } else {
       for (let i = 0; i < 4; i++) a[i] = (Math.random() * 4294967296) >>> 0;

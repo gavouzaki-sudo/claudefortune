@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-mkdir -p web/wasm
+mkdir -p web/wasm public/wasm
 clang --target=wasm32 -O2 -nostdlib -ffreestanding -fno-builtin \
   -Wall -Wextra -Wno-unused-parameter \
   -Wl,--no-entry \
@@ -13,6 +13,9 @@ clang --target=wasm32 -O2 -nostdlib -ffreestanding -fno-builtin \
   -Wl,--max-memory=4194304 \
   -Wl,-z,stack-size=131072 \
   -Wl,--strip-all \
-  -o web/wasm/core.wasm wasm/core.c
+  -o public/wasm/core.wasm wasm/core.c
 
-ls -l web/wasm/core.wasm
+cp public/wasm/core.wasm web/wasm/core.wasm
+
+ls -l public/wasm/core.wasm web/wasm/core.wasm
+

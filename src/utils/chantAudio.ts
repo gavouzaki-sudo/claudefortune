@@ -1,5 +1,5 @@
-// Web Audio API Synthesizer for 10 Civilizations' Sacred Chants & Mystic Soundscapes
-// Generates authentic procedural chant drones, sacred bells, gongs, and ritual resonance.
+// Web Audio Cultural Audio Engine for 10 Civilizations
+// Generates authentic procedural melodic sequences, instrument modeling, and physical impulse response reverb.
 
 export interface ChantMetadata {
   id: string;
@@ -14,104 +14,717 @@ export const CHANT_INFO: Record<string, ChantMetadata> = {
   thai: {
     id: 'thai',
     civilization: 'ไทย',
-    chantTitle: 'บทสวดสรภัญญะมงคล & กริ่งระฆังวัดสยาม',
-    origChantName: 'Siam Buddhist Sarapanya & Temple Bell Chime',
-    mantraPreview: 'นะโม โอมมหาลาโภ พุทโธ ชัยยะ (กังวานระฆังทองเหลือง)',
-    instrument: 'ระฆังทองเหลืองใบใหญ่ & เสียงสวดมนต์โทนต่ำ',
+    chantTitle: 'ระนาดเอก 7 เสียงเท่า (7TET) & ขิมสยามมงคล',
+    origChantName: 'Classical Thai Ranat Ek & Khim 7TET Melody',
+    mantraPreview: 'ระนาดเอกตีคู่แปด กรอสายขิมอวยพรชัยมงคล',
+    instrument: 'ระนาดเอกไม้ไผ่ & ขิมสายทองเหลือง',
   },
   chinese: {
     id: 'chinese',
     civilization: 'จีน',
-    chantTitle: 'มนตราเต๋าฟ้าดิน & ฆ้องทองมังกรสวรรค์',
-    origChantName: 'Taoist Celestial Gong & Dragon Sutra',
-    mantraPreview: 'อี้ชี่ฮั่วซานชิง ฟ้าดินไร้ขอบเขต (ระฆังสำริดก้อง)',
-    instrument: 'ฆ้องหลัวโบราณ & ระฆังสำริดหยก',
+    chantTitle: 'กู่เจิงสายสวรรค์ & ขลุ่ยตี่จื่อมังกรฟ้า',
+    origChantName: 'Taoist Celestial Guzheng & Dizi Pentatonic Melody',
+    mantraPreview: 'เอื้อนสายกู่เจิงโบราณ ห้าเสียงเพนทาโทนิกส์',
+    instrument: 'พิณกู่เจิงโบราณ & ขลุ่ยตี่จื่อ',
   },
   vedic: {
     id: 'vedic',
     civilization: 'อินเดีย',
-    chantTitle: 'มหาคายตรีมนตรา & เสียงโอม 108Hz ภพภูมิจักรวาล',
-    origChantName: 'Vedic Gayatri Mantra & 108Hz Sacred Om Drone',
-    mantraPreview: 'โอม ชานติ ชานติ ชานติ ภวะ (สั่นสะเทือนเซลล์)',
-    instrument: 'เสียงทานปูระ & มนต์โอมโอเวอร์โทนธรรมชาติ',
+    chantTitle: 'ราคะไภรวะ (Raga Bhairav) สิตาร์ & โดรนทานปุระ',
+    origChantName: 'Vedic Raga Bhairav Sitar & Tanpura Drone',
+    mantraPreview: 'เสียงเมียนด์สิตาร์ก้องกังวาน มนต์โอมจักรวาล',
+    instrument: 'พิณสิตาร์ & ทานปุระ Sa-Pa',
   },
   western: {
     id: 'western',
     civilization: 'ยุโรป / สากล',
-    chantTitle: 'บทสวดเกรกอเรียน & ออร์แกนท่อวิหารศักดิ์สิทธิ์',
-    origChantName: 'Gregorian Cathedral Chant & Sacred Pipe Organ',
-    mantraPreview: 'Benedictus qui venit in nomine Domini (ก้องกังวานโบสถ์หิน)',
-    instrument: 'ออร์แกนมหาวิหาร & ประสานเสียงเกรกอเรียน',
+    chantTitle: 'ไปป์ออร์แกนวิหาร & พิณเคลติกฮาร์ปศักดิ์สิทธิ์',
+    origChantName: 'Cathedral Pipe Organ & Celtic Harp Melody',
+    mantraPreview: 'คอร์ดไปป์ออร์แกนมหาวิหารหินและพิณเคลติก',
+    instrument: 'ไปป์ออร์แกนวิหารหิน & พิณเคลติก',
   },
   native_american: {
     id: 'native_american',
     civilization: 'อินเดียแดง',
-    chantTitle: 'บทสวดวิญญาณสายลม & จังหวะกลองชามานพญาอินทรี',
-    origChantName: 'Shamanic Spirit Wind Chant & Sacred Cedar Drum',
-    mantraPreview: 'เฮยา เฮยา โฮ... วิญญาณธรรมชาติคุ้มครอง (เสียงขลุ่ยไม้ซีดาร์)',
-    instrument: 'กลองหนังวัวกระทิง & ขลุ่ยไม้ซีดาร์วิญญาณ',
+    chantTitle: 'ขลุ่ยไม้ซีดาร์วิญญาณสายลม & กลองชามาน',
+    origChantName: 'Native Cedar Flute Melody & Shamanic Spirit Drum',
+    mantraPreview: 'เสียงลมหายใจขลุ่ยไม้ซีดาร์ วิญญาณธรรมชาติ',
+    instrument: 'ขลุ่ยไม้ซีดาร์วิญญาณ & กลองหนังวัวกระทิง',
   },
   islamic: {
     id: 'islamic',
     civilization: 'อิสลาม / อาหรับ',
-    chantTitle: 'มนตราแห่งดวงดาวบุรุจ & คอร์ดดนตรีอาหรับโบราณ',
-    origChantName: 'Celestial Buruj Maqam & Desert Oud Harmonic',
-    mantraPreview: 'บิสมิลลาฮ์ แสงแห่งดวงดาวนำทาง (ก้องกังวานแห่งโอเอซิส)',
-    instrument: 'เสียงฮัมลี้ลับ & พิณอุ๊ดแห่งทะเลทรายราตรี',
+    chantTitle: 'พิณอูด มาคามฮิญาซ (Maqam Hijaz) & รัวปิ๊กทะเลทราย',
+    origChantName: 'Arabic Maqam Hijaz Oud & Tremolo Melody',
+    mantraPreview: 'มาคามฮิญาซลี้ลับ แสงดาวโอเอซิสราตรี',
+    instrument: 'พิณอูดโบราณ & รัวปิ๊กทะเลทราย',
   },
   vietnamese: {
     id: 'vietnamese',
     civilization: 'เวียดนาม',
-    chantTitle: 'เสียงฆ้องมงคลวัดเจดีย์เตริ่นกว็อก & พิณด่าวบ่าว',
-    origChantName: 'Tran Quoc Pagoda Bronze Bell & Dan Bau Harmony',
-    mantraPreview: 'นามโม กวนเท้เอิม บ่อต๊าต อวยพรอายุยืน (เสียงสายพิณสะบัดกังวาน)',
-    instrument: 'ฆ้องหม่องสำริด & พิณดนตรีสายเดียวโบราณ',
+    chantTitle: 'พิณด่านเบ่า (Dan Bau) สายเดียว & โก่งคันโยกเอื้อนกว้าง',
+    origChantName: 'Vietnamese Dan Bau Microtonal Lever Melody',
+    mantraPreview: 'เสียงใสโก่งคันโยกเอื้อนกว้างแห่งสายน้ำ',
+    instrument: 'พิณด่านเบ่าสายเดียวโบราณ',
   },
   burmese: {
     id: 'burmese',
     civilization: 'พม่า',
-    chantTitle: 'ระฆังเจดีย์ชเวดากอง & มนต์มหาภูติ 8 ทิศ',
-    origChantName: 'Shwedagon Kyi-zee Bell & 8 Mahabhuta Chants',
-    mantraPreview: 'พุทธัง สรณัง คัจฉามิ (เสียงกริ่งชเวดากองหมุนสะท้อน)',
-    instrument: 'ระฆังสามเหลี่ยมจีซี & สวดมนต์เจดีย์ทองคำ',
+    chantTitle: 'พิณซองเกาะ (Saung Gauk) & ฆ้องวงเจดีย์ชเวดากอง',
+    origChantName: 'Burmese Royal Saung Gauk & Kyi Waing Gong',
+    mantraPreview: 'สายพิณพระราชวังพม่า กริ่งระฆังทองเจดีย์',
+    instrument: 'พิณซองเกาะ & ฆ้องวง (Kyi waing)',
   },
   egyptian: {
     id: 'egyptian',
     civilization: 'อียิปต์โบราณ',
-    chantTitle: 'มนต์สุริยเทพรา & เสียงซิสตรัมทองคำวิหารคาร์นัค',
-    origChantName: 'Hymn to Sun God Ra & Karnak Golden Sistrum',
-    mantraPreview: 'โอ้ รา ผู้สถิตเหนือเส้นขอบฟ้า (ท่วงทำนองไอยคุปต์กึกก้อง)',
-    instrument: 'เครื่องเขย่าซิสตรัม & คลื่นความถี่ลึกลับแห่งพีระมิด',
+    chantTitle: 'ขลุ่ยนาย (Nay) ไอยคุปต์ ลมทุ้มก้องวิหารหิน & ซิสตรัม',
+    origChantName: 'Ancient Egyptian Nay Flute & Sistrum Shimmer',
+    mantraPreview: 'ท่วงทำนองทุ้มก้องวิหารหิน สรรเสริญสุริยเทพรา',
+    instrument: 'ขลุ่ยนายไอยคุปต์ & กระดิ่งซิสตรัม',
   },
   aztec_mayan: {
     id: 'aztec_mayan',
     civilization: 'แอซเท็ก / มายา',
-    chantTitle: 'เสียงขลุ่ยดินเผาสองห้อง & มนต์สุริยะพีระมิดชีเชนอิตซา',
-    origChantName: 'Mayan Double-Chamber Ocarina & Chichen Itza Solar Chant',
-    mantraPreview: 'ฮุนับคู จิตวิญญาณสุริยะและกาแล็กซี (เสียงนกศักดิ์สิทธิ์เกตซาล)',
-    instrument: 'ขลุ่ยดินเผาโบราณ & กลองหินเตโปนัซตลี',
+    chantTitle: 'โอคารินาดินเผา (Clay Ocarina) สุริยะพีระมิดมายา',
+    origChantName: 'Mesoamerican Mayan Clay Ocarina Solar Melody',
+    mantraPreview: 'เสียงกลมใสแห่งขลุ่ยดินเผาโบราณชีเชนอิตซา',
+    instrument: 'โอคารินาดินเผาสองห้อง & กลองเตโปนัซตลี',
   },
 };
 
-// Global audio state
-let audioCtx: AudioContext | null = null;
-let currentNodes: { stop: () => void } | null = null;
+// Map civilization system IDs to presets
+const CIV_TO_PRESET: Record<string, string> = {
+  chinese: 'china',
+  thai: 'thai',
+  vedic: 'india',
+  western: 'western',
+  native_american: 'native',
+  islamic: 'islamic',
+  vietnamese: 'vietnam',
+  burmese: 'burmese',
+  egyptian: 'egypt',
+  aztec_mayan: 'aztec',
+};
+
+// Seeded RNG: mulberry32
+function mulberry32(seed: number): () => number {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const THAI_7TET = [0, 1, 2, 3, 4, 5, 6].map((i) => (i * 12) / 7);
+
+interface InstrumentConfig {
+  type: 'pluck' | 'mallet' | 'flute' | 'organ';
+  wave?: OscillatorType;
+  bright?: number;
+  decay?: number;
+  bend?: number;
+  bendTime?: number;
+  bendProb?: number;
+  vibrato?: number;
+  vibDepth?: number;
+  q?: number;
+  partials?: [number, number, number][];
+  click?: number;
+  octave?: boolean;
+  attack?: number;
+  release?: number;
+  breath?: number;
+}
+
+interface Preset {
+  root: number;
+  scale: number[];
+  bpm: number;
+  rhythm: number[];
+  inst: InstrumentConfig;
+  orn?: { mordent?: number; tremolo?: number };
+  layer?: { prob: number; ratio: number; inst: InstrumentConfig };
+  drone?: number[];
+  reverb: number;
+  wet: number;
+}
+
+const PRESETS: Record<string, Preset> = {
+  china: {
+    root: 67,
+    scale: [0, 2, 5, 7, 9],
+    bpm: 72,
+    rhythm: [0.5, 0.5, 1, 1, 1.5],
+    inst: {
+      type: 'pluck',
+      wave: 'triangle',
+      bright: 4500,
+      decay: 1.6,
+      bend: 150,
+      bendTime: 0.18,
+      bendProb: 0.4,
+      vibrato: 6,
+      vibDepth: 25,
+    },
+    orn: { mordent: 0.15 },
+    reverb: 2.5,
+    wet: 0.35,
+  },
+  thai: {
+    root: 72,
+    scale: THAI_7TET,
+    bpm: 132,
+    rhythm: [0.5, 0.5, 0.5, 1],
+    inst: {
+      type: 'mallet',
+      partials: [
+        [1, 1, 0.5],
+        [3.93, 0.35, 0.12],
+        [9.2, 0.1, 0.05],
+      ],
+      click: 2500,
+      octave: true,
+    },
+    orn: { tremolo: 0.35 },
+    layer: {
+      prob: 0.25,
+      ratio: 1,
+      inst: { type: 'pluck', wave: 'triangle', bright: 6000, decay: 1.2 },
+    },
+    reverb: 1.2,
+    wet: 0.2,
+  },
+  india: {
+    root: 60,
+    scale: [0, 1, 4, 5, 7, 8, 11],
+    bpm: 66,
+    rhythm: [0.5, 1, 1, 1.5, 2],
+    inst: {
+      type: 'pluck',
+      wave: 'sawtooth',
+      bright: 5000,
+      q: 6,
+      decay: 2.2,
+      bend: 200,
+      bendTime: 0.25,
+      bendProb: 0.5,
+      vibrato: 5,
+      vibDepth: 15,
+    },
+    orn: { mordent: 0.2 },
+    drone: [-12, -5],
+    reverb: 2,
+    wet: 0.3,
+  },
+  western: {
+    root: 60,
+    scale: [0, 2, 4, 5, 7, 9, 11],
+    bpm: 60,
+    rhythm: [1, 1, 1, 2],
+    inst: { type: 'organ' },
+    layer: {
+      prob: 0.4,
+      ratio: 2,
+      inst: { type: 'pluck', wave: 'triangle', bright: 3000, decay: 2 },
+    },
+    drone: [-12, -5],
+    reverb: 5,
+    wet: 0.5,
+  },
+  native: {
+    root: 57,
+    scale: [0, 3, 5, 7, 10],
+    bpm: 56,
+    rhythm: [1, 1.5, 2, 3],
+    inst: {
+      type: 'flute',
+      wave: 'sine',
+      attack: 0.12,
+      release: 0.4,
+      breath: 0.06,
+      bend: 80,
+      bendTime: 0.15,
+      vibrato: 5,
+      vibDepth: 30,
+    },
+    reverb: 3.5,
+    wet: 0.45,
+  },
+  islamic: {
+    root: 62,
+    scale: [0, 1, 4, 5, 7, 8, 10],
+    bpm: 84,
+    rhythm: [0.25, 0.5, 0.5, 1],
+    inst: {
+      type: 'pluck',
+      wave: 'sawtooth',
+      bright: 2200,
+      q: 2,
+      decay: 0.9,
+      bend: 100,
+      bendTime: 0.08,
+      bendProb: 0.3,
+    },
+    orn: { mordent: 0.3, tremolo: 0.15 },
+    reverb: 1.8,
+    wet: 0.3,
+  },
+  vietnam: {
+    root: 74,
+    scale: [0, 2, 5, 7, 9],
+    bpm: 60,
+    rhythm: [1, 1.5, 2],
+    inst: {
+      type: 'pluck',
+      wave: 'sine',
+      bright: 8000,
+      decay: 2.5,
+      bend: 300,
+      bendTime: 0.35,
+      bendProb: 0.6,
+      vibrato: 5.5,
+      vibDepth: 40,
+    },
+    reverb: 2,
+    wet: 0.3,
+  },
+  burmese: {
+    root: 60,
+    scale: [0, 2, 4, 7, 9],
+    bpm: 100,
+    rhythm: [0.5, 0.5, 1],
+    inst: { type: 'pluck', wave: 'triangle', bright: 3500, decay: 1.3 },
+    orn: { mordent: 0.2 },
+    layer: {
+      prob: 0.3,
+      ratio: 1,
+      inst: {
+        type: 'mallet',
+        partials: [
+          [1, 1, 1.2],
+          [2.0, 0.4, 0.6],
+          [2.76, 0.3, 0.4],
+        ],
+        click: 4000,
+      },
+    },
+    reverb: 1.5,
+    wet: 0.25,
+  },
+  egypt: {
+    root: 62,
+    scale: [0, 1, 4, 5, 7, 8, 10],
+    bpm: 58,
+    rhythm: [0.5, 1, 1.5, 2],
+    inst: {
+      type: 'flute',
+      wave: 'triangle',
+      attack: 0.18,
+      release: 0.5,
+      breath: 0.12,
+      bend: 120,
+      bendTime: 0.2,
+      vibrato: 5,
+      vibDepth: 20,
+    },
+    orn: { mordent: 0.2 },
+    drone: [-12],
+    reverb: 3.5,
+    wet: 0.45,
+  },
+  aztec: {
+    root: 69,
+    scale: [0, 3, 5, 8, 10],
+    bpm: 76,
+    rhythm: [0.5, 1, 1, 2],
+    inst: {
+      type: 'flute',
+      wave: 'sine',
+      attack: 0.04,
+      release: 0.2,
+      breath: 0.03,
+      vibrato: 6,
+      vibDepth: 10,
+    },
+    reverb: 3,
+    wet: 0.4,
+  },
+};
+
+class CulturalAudioEngine {
+  ctx: AudioContext | null = null;
+  out: GainNode | null = null;
+  noise: AudioBuffer | null = null;
+  irCache: Record<number, AudioBuffer> = {};
+  current: GainNode | null = null;
+  rand: () => number = Math.random;
+
+  async init(): Promise<void> {
+    if (typeof window === 'undefined') return;
+    if (!this.ctx) {
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      const c = (this.ctx = new AudioCtx());
+      this.out = c.createGain();
+      this.out.gain.value = 0.8;
+      const limiter = c.createDynamicsCompressor();
+      limiter.threshold.value = -6;
+      limiter.ratio.value = 12;
+      this.out.connect(limiter).connect(c.destination);
+      this.noise = this.makeNoise(2);
+    }
+    if (this.ctx && this.ctx.state !== 'running') {
+      try {
+        await this.ctx.resume();
+      } catch {}
+    }
+  }
+
+  makeNoise(sec: number): AudioBuffer {
+    if (!this.ctx) throw new Error('No audio context');
+    const c = this.ctx;
+    const b = c.createBuffer(1, c.sampleRate * sec, c.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return b;
+  }
+
+  getIR(sec: number): AudioBuffer {
+    if (this.irCache[sec]) return this.irCache[sec];
+    if (!this.ctx) throw new Error('No audio context');
+    const c = this.ctx;
+    const len = Math.floor(c.sampleRate * sec);
+    const ir = c.createBuffer(2, len, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      for (let i = 0; i < len; i++) {
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      }
+    }
+    return (this.irCache[sec] = ir);
+  }
+
+  freq(root: number, semis: number): number {
+    return 440 * Math.pow(2, (root + semis - 69) / 12);
+  }
+
+  degree(p: Preset, d: number): number {
+    const n = p.scale.length;
+    return p.scale[((d % n) + n) % n] + 12 * Math.floor(d / n);
+  }
+
+  melody(p: Preset): { d: number; beat: number; dur: number }[] {
+    const r = this.rand;
+    const n = p.scale.length;
+    const len = 8;
+    const fifth = Math.max(
+      0,
+      p.scale.findIndex((s) => Math.abs(s - 7) < 0.5)
+    );
+    const a: { d: number; beat: number; dur: number }[] = [];
+    let beat = 0;
+    let d = 0;
+    while (beat < len) {
+      const dur = Math.min(p.rhythm[Math.floor(r() * p.rhythm.length)], len - beat);
+      const x = r();
+      d += x < 0.35 ? 1 : x < 0.7 ? -1 : x < 0.82 ? 2 : x < 0.94 ? -2 : 0;
+      d = Math.max(-2, Math.min(n + 3, d));
+      a.push({ d, beat, dur });
+      beat += dur;
+    }
+    a[a.length - 1].d = fifth;
+    const b = a.map((item) => ({
+      ...item,
+      beat: item.beat + len,
+      d: r() < 0.3 ? item.d + (r() < 0.5 ? 1 : -1) : item.d,
+    }));
+    const last = b[b.length - 1];
+    last.d = last.d > n / 2 ? n : 0;
+    last.dur += 2;
+    return [...a, ...b];
+  }
+
+  async play(civ: string, { seed = Date.now() }: { seed?: number } = {}): Promise<number> {
+    const p = PRESETS[civ];
+    if (!p) throw new Error(`Unknown civilization: ${civ}`);
+    await this.init();
+    if (!this.ctx || !this.out) return 0;
+    this.stop();
+    this.rand = mulberry32(seed);
+
+    const c = this.ctx;
+    const t0 = c.currentTime + 0.05;
+    const beat = 60 / p.bpm;
+    const bus = c.createGain();
+    const dry = c.createGain();
+    const wet = c.createGain();
+    const verb = c.createConvolver();
+    verb.buffer = this.getIR(p.reverb);
+    dry.gain.value = 1 - p.wet;
+    wet.gain.value = p.wet;
+    bus.connect(dry).connect(this.out);
+    bus.connect(verb).connect(wet).connect(this.out);
+    this.current = bus;
+
+    const notes = this.melody(p);
+    notes.forEach((n) => {
+      const f = this.freq(p.root, this.degree(p, n.d));
+      const up = this.freq(p.root, this.degree(p, n.d + 1));
+      this.note(p, f, up, t0 + n.beat * beat, n.dur * beat, bus);
+    });
+    const last = notes[notes.length - 1];
+    const end = t0 + (last.beat + last.dur) * beat;
+    if (p.drone) this.drone(p, t0, end + 0.5, bus);
+    return end - t0;
+  }
+
+  stop(): void {
+    if (!this.current || !this.ctx) return;
+    const g = this.current;
+    g.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
+    setTimeout(() => {
+      try {
+        g.disconnect();
+      } catch {}
+    }, 400);
+    this.current = null;
+  }
+
+  note(p: Preset, f: number, upper: number, t: number, dur: number, out: AudioNode): void {
+    const o = p.orn || {};
+    const r = this.rand;
+    const play = (inst: InstrumentConfig, ...a: [number, number, number, AudioNode, boolean, number]) => {
+      if (inst.type === 'pluck') this.pluck(inst, ...a);
+      else if (inst.type === 'mallet') this.mallet(inst, ...a);
+      else if (inst.type === 'flute') this.flute(inst, ...a);
+      else if (inst.type === 'organ') this.organ(inst, ...a);
+    };
+
+    if (o.mordent && dur > 0.3 && r() < o.mordent) {
+      play(p.inst, upper, t, 0.07, out, true, 0.7);
+      t += 0.07;
+      dur -= 0.07;
+    }
+    if (o.tremolo && dur > 0.4 && r() < o.tremolo) {
+      for (let x = 0; x < dur - 0.05; x += 0.07) {
+        play(p.inst, f, t + x, 0.07, out, true, 0.55 + 0.35 * r());
+      }
+    } else {
+      play(p.inst, f, t, dur, out, false, 1);
+    }
+    if (p.layer && r() < p.layer.prob) {
+      play(p.layer.inst, f * p.layer.ratio, t, dur, out, false, 0.5);
+    }
+  }
+
+  vibrato(param: AudioParam, t: number, rate: number, depthCents: number, end: number): void {
+    if (!this.ctx) return;
+    const c = this.ctx;
+    const lfo = c.createOscillator();
+    const depth = c.createGain();
+    lfo.frequency.value = rate;
+    depth.gain.setValueAtTime(0, t);
+    depth.gain.linearRampToValueAtTime(depthCents, t + 0.3);
+    lfo.connect(depth).connect(param);
+    lfo.start(t);
+    lfo.stop(end);
+  }
+
+  pluck(
+    s: InstrumentConfig,
+    f: number,
+    t: number,
+    dur: number,
+    out: AudioNode,
+    grace = false,
+    vel = 1
+  ): void {
+    if (!this.ctx) return;
+    const c = this.ctx;
+    const decay = grace ? Math.min(s.decay || 1, 0.4) : s.decay || 1.5;
+    const end = t + decay;
+    const osc = c.createOscillator();
+    const flt = c.createBiquadFilter();
+    const g = c.createGain();
+    osc.type = s.wave || 'triangle';
+    osc.frequency.value = f;
+    if (s.bend && !grace && this.rand() < (s.bendProb ?? 1)) {
+      osc.detune.setValueAtTime(-s.bend, t);
+      osc.detune.linearRampToValueAtTime(0, t + (s.bendTime || 0.15));
+    }
+    if (s.vibrato && !grace && dur > 0.4) {
+      this.vibrato(osc.detune, t + 0.2, s.vibrato, s.vibDepth || 20, end);
+    }
+    flt.type = 'lowpass';
+    flt.Q.value = s.q || 1;
+    flt.frequency.setValueAtTime(s.bright || 4000, t);
+    flt.frequency.exponentialRampToValueAtTime(Math.max(f * 1.5, 200), t + decay * 0.6);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.3 * vel, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, end);
+    osc.connect(flt).connect(g).connect(out);
+    osc.start(t);
+    osc.stop(end + 0.05);
+  }
+
+  mallet(
+    s: InstrumentConfig,
+    f: number,
+    t: number,
+    _dur: number,
+    out: AudioNode,
+    _grace = false,
+    vel = 1
+  ): void {
+    if (!this.ctx) return;
+    const c = this.ctx;
+    const bases = s.octave ? [[f, 1], [f / 2, 0.6]] : [[f, 1]];
+    bases.forEach(([base, v]) =>
+      (s.partials || []).forEach(([ratio, amp, dec]) => {
+        if (base * ratio > c.sampleRate / 2) return;
+        const o = c.createOscillator();
+        const g = c.createGain();
+        o.frequency.value = base * ratio;
+        g.gain.setValueAtTime(0.25 * amp * v * vel, t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+        o.connect(g).connect(out);
+        o.start(t);
+        o.stop(t + dec + 0.05);
+      })
+    );
+    if (this.noise) {
+      const n = c.createBufferSource();
+      const hp = c.createBiquadFilter();
+      const g = c.createGain();
+      n.buffer = this.noise;
+      hp.type = 'highpass';
+      hp.frequency.value = s.click || 2500;
+      g.gain.setValueAtTime(0.2 * vel, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
+      n.connect(hp).connect(g).connect(out);
+      n.start(t, Math.random());
+      n.stop(t + 0.04);
+    }
+  }
+
+  flute(
+    s: InstrumentConfig,
+    f: number,
+    t: number,
+    dur: number,
+    out: AudioNode,
+    grace = false,
+    vel = 1
+  ): void {
+    if (!this.ctx) return;
+    const c = this.ctx;
+    const A = grace ? 0.01 : s.attack || 0.1;
+    const hold = t + Math.max(A, dur);
+    const end = hold + (s.release || 0.3);
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = s.wave || 'sine';
+    osc.frequency.value = f;
+    if (s.bend && !grace) {
+      osc.detune.setValueAtTime(-s.bend, t);
+      osc.detune.linearRampToValueAtTime(0, t + (s.bendTime || 0.15));
+    }
+    if (s.vibrato && dur > 0.4) {
+      this.vibrato(osc.detune, t + Math.min(0.25, dur * 0.4), s.vibrato, s.vibDepth || 20, end);
+    }
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.28 * vel, t + A);
+    g.gain.setValueAtTime(0.28 * vel, hold);
+    g.gain.exponentialRampToValueAtTime(0.0001, end);
+    osc.connect(g).connect(out);
+    osc.start(t);
+    osc.stop(end + 0.05);
+
+    if (s.breath && this.noise) {
+      const n = c.createBufferSource();
+      const bp = c.createBiquadFilter();
+      const ng = c.createGain();
+      n.buffer = this.noise;
+      n.loop = true;
+      bp.type = 'bandpass';
+      bp.frequency.value = Math.min(f * 2, 8000);
+      bp.Q.value = 1.2;
+      ng.gain.setValueAtTime(0.0001, t);
+      ng.gain.linearRampToValueAtTime(s.breath * vel, t + A * 0.5);
+      ng.gain.exponentialRampToValueAtTime(s.breath * 0.35 * vel, t + A * 1.5);
+      ng.gain.exponentialRampToValueAtTime(0.0001, end);
+      n.connect(bp).connect(ng).connect(out);
+      n.start(t, Math.random());
+      n.stop(end + 0.05);
+    }
+  }
+
+  organ(
+    _s: InstrumentConfig,
+    f: number,
+    t: number,
+    dur: number,
+    out: AudioNode,
+    _grace = false,
+    vel = 1
+  ): void {
+    if (!this.ctx) return;
+    const c = this.ctx;
+    const end = t + dur + 0.25;
+    const g = c.createGain();
+    [
+      [0.5, 0.5],
+      [1, 1],
+      [2, 0.5],
+      [3, 0.25],
+      [4, 0.25],
+    ].forEach(([h, a]) => {
+      const o = c.createOscillator();
+      const og = c.createGain();
+      o.frequency.value = f * h;
+      og.gain.value = a;
+      o.connect(og).connect(g);
+      o.start(t);
+      o.stop(end + 0.05);
+    });
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.1 * vel, t + 0.06);
+    g.gain.setValueAtTime(0.1 * vel, t + dur);
+    g.gain.linearRampToValueAtTime(0.0001, end);
+    g.connect(out);
+  }
+
+  drone(p: Preset, t: number, end: number, out: AudioNode): void {
+    if (!this.ctx || !p.drone) return;
+    const c = this.ctx;
+    p.drone.forEach((semi) => {
+      const o = c.createOscillator();
+      const lp = c.createBiquadFilter();
+      const g = c.createGain();
+      o.type = 'sawtooth';
+      o.frequency.value = this.freq(p.root, semi);
+      lp.type = 'lowpass';
+      lp.frequency.value = 700;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.035, t + 1);
+      g.gain.setValueAtTime(0.035, end - 1);
+      g.gain.linearRampToValueAtTime(0.0001, end);
+      o.connect(lp).connect(g).connect(out);
+      o.start(t);
+      o.stop(end + 0.05);
+    });
+  }
+}
+
+// Global engine singleton
+const engine = new CulturalAudioEngine();
 let isMuted = false;
 let activeChantId: string | null = null;
 const listeners = new Set<(chantId: string | null) => void>();
-
-function getAudioContext(): AudioContext | null {
-  if (typeof window === 'undefined') return null;
-  const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  if (!AudioCtx) return null;
-  if (!audioCtx) {
-    audioCtx = new AudioCtx();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume().catch(() => {});
-  }
-  return audioCtx;
-}
 
 export function subscribeChantState(cb: (chantId: string | null) => void): () => void {
   listeners.add(cb);
@@ -127,14 +740,7 @@ function notifyListeners(id: string | null) {
 }
 
 export function stopChant(): void {
-  if (currentNodes) {
-    try {
-      currentNodes.stop();
-    } catch {
-      // Ignore
-    }
-    currentNodes = null;
-  }
+  engine.stop();
   notifyListeners(null);
 }
 
@@ -154,452 +760,15 @@ export function getActiveChantId(): string | null {
   return activeChantId;
 }
 
-/**
- * Play authentic synthesized sacred chant for a given civilization
- */
 export function playChant(sysId: string): void {
   if (isMuted) return;
-
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  // Stop any currently playing chant
-  stopChant();
-
-  const now = ctx.currentTime;
-  const masterGain = ctx.createGain();
-  masterGain.gain.setValueAtTime(0.001, now);
-  // Fade in smoothly over 0.25 seconds
-  masterGain.gain.exponentialRampToValueAtTime(0.28, now + 0.25);
-  masterGain.connect(ctx.destination);
-
-  const cleanups: (() => void)[] = [];
-
-  try {
-    switch (sysId) {
-      case 'thai': {
-        // Thai Buddhist Monk Chant (Low Drone around F2 ~ 87.3Hz) + Resonant Brass Singing Bell (528Hz)
-        const chantOsc = ctx.createOscillator();
-        chantOsc.type = 'sawtooth';
-        chantOsc.frequency.setValueAtTime(87.3, now); // F2
-
-        // Formant filter for chanting "Ommmm-Auummm"
-        const formant = ctx.createBiquadFilter();
-        formant.type = 'bandpass';
-        formant.frequency.setValueAtTime(540, now);
-        formant.Q.setValueAtTime(4.0, now);
-
-        // Vocal vibrato LFO
-        const lfo = ctx.createOscillator();
-        const lfoGain = ctx.createGain();
-        lfo.frequency.setValueAtTime(3.2, now); // gentle chanting tremor
-        lfoGain.gain.setValueAtTime(1.8, now);
-        lfo.connect(chantOsc.frequency);
-
-        const chantGain = ctx.createGain();
-        chantGain.gain.setValueAtTime(0.35, now);
-
-        chantOsc.connect(formant);
-        formant.connect(chantGain);
-        chantGain.connect(masterGain);
-
-        chantOsc.start(now);
-        lfo.start(now);
-
-        // Temple Brass Bell Strike (528 Hz Love/Auspicious Solfeggio frequency + metallic shimmer)
-        [528, 1056, 1584].forEach((freq, i) => {
-          const bell = ctx.createOscillator();
-          const bellGain = ctx.createGain();
-          bell.type = 'sine';
-          bell.frequency.setValueAtTime(freq, now);
-
-          bellGain.gain.setValueAtTime(i === 0 ? 0.4 : 0.15, now);
-          bellGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.8);
-
-          bell.connect(bellGain);
-          bellGain.connect(masterGain);
-
-          bell.start(now);
-          bell.stop(now + 4.0);
-        });
-
-        cleanups.push(() => {
-          chantGain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
-          setTimeout(() => {
-            try { chantOsc.stop(); lfo.stop(); } catch {}
-          }, 350);
-        });
-        break;
-      }
-
-      case 'chinese': {
-        // Deep Taoist Gong (128Hz with pitch descent) + High Jade Chime (pentatonic E6 / G6)
-        const gong = ctx.createOscillator();
-        const gongGain = ctx.createGain();
-        gong.type = 'triangle';
-        gong.frequency.setValueAtTime(138, now);
-        gong.frequency.exponentialRampToValueAtTime(108, now + 1.2);
-
-        gongGain.gain.setValueAtTime(0.55, now);
-        gongGain.gain.exponentialRampToValueAtTime(0.001, now + 4.5);
-
-        gong.connect(gongGain);
-        gongGain.connect(masterGain);
-        gong.start(now);
-        gong.stop(now + 4.6);
-
-        // Taoist Celestial Chimes (Pentatonic arpeggio chime)
-        const chimePitches = [659.25, 783.99, 987.77, 1318.51];
-        chimePitches.forEach((pitch, idx) => {
-          const chime = ctx.createOscillator();
-          const chimeGain = ctx.createGain();
-          const delay = idx * 0.18;
-
-          chime.type = 'sine';
-          chime.frequency.setValueAtTime(pitch, now + delay);
-
-          chimeGain.gain.setValueAtTime(0.0001, now);
-          chimeGain.gain.setValueAtTime(0.25, now + delay);
-          chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 2.5);
-
-          chime.connect(chimeGain);
-          chimeGain.connect(masterGain);
-
-          chime.start(now + delay);
-          chime.stop(now + delay + 2.6);
-        });
-
-        cleanups.push(() => {
-          try { gong.stop(); } catch {}
-        });
-        break;
-      }
-
-      case 'vedic': {
-        // Sacred Gayatri Om 108Hz Fundamental + Tanpura Drone Harmonics (108Hz, 162Hz, 216Hz, 324Hz)
-        const freqs = [108, 162, 216, 324];
-        const oscs: OscillatorNode[] = [];
-
-        freqs.forEach((f, idx) => {
-          const osc = ctx.createOscillator();
-          const oscGain = ctx.createGain();
-          osc.type = idx === 0 ? 'sine' : 'triangle';
-          osc.frequency.setValueAtTime(f, now);
-
-          // Tanpura breathing shimmer
-          const oscLfo = ctx.createOscillator();
-          const oscLfoGain = ctx.createGain();
-          oscLfo.frequency.setValueAtTime(0.25 + idx * 0.1, now);
-          oscLfoGain.gain.setValueAtTime(0.08, now);
-          oscLfo.connect(oscGain.gain);
-
-          oscGain.gain.setValueAtTime(idx === 0 ? 0.35 : 0.15, now);
-
-          osc.connect(oscGain);
-          oscGain.connect(masterGain);
-
-          osc.start(now);
-          oscLfo.start(now);
-          oscs.push(osc);
-          cleanups.push(() => {
-            try { osc.stop(); oscLfo.stop(); } catch {}
-          });
-        });
-        break;
-      }
-
-      case 'western': {
-        // Cathedral Organ & Gregorian Sacred Triad (C3 = 130.81Hz, G3 = 196Hz, E4 = 329.63Hz)
-        const chords = [130.81, 196.0, 329.63, 523.25];
-        chords.forEach((c) => {
-          const pipe = ctx.createOscillator();
-          const pipeGain = ctx.createGain();
-          pipe.type = 'sawtooth';
-          pipe.frequency.setValueAtTime(c, now);
-
-          // Cathedral acoustics lowpass
-          const filter = ctx.createBiquadFilter();
-          filter.type = 'lowpass';
-          filter.frequency.setValueAtTime(750, now);
-
-          pipeGain.gain.setValueAtTime(0.12, now);
-
-          pipe.connect(filter);
-          filter.connect(pipeGain);
-          pipeGain.connect(masterGain);
-
-          pipe.start(now);
-          cleanups.push(() => {
-            try { pipe.stop(); } catch {}
-          });
-        });
-        break;
-      }
-
-      case 'native_american': {
-        // Shamanic Heartbeat Buffalo Drum (60Hz dual thump) + Cedar Spirit Flute (Pentatonic F#)
-        const playDrumHit = (hitTime: number) => {
-          const drum = ctx.createOscillator();
-          const drumGain = ctx.createGain();
-          drum.type = 'sine';
-          drum.frequency.setValueAtTime(80, hitTime);
-          drum.frequency.exponentialRampToValueAtTime(45, hitTime + 0.3);
-
-          drumGain.gain.setValueAtTime(0.6, hitTime);
-          drumGain.gain.exponentialRampToValueAtTime(0.001, hitTime + 0.5);
-
-          drum.connect(drumGain);
-          drumGain.connect(masterGain);
-
-          drum.start(hitTime);
-          drum.stop(hitTime + 0.55);
-        };
-
-        // Double heartbeat: Ba-bum, Ba-bum
-        playDrumHit(now);
-        playDrumHit(now + 0.22);
-        playDrumHit(now + 1.2);
-        playDrumHit(now + 1.42);
-
-        // Cedar Spirit Flute
-        const flute = ctx.createOscillator();
-        const fluteGain = ctx.createGain();
-        flute.type = 'sine';
-        flute.frequency.setValueAtTime(370, now + 0.3); // F#4
-        flute.frequency.linearRampToValueAtTime(440, now + 0.9); // A4 glide
-
-        fluteGain.gain.setValueAtTime(0.0001, now);
-        fluteGain.gain.setValueAtTime(0.25, now + 0.3);
-        fluteGain.gain.exponentialRampToValueAtTime(0.001, now + 3.2);
-
-        flute.connect(fluteGain);
-        fluteGain.connect(masterGain);
-        flute.start(now + 0.3);
-        flute.stop(now + 3.3);
-
-        cleanups.push(() => {
-          try { flute.stop(); } catch {}
-        });
-        break;
-      }
-
-      case 'islamic': {
-        // Maqam Bayati celestial drone (D2 = 73.4Hz, A2 = 110Hz, D3 = 146.8Hz) + Arabian Oud Glissando
-        const maqamNotes = [73.4, 110.0, 146.8];
-        maqamNotes.forEach((f) => {
-          const osc = ctx.createOscillator();
-          const g = ctx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(f, now);
-
-          g.gain.setValueAtTime(0.2, now);
-          osc.connect(g);
-          g.connect(masterGain);
-          osc.start(now);
-          cleanups.push(() => {
-            try { osc.stop(); } catch {}
-          });
-        });
-
-        // Oud pluck slide
-        const oud = ctx.createOscillator();
-        const oudGain = ctx.createGain();
-        oud.type = 'sawtooth';
-        oud.frequency.setValueAtTime(293.66, now + 0.1); // D4
-        oud.frequency.linearRampToValueAtTime(329.63, now + 0.4); // E4
-        oud.frequency.linearRampToValueAtTime(349.23, now + 0.8); // F4
-
-        const oudFilter = ctx.createBiquadFilter();
-        oudFilter.type = 'bandpass';
-        oudFilter.frequency.setValueAtTime(800, now);
-        oudFilter.Q.setValueAtTime(2.5, now);
-
-        oudGain.gain.setValueAtTime(0.001, now);
-        oudGain.gain.setValueAtTime(0.35, now + 0.1);
-        oudGain.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
-
-        oud.connect(oudFilter);
-        oudFilter.connect(oudGain);
-        oudGain.connect(masterGain);
-        oud.start(now + 0.1);
-        oud.stop(now + 3.1);
-        break;
-      }
-
-      case 'vietnamese': {
-        // Tran Quoc Bronze Bell + Microtonal Dan Bau Bend (392Hz G4 to 440Hz A4)
-        const bell = ctx.createOscillator();
-        const bellGain = ctx.createGain();
-        bell.type = 'triangle';
-        bell.frequency.setValueAtTime(349.23, now); // F4
-        bellGain.gain.setValueAtTime(0.45, now);
-        bellGain.gain.exponentialRampToValueAtTime(0.001, now + 3.5);
-        bell.connect(bellGain);
-        bellGain.connect(masterGain);
-        bell.start(now);
-        bell.stop(now + 3.6);
-
-        // Dan Bau bend
-        const danBau = ctx.createOscillator();
-        const danBauGain = ctx.createGain();
-        danBau.type = 'sine';
-        danBau.frequency.setValueAtTime(392, now + 0.2);
-        danBau.frequency.exponentialRampToValueAtTime(523.25, now + 0.9);
-        danBau.frequency.linearRampToValueAtTime(440, now + 1.6);
-
-        danBauGain.gain.setValueAtTime(0.001, now);
-        danBauGain.gain.setValueAtTime(0.3, now + 0.2);
-        danBauGain.gain.exponentialRampToValueAtTime(0.001, now + 3.2);
-
-        danBau.connect(danBauGain);
-        danBauGain.connect(masterGain);
-        danBau.start(now + 0.2);
-        danBau.stop(now + 3.3);
-        break;
-      }
-
-      case 'burmese': {
-        // Triangular Burmese Kyi-zee Bell (Flutters and spins at 392Hz) + Golden Pagoda Drone
-        const kyiZee = ctx.createOscillator();
-        const kyiZeeGain = ctx.createGain();
-        kyiZee.type = 'sine';
-        kyiZee.frequency.setValueAtTime(392.0, now);
-
-        // Flutter modulation simulating spinning metal triangle
-        const flutterLfo = ctx.createOscillator();
-        flutterLfo.frequency.setValueAtTime(7.5, now);
-        const flutterGain = ctx.createGain();
-        flutterGain.gain.setValueAtTime(14.0, now);
-        flutterLfo.connect(kyiZee.frequency);
-
-        kyiZeeGain.gain.setValueAtTime(0.4, now);
-        kyiZeeGain.gain.exponentialRampToValueAtTime(0.0001, now + 4.2);
-
-        kyiZee.connect(kyiZeeGain);
-        kyiZeeGain.connect(masterGain);
-
-        kyiZee.start(now);
-        flutterLfo.start(now);
-        kyiZee.stop(now + 4.3);
-        flutterLfo.stop(now + 4.3);
-        break;
-      }
-
-      case 'egyptian': {
-        // Phrygian Drone (E2 = 82.4Hz + B2 = 123.4Hz + F3 = 174.6Hz) + Golden Sistrum Rattle
-        [82.4, 123.4, 174.6].forEach((f) => {
-          const osc = ctx.createOscillator();
-          const g = ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(f, now);
-
-          const filt = ctx.createBiquadFilter();
-          filt.type = 'lowpass';
-          filt.frequency.setValueAtTime(420, now);
-
-          g.gain.setValueAtTime(0.18, now);
-          osc.connect(filt);
-          filt.connect(g);
-          g.connect(masterGain);
-          osc.start(now);
-          cleanups.push(() => {
-            try { osc.stop(); } catch {}
-          });
-        });
-
-        // Golden Sistrum Chime shimmer (metallic cluster)
-        [2093, 2793, 3135].forEach((sf, sidx) => {
-          const sOsc = ctx.createOscillator();
-          const sGain = ctx.createGain();
-          sOsc.type = 'sine';
-          sOsc.frequency.setValueAtTime(sf, now + sidx * 0.08);
-
-          sGain.gain.setValueAtTime(0.15, now + sidx * 0.08);
-          sGain.gain.exponentialRampToValueAtTime(0.0001, now + sidx * 0.08 + 1.4);
-
-          sOsc.connect(sGain);
-          sGain.connect(masterGain);
-          sOsc.start(now + sidx * 0.08);
-          sOsc.stop(now + sidx * 0.08 + 1.5);
-        });
-        break;
-      }
-
-      case 'aztec_mayan': {
-        // Mayan Double-Chamber Ocarina with Acoustic Beating (432Hz + 438Hz = 6Hz Theta trance beat)
-        const ocarina1 = ctx.createOscillator();
-        const ocarina2 = ctx.createOscillator();
-        const ocarinaGain = ctx.createGain();
-
-        ocarina1.type = 'sine';
-        ocarina2.type = 'sine';
-        ocarina1.frequency.setValueAtTime(432.0, now); // Sacred 432Hz
-        ocarina2.frequency.setValueAtTime(438.0, now); // Binaural 6Hz beat
-
-        ocarinaGain.gain.setValueAtTime(0.001, now);
-        ocarinaGain.gain.setValueAtTime(0.28, now + 0.15);
-        ocarinaGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.6);
-
-        ocarina1.connect(ocarinaGain);
-        ocarina2.connect(ocarinaGain);
-        ocarinaGain.connect(masterGain);
-
-        ocarina1.start(now);
-        ocarina2.start(now);
-        ocarina1.stop(now + 3.7);
-        ocarina2.stop(now + 3.7);
-
-        // Low stone temple drum
-        const stoneDrum = ctx.createOscillator();
-        const stoneGain = ctx.createGain();
-        stoneDrum.type = 'triangle';
-        stoneDrum.frequency.setValueAtTime(95, now);
-        stoneDrum.frequency.exponentialRampToValueAtTime(40, now + 0.4);
-        stoneGain.gain.setValueAtTime(0.5, now);
-        stoneGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-
-        stoneDrum.connect(stoneGain);
-        stoneGain.connect(masterGain);
-        stoneDrum.start(now);
-        stoneDrum.stop(now + 0.65);
-        break;
-      }
-
-      default: {
-        // Generic auspicious temple bell
-        const bell = ctx.createOscillator();
-        const bellGain = ctx.createGain();
-        bell.type = 'sine';
-        bell.frequency.setValueAtTime(440, now);
-        bellGain.gain.setValueAtTime(0.3, now);
-        bellGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.5);
-        bell.connect(bellGain);
-        bellGain.connect(masterGain);
-        bell.start(now);
-        bell.stop(now + 2.6);
-        break;
-      }
-    }
-
-    currentNodes = {
-      stop: () => {
-        try {
-          masterGain.gain.setValueAtTime(masterGain.gain.value, ctx.currentTime);
-          masterGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25);
-          setTimeout(() => {
-            cleanups.forEach((c) => {
-              try { c(); } catch {}
-            });
-            masterGain.disconnect();
-          }, 280);
-        } catch {
-          // Ignore
-        }
-      },
-    };
-
-    notifyListeners(sysId);
-  } catch (err) {
-    console.warn('Audio synthesis error:', err);
-  }
+  const presetKey = CIV_TO_PRESET[sysId] || 'thai';
+  engine
+    .play(presetKey)
+    .then(() => {
+      notifyListeners(sysId);
+    })
+    .catch((err) => {
+      console.warn('CulturalAudioEngine error:', err);
+    });
 }

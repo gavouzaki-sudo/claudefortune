@@ -16,21 +16,21 @@ interface GateProps {
   onSessionStart: (session: UserSession) => void;
 }
 
-// Spatial coordinates for the 10 astrology systems distributed across the celestial canvas
+// Spatial coordinates for the 10 astrology systems distributed in a celestial ring around the canvas
 const SYSTEM_LOCATIONS: Record<
   string,
   { x: number; y: number; halo: string; label: string; sub: string }
 > = {
-  western: { x: 20, y: 22, halo: '#7986cb', label: 'ยุโรป / สากล', sub: '12 จักรราศี' },
-  native_american: { x: 50, y: 15, halo: '#ff7043', label: 'อินเดียแดง', sub: 'โทเท็มสัตว์วิญญาณ' },
-  vedic: { x: 80, y: 22, halo: '#ff9900', label: 'อินเดีย', sub: 'โหราศาสตร์พระเวท' },
-  thai: { x: 16, y: 56, halo: '#f5c542', label: 'ไทย', sub: '12 นักษัตรสยาม' },
-  chinese: { x: 50, y: 48, halo: '#ff3b30', label: 'จีน', sub: '12 นักษัตรมังกรฟ้า' },
-  islamic: { x: 84, y: 56, halo: '#00e676', label: 'อิสลาม / อาหรับ', sub: '12 บุรุจดวงดาว' },
-  vietnamese: { x: 34, y: 70, halo: '#ffca28', label: 'เวียดนาม', sub: '12 สัตว์ศักดิ์สิทธิ์' },
-  burmese: { x: 66, y: 70, halo: '#ba68c8', label: 'พม่า', sub: 'มหาภูติ 8 สัตว์' },
-  egyptian: { x: 22, y: 88, halo: '#ffd700', label: 'อียิปต์โบราณ', sub: 'ทวยเทพแห่งไนล์' },
-  aztec_mayan: { x: 78, y: 88, halo: '#26c6da', label: 'แอซเท็ก / มายา', sub: 'ปฏิทินสุริยะ' },
+  western: { x: 22, y: 20, halo: '#7986cb', label: 'ยุโรป / สากล', sub: '12 จักรราศี' },
+  native_american: { x: 50, y: 12, halo: '#ff7043', label: 'อินเดียแดง', sub: 'โทเท็มสัตว์วิญญาณ' },
+  vedic: { x: 78, y: 20, halo: '#ff9900', label: 'อินเดีย', sub: 'โหราศาสตร์พระเวท' },
+  islamic: { x: 86, y: 40, halo: '#00e676', label: 'อิสลาม / อาหรับ', sub: '12 บุรุจดวงดาว' },
+  burmese: { x: 85, y: 64, halo: '#ba68c8', label: 'พม่า', sub: 'มหาภูติ 8 สัตว์' },
+  aztec_mayan: { x: 75, y: 86, halo: '#26c6da', label: 'แอซเท็ก / มายา', sub: 'ปฏิทินสุริยะ' },
+  vietnamese: { x: 50, y: 88, halo: '#ffca28', label: 'เวียดนาม', sub: '12 สัตว์ศักดิ์สิทธิ์' },
+  egyptian: { x: 25, y: 86, halo: '#ffd700', label: 'อียิปต์โบราณ', sub: 'ทวยเทพแห่งไนล์' },
+  thai: { x: 15, y: 64, halo: '#f5c542', label: 'ไทย', sub: '12 นักษัตรสยาม' },
+  chinese: { x: 14, y: 40, halo: '#ff3b30', label: 'จีน', sub: '12 นักษัตรมังกรฟ้า' },
 };
 
 // Current Buddhist Era year for backend calculation
@@ -205,7 +205,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
     // If dragged beyond threshold, swiped inward, or quick flick, dismiss back to star map
     if (dist > 30 || velocity > 0.28 || isInwardSwipe) {
       handleCloseRadialMenu();
-    } else if (dist <= 6 && (e.target as HTMLElement).classList.contains('radial-circular-overlay')) {
+    } else if (dist <= 10 && !(e.target as HTMLElement).closest('.radial-menu-center-card, .radial-symbol-satellite, .btn-back-to-all-systems')) {
       // Tap on empty space outside center card
       handleCloseRadialMenu();
     } else {
@@ -235,75 +235,13 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
     }
   };
 
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const nextMuted = toggleMuteChant();
-    setMuted(nextMuted);
-    if (!nextMuted && activeSystem) {
-      playChant(activeSystem.id);
-    }
-  };
-
-  const replayChant = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (activeSystem) {
-      playChant(activeSystem.id);
-    }
-  };
-
   const activeSymbol: ZodiacItem | null = activeSystem
     ? activeSystem.items[activeSymbolIndex] || activeSystem.items[0]
     : null;
 
-  // Parent node location for subtle trajectory connection
-  const parentLoc = activeSystem ? SYSTEM_LOCATIONS[activeSystem.id] : null;
-
   return (
     <section id="gate" className="panel gate cosmic-celestial-gate">
-      {/* Top Title Banner */}
-      <div className="celestial-gate-header text-center">
-        <div className="celestial-pill-badge">
-          <span>✦ มณฑลโหราศาสตร์สากลและวงล้อดวงดาว ✦</span>
-        </div>
-        <h2 className="title celestial-main-title">เลือกอารยธรรมและสัญลักษณ์แห่งโชคชะตา</h2>
-        <p className="lead celestial-lead">
-          แตะดวงดาวอารยธรรมเพื่อคลี่ขยาย <strong>วงล้อดวงดาวทรงกลม (Circular Zodiac Menu)</strong> พร้อมสดับรับฟัง <strong>เสียงสวดมนตราศักดิ์สิทธิ์ประจำอารยธรรม (Chant SFX)</strong> แล้วเลือกสัญลักษณ์เพื่อเริ่มพิธี
-        </p>
-
-        {/* Global Sound & Gesture Hint Controls */}
-        <div className="gate-audio-toolbar">
-          <button
-            type="button"
-            className={`audio-toggle-btn ${muted ? 'is-muted' : 'is-playing'}`}
-            onClick={toggleMute}
-            title={muted ? 'เปิดเสียงบทสวด' : 'ปิดเสียงบทสวด'}
-            aria-label={muted ? 'เปิดเสียงบทสวด' : 'ปิดเสียงบทสวด'}
-          >
-            <span className="audio-icon">{muted ? '🔇' : '🔊'}</span>
-            <span className="audio-text">
-              {muted ? 'เสียงบทสวด: ปิดอยู่' : 'เสียงบทสวด: เปิดอยู่'}
-            </span>
-          </button>
-          {playingChantId && currentChant && (
-            <div className="now-chanting-pill animate-pulse-glow">
-              <span className="wave-bars">
-                <span className="wb wb-1" />
-                <span className="wb wb-2" />
-                <span className="wb wb-3" />
-              </span>
-              <span className="now-title">{currentChant.chantTitle}</span>
-              <button
-                type="button"
-                className="btn-replay-chant"
-                onClick={replayChant}
-                title="ฟังบทสวดซ้ำ"
-              >
-                🔄 ฟังซ้ำ
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Main Interactive Celestial Orrery Stage */}
 
       {/* Main Interactive Celestial Orrery Stage */}
       <div className="celestial-stage-wrapper">
@@ -319,6 +257,50 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
             <div className="c-axis c-axis-h" />
             <div className="c-axis c-axis-v" />
             <div className="c-core-radiance" />
+
+            {/* Cosmic Celestial Bodies (Earth, Mars, Saturn, Galaxy & Famous Stars) */}
+            <div className="c-galaxy-dust" />
+
+            <div className="celestial-body c-body-earth" title="โลก (Earth)">
+              <div className="planet-atmosphere" />
+              <span className="planet-icon">🌍</span>
+              <span className="body-label">โลก</span>
+            </div>
+
+            <div className="celestial-body c-body-mars" title="ดาวอังคาร (Mars)">
+              <div className="planet-glow" />
+              <span className="planet-icon">🔴</span>
+              <span className="body-label">ดาวอังคาร</span>
+            </div>
+
+            <div className="celestial-body c-body-saturn" title="ดาวเสาร์ (Saturn)">
+              <div className="saturn-ring" />
+              <span className="planet-icon">🪐</span>
+              <span className="body-label">ดาวเสาร์</span>
+            </div>
+
+            <div className="celestial-star c-star-polaris" title="ดาวเหนือ (Polaris)">
+              <span className="star-spike" />
+              <span className="star-sparkle">✦</span>
+              <span className="body-label">ดาวเหนือ</span>
+            </div>
+
+            <div className="celestial-star c-star-sirius" title="ดาวซิริอุส (Sirius)">
+              <span className="star-spike" />
+              <span className="star-sparkle">✨</span>
+              <span className="body-label">ซิริอุส</span>
+            </div>
+
+            <div className="celestial-star c-star-betelgeuse" title="ดาวเบเทลจุส (Betelgeuse)">
+              <span className="star-glow" />
+              <span className="star-sparkle">⭐</span>
+              <span className="body-label">เบเทลจุส</span>
+            </div>
+
+            <div className="celestial-cluster c-cluster-pleiades" title="กระจุกดาวลูกไก่ (Pleiades)">
+              <span className="cluster-stars">✧✦✧</span>
+              <span className="body-label">กระจุกดาวลูกไก่</span>
+            </div>
           </div>
 
           {/* 10 Astrology System Nodes Distributed on Canvas */}
@@ -375,10 +357,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                 <span className="core-portal-icon">🌌</span>
                 <div className="core-portal-ring" />
               </div>
-              <h3 className="core-portal-title">เลือกอารยธรรมบนผืนฟ้า</h3>
-              <p className="core-portal-hint">
-                แตะที่อารยธรรมใดก็ได้ (ไทย, จีน, อินเดีย, ยุโรป ฯลฯ) เพื่อคลี่ขยาย <strong>วงล้อดวงดาว 12 สัญลักษณ์</strong> พร้อมฟังบทสวด
-              </p>
+              <h3 className="core-portal-title">อารยธรรม</h3>
             </div>
           )}
 
@@ -390,35 +369,15 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerCancel}
+              onClick={(e) => {
+                if (!(e.target as HTMLElement).closest('.radial-menu-center-card, .radial-symbol-satellite, .btn-back-to-all-systems')) {
+                  handleCloseRadialMenu();
+                }
+              }}
               style={{
                 touchAction: 'none',
               }}
             >
-              {/* Ghost connection line pointing back to parent category node */}
-              {parentLoc && (
-                <svg
-                  className="drag-guide-svg"
-                  aria-hidden="true"
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
-                    pointerEvents: 'none',
-                    zIndex: 25,
-                  }}
-                >
-                  <line
-                    x1="50%"
-                    y1="50%"
-                    x2={`${parentLoc.x}%`}
-                    y2={`${parentLoc.y}%`}
-                    stroke="rgba(245, 197, 66, 0.35)"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
-                  />
-                </svg>
-              )}
 
               {/* Dynamic Drag Container responding to touch/mouse gestures */}
               <div
@@ -429,50 +388,86 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                   transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease',
                 }}
               >
-                {/* Drag to Dismiss Gesture Hint Pill */}
-                <div className="drag-dismiss-hint-pill">
-                  <span className="drag-arrow">⬇</span>
-                  <span>ปัดเข้าด้านในหรือลากเพื่อย่นเก็บ (Swipe / Drag to dismiss)</span>
+                {/* Prominent Back to All Civilizations Button */}
+                <div className="radial-top-action-bar">
                   <button
                     type="button"
-                    className="drag-dismiss-close-icon"
+                    className="btn-back-to-all-systems"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleCloseRadialMenu();
                     }}
-                    title="ปิดวงล้อ"
+                    title="กลับสู่ผืนฟ้าเพื่อเลือกอารยธรรมอื่น"
                   >
-                    ✕
+                    <span>⬅ กลับไปเลือกอารยธรรมอื่น (Select Other)</span>
                   </button>
                 </div>
 
-                {/* Celestial Center Core Sigil (Not a boxy popup modal) */}
+                {/* Celestial Center Core Sigil & Selected Symbol Altar */}
                 <div
-                  className="radial-menu-center-card celestial-center-sigil"
-                  onClick={(e) => e.stopPropagation()}
+                  className="radial-menu-center-card celestial-center-sigil active-altar-card"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (activeSymbol && activeSystem) {
+                      completeSession(activeSymbol, activeSystem);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  title="คลิกเพื่ออัญเชิญ"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      if (activeSymbol && activeSystem) completeSession(activeSymbol, activeSystem);
+                    }
+                  }}
                 >
-                  <div className="radial-center-badge">
-                    <span className="center-icon">{activeSystem.icon}</span>
-                    <h3 className="center-name">{activeSystem.name}</h3>
+                  {/* Top Bar with System Name & Close Button */}
+                  <div className="radial-center-header">
+                    <span className="center-sys-badge">
+                      <span className="center-icon">{activeSystem.icon}</span>
+                      <span className="center-sys-name">{activeSystem.name}</span>
+                    </span>
+                    <button
+                      type="button"
+                      className="center-close-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCloseRadialMenu();
+                      }}
+                      title="กลับไปเลือกอารยธรรมอื่น"
+                    >
+                      ✕
+                    </button>
                   </div>
 
-                  <p className="center-mythos">{activeSystem.mythos}</p>
-
-                  {/* Sacred Chant & Audio Info */}
-                  {currentChant && (
-                    <div className="center-chant-box">
-                      <div className="chant-name-row">
-                        <span className="chant-sacred-icon">🪔</span>
-                        <span className="chant-name-text">{currentChant.chantTitle}</span>
+                  {/* Focused Zodiac Symbol: Name in Civilization Language */}
+                  {activeSymbol && (
+                    <div className="center-symbol-focus animate-rise">
+                      <div className="center-symbol-orb">
+                        <span className="center-symbol-icon">{activeSymbol.symbol}</span>
+                        <div className="center-symbol-glow" />
                       </div>
-                      <p className="chant-mantra-text">"{currentChant.mantraPreview}"</p>
+
+                      <h3 className="center-symbol-title">
+                        {activeSymbol.origName || activeSymbol.name}
+                        {activeSymbol.origName && activeSymbol.name !== activeSymbol.origName && (
+                          <span className="center-symbol-sub"> ({activeSymbol.name})</span>
+                        )}
+                      </h3>
+                    </div>
+                  )}
+
+                  {/* Action Button: Short & Powerful */}
+                  {activeSymbol && (
+                    <div className="center-action-row" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
-                        className="btn-chant-play-mini"
-                        onClick={replayChant}
-                        title="ฟังเสียงบทสวดนี้"
+                        className="btn primary center-confirm-btn"
+                        onClick={() => completeSession(activeSymbol, activeSystem)}
                       >
-                        🎵 เล่นเสียงบทสวด
+                        <span>อัญเชิญ</span>
+                        <span className="arrow-icon">➔</span>
                       </button>
                     </div>
                   )}
@@ -493,8 +488,8 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                     // Calculate angle around 360 degrees, starting from top (-90 deg)
                     const angleDeg = (360 / total) * idx - 90;
                     const angleRad = (angleDeg * Math.PI) / 180;
-                    // Responsive radius: 142px for mobile, 185px for desktop
-                    const radius = isMobile ? 142 : 185;
+                    // Responsive radius: 155px for mobile, 205px for desktop to provide generous center space
+                    const radius = isMobile ? 155 : 205;
                     const posX = Math.round(Math.cos(angleRad) * radius);
                     const posY = Math.round(Math.sin(angleRad) * radius);
                     const isSelected = activeSymbolIndex === idx;
@@ -527,8 +522,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                           {isSelected && <span className="satellite-star-badge">✦</span>}
                         </div>
                         <div className="satellite-tag">
-                          <span className="sat-name">{item.name}</span>
-                          {item.origName && <span className="sat-orig">{item.origName}</span>}
+                          <span className="sat-name">{item.origName || item.name}</span>
                         </div>
                       </div>
                     );
@@ -539,55 +533,6 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
           )}
         </div>
       </div>
-
-      {/* Selected Symbol Detail Altar & Quick Confirm */}
-      {activeSystem && activeSymbol && (
-        <div className="altar-preview-strip animate-rise">
-          <div className="altar-strip-main">
-            <div className="altar-strip-icon-box">
-              <span className="big-symbol">{activeSymbol.symbol}</span>
-              <div className="symbol-pulse-ring" />
-            </div>
-
-            <div className="altar-strip-info">
-              <div className="strip-title-row">
-                <h3 className="strip-title">{activeSymbol.name}</h3>
-                {activeSymbol.origName && (
-                  <span className="strip-orig">{activeSymbol.origName}</span>
-                )}
-                <span className="strip-system-tag">
-                  ({activeSystem.name})
-                </span>
-              </div>
-
-              <div className="strip-pills">
-                <span className="pill-badge elem-badge">⚡ {activeSymbol.element}</span>
-                <span className="pill-badge aura-badge">✨ ออร่า: {activeSymbol.aura}</span>
-                {currentChant && (
-                  <span className="pill-badge chant-badge">
-                    🪔 {currentChant.civilization}
-                  </span>
-                )}
-              </div>
-
-              <p className="strip-attribute">
-                <strong>พลังและพรศักดิ์สิทธิ์:</strong> {activeSymbol.attribute}
-              </p>
-            </div>
-          </div>
-
-          <div className="altar-strip-action">
-            <button
-              type="button"
-              className="btn primary strip-confirm-btn"
-              onClick={() => completeSession(activeSymbol, activeSystem)}
-            >
-              <span>อัญเชิญพลังเข้าสู่พิธี</span>
-              <span className="arrow-icon">➔</span>
-            </button>
-          </div>
-        </div>
-      )}
 
       {error && (
         <p id="gate-error" className="error text-center" role="alert">

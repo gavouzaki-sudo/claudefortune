@@ -6,9 +6,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 ./build.sh
+npm run build
 rm -rf dist-hf
 mkdir -p dist-hf
-cp -r web/. dist-hf/
+cp -r dist/. dist-hf/
 
 cat > dist-hf/README.md <<'EOF'
 ---

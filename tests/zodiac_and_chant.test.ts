@@ -56,3 +56,19 @@ test('Chant mute/unmute state toggles reliably', () => {
   const reverted = toggleMuteChant();
   assert.equal(reverted, initial);
 });
+
+test('Theme system contains 18 themes including xmas, valentine, frost, midautumn, forest', async () => {
+  const { ALL_THEMES } = await import('../src/utils/smartTheme');
+  assert.ok(ALL_THEMES.length >= 18, `Expected at least 18 themes, found ${ALL_THEMES.length}`);
+  const xmas = ALL_THEMES.find((t) => t.id === 'xmas');
+  assert.ok(xmas, 'Missing xmas theme');
+  const val = ALL_THEMES.find((t) => t.id === 'valentine');
+  assert.ok(val, 'Missing valentine theme');
+  const frost = ALL_THEMES.find((t) => t.id === 'frost');
+  assert.ok(frost, 'Missing frost theme');
+  const midautumn = ALL_THEMES.find((t) => t.id === 'midautumn');
+  assert.ok(midautumn, 'Missing midautumn theme');
+  const forest = ALL_THEMES.find((t) => t.id === 'forest');
+  assert.ok(forest, 'Missing forest theme');
+});
+
