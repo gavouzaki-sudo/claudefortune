@@ -82,7 +82,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               onClick={handlePlay}
               title="เริ่มฟังเสียงอ่านธรรมบรรยาย (สุ่มท่วงทำนองอัตโนมัติ)"
             >
-              <span>▶ ฟังเสียงสวด</span>
+              <span>▶ อ่าน</span>
             </button>
           ) : speechState.isPaused ? (
             <button
@@ -148,7 +148,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
                 ? speechState.isPaused
                   ? '⏸ พักการอ่านชั่วคราว — กดปุ่มเพื่ออ่านต่อ'
                   : `📿 กำลังสวดบรรยายด้วยเสียง${activePreset.title}...`
-                : 'กดปุ่มด้านบนเพื่อสดับรับฟังเสียงสวด'}
+                : 'กดปุ่มด้านบนเพื่อสดับรับฟังเสียง'}
             </span>
           </div>
 

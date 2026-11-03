@@ -388,21 +388,6 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                   transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease',
                 }}
               >
-                {/* Prominent Back to All Civilizations Button */}
-                <div className="radial-top-action-bar">
-                  <button
-                    type="button"
-                    className="btn-back-to-all-systems"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCloseRadialMenu();
-                    }}
-                    title="กลับสู่ผืนฟ้าเพื่อเลือกอารยธรรมอื่น"
-                  >
-                    <span>⬅ กลับไปเลือกอารยธรรมอื่น (Select Other)</span>
-                  </button>
-                </div>
-
                 {/* Celestial Center Core Sigil & Selected Symbol Altar */}
                 <div
                   className="radial-menu-center-card celestial-center-sigil active-altar-card"

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-export type FortuneTopic = 'stick' | 'tarot' | 'number' | 'ritual' | 'scan' | 'festival' | 'love' | 'cosmic' | 'meditation';
+export type FortuneTopic = 'stick' | 'tarot' | 'number' | 'ritual' | 'scan' | 'festival' | 'love' | 'cosmic' | 'meditation' | 'auspicious';
 
 interface FortuneCanvasBackgroundProps {
   activeTopic: FortuneTopic;

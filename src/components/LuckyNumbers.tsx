@@ -4,13 +4,16 @@ import type { LuckyNumbersResult } from '../types';
 import { BurnTalisman } from './BurnTalisman';
 import { LuckyMiniGames } from './LuckyMiniGames';
 import { playFireCrackle } from '../utils/chantAudio';
+import { saveJournalEntry } from '../utils/fortuneJournal';
+import type { CardData } from '../utils/luckyCardCanvas';
 
 interface LuckyNumbersProps {
   bridge: Bridge;
   onToast: (msg: string) => void;
+  onOpenCard?: (card: CardData) => void;
 }
 
-export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast }) => {
+export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onOpenCard }) => {
   // Category: 0 = เลขท้าย 2 ตัว, 1 = เลขท้าย 3 ตัว
   const [category, setCategory] = useState<0 | 1>(0);
   const [luckyResult, setLuckyResult] = useState<LuckyNumbersResult | null>(null);
@@ -19,6 +22,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast }) =
   // Burn level: 0 = unburned, 1 = 33%, 2 = 66%, 3 = 100% (fully revealed)
   const [burnLevel, setBurnLevel] = useState<number>(0);
   const [isBurning, setIsBurning] = useState<boolean>(false);
+  const [isJournalSaved, setIsJournalSaved] = useState<boolean>(false);
 
   // Initialize or fetch numbers when category changes or on mount
   const generateNumber = useCallback(
@@ -35,7 +39,9 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast }) =
           setLuckyNumber(num);
         }
       } catch {
-        onToast('เกิดข้อผิดพลาดในการคำนวณเลขมงคล');
+        setTimeout(() => {
+          onToast('เกิดข้อผิดพลาดในการคำนวณเลขมงคล');
+        }, 0);
       }
     },
     [bridge, onToast]
@@ -49,8 +55,10 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast }) =
   const handleCategoryChange = (newCat: 0 | 1) => {
     setCategory(newCat);
     setBurnLevel(0);
-    generateNumber(newCat);
-    onToast(`เปลี่ยนประเภทเป็น: ${newCat === 0 ? 'เลขท้าย 2 ตัว' : 'เลขท้าย 3 ตัว'}`);
+    setIsJournalSaved(false);
+    setTimeout(() => {
+      onToast(`เปลี่ยนประเภทเป็น: ${newCat === 0 ? 'เลขท้าย 2 ตัว' : 'เลขท้าย 3 ตัว'}`);
+    }, 0);
   };
 
   // When player wins a round in any mini-game
@@ -69,11 +77,13 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast }) =
 
     setBurnLevel((prev) => {
       const next = Math.min(3, prev + 1);
-      if (next === 3) {
-        onToast('🔥 ยันต์มอดไหม้สมบูรณ์! ปรากฏเลขมงคล 100%!');
-      } else {
-        onToast(`🔥 เพลิงเผายันต์ลามขึ้น! (${next}/3 ตา) ชนะอีก ${3 - next} ตา!`);
-      }
+      setTimeout(() => {
+        if (next === 3) {
+          onToast('🔥 ยันต์มอดไหม้สมบูรณ์! ปรากฏเลขมงคล 100%!');
+        } else {
+          onToast(`🔥 เพลิงเผายันต์ลามขึ้น! (${next}/3 ตา) ชนะอีก ${3 - next} ตา!`);
+        }
+      }, 0);
       return next;
     });
 
@@ -82,16 +92,53 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast }) =
     }, 1100);
   }, [onToast]);
 
+  // Save to journal and open card modal
+  const handleSaveAndShare = () => {
+    if (burnLevel < 3) return;
+    if (!isJournalSaved) {
+      saveJournalEntry({
+        type: 'number',
+        title: `เลขมงคล (${category === 0 ? 'เลขท้าย 2 ตัว' : 'เลขท้าย 3 ตัว'})`,
+        summary: `เลขเด่น: ${luckyNumber} — เผายันต์สำเร็จ`,
+        details: {
+          luckyNumbers: {
+            twoDigits: category === 0 ? [luckyNumber] : ['89'],
+            threeDigits: category === 1 ? [luckyNumber] : ['728'],
+          },
+        },
+      });
+      setIsJournalSaved(true);
+      onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
+    }
+    if (onOpenCard) {
+      onOpenCard({
+        type: 'number',
+        title: `เลขมงคลประจำตัว (${category === 0 ? 'เลข 2 ตัว' : 'เลข 3 ตัว'})`,
+        details: {
+          luckyNumbers: {
+            twoDigits: [luckyNumber],
+            threeDigits: category === 1 ? [luckyNumber] : ['728'],
+          },
+        },
+      });
+    }
+  };
+
   // When player loses a round
   const handleLose = useCallback(() => {
-    onToast('🏮 ตานี้ยังไม่ชนะ เพลิงจึงยังไม่ลาม — เล่นใหม่อีกครั้ง!');
+    setTimeout(() => {
+      onToast('🏮 ตานี้ยังไม่ชนะ เพลิงจึงยังไม่ลาม — เล่นใหม่อีกครั้ง!');
+    }, 0);
   }, [onToast]);
 
   // Reset to start a new burning talisman
   const handleReset = () => {
     setBurnLevel(0);
+    setIsJournalSaved(false);
     generateNumber(category);
-    onToast('เริ่มต้นแผ่นยันต์ใหม่เรียบร้อย');
+    setTimeout(() => {
+      onToast('เริ่มต้นแผ่นยันต์ใหม่เรียบร้อย');
+    }, 0);
   };
 
   return (
@@ -170,7 +217,17 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast }) =
             </div>
           </div>
 
-          <div className="row center" style={{ marginTop: '1.1rem' }}>
+          <div className="row center" style={{ marginTop: '1.1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            {onOpenCard && (
+              <button
+                type="button"
+                className="btn gold"
+                onClick={handleSaveAndShare}
+                title="บันทึกและแชร์การ์ดเลขมงคล"
+              >
+                <span>🎴 บันทึก&แชร์</span>
+              </button>
+            )}
             <button
               type="button"
               className="btn primary glow-gold"

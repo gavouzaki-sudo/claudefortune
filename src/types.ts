@@ -1,4 +1,4 @@
-export type DivinationTopic = 'stick' | 'tarot' | 'number' | 'ritual' | 'love' | 'scan' | 'meditation' | 'festival';
+export type DivinationTopic = 'stick' | 'tarot' | 'number' | 'ritual' | 'love' | 'scan' | 'meditation' | 'festival' | 'auspicious';
 
 export interface ZodiacInfo {
   id: number;

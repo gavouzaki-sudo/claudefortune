@@ -3,16 +3,21 @@ import { Bridge } from '../bridge';
 import type { StickResult } from '../types';
 import { PuaPoi } from './PuaPoi';
 import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
+import { spiritualSpeechEngine } from '../utils/spiritualSpeech';
+import { saveJournalEntry } from '../utils/fortuneJournal';
+import type { CardData } from '../utils/luckyCardCanvas';
 
 interface SiameseSticksProps {
   bridge: Bridge;
   onToast: (msg: string) => void;
+  onOpenCard?: (card: CardData) => void;
 }
 
 type StickRitualStep = 'cylinder' | 'puapoi' | 'prophecy';
 
-export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast }) => {
+export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, onOpenCard }) => {
   const [step, setStep] = useState<StickRitualStep>('cylinder');
+  const [prophecyMode, setProphecyMode] = useState<'read' | 'listen'>('read');
   const [shakeMeter, setShakeMeter] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -20,6 +25,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast })
   const [showFallen, setShowFallen] = useState(false);
   const [result, setResult] = useState<StickResult | null>(null);
   const [puaPoiVerified, setPuaPoiVerified] = useState<boolean>(false);
+  const [isJournalSaved, setIsJournalSaved] = useState<boolean>(false);
 
   const shakeValueRef = useRef(0);
   const shakeRawRef = useRef(0);
@@ -112,23 +118,82 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast })
 
   // User resets to shake a new stick
   const handleResetToShake = () => {
+    spiritualSpeechEngine.stop();
     setStep('cylinder');
     setFallenNum(null);
     setShowFallen(false);
     setResult(null);
     setPuaPoiVerified(false);
+    setIsJournalSaved(false);
+    setProphecyMode('read');
     shakeValueRef.current = 0;
     shakeRawRef.current = 0;
     setShakeMeter(0);
   };
 
-  // User confirms fortune through Pua Poi or skips
-  const handleConfirmFortune = () => {
+  // Manual save to fortune journal upon button click
+  const handleSaveAndShare = () => {
+    if (!result) return;
+    if (!isJournalSaved) {
+      saveJournalEntry({
+        type: 'stick',
+        title: `เซียมซีใบที่ ${result.stick} · ${result.title}`,
+        summary: `${result.level_name}: ${result.verse.slice(0, 80)}`,
+        details: {
+          stickNumber: result.stick,
+          fortuneTitle: result.title,
+          aspects: {
+            finance: result.aspects[0]?.text,
+            love: result.aspects[1]?.text,
+            health: result.aspects[2]?.text,
+            career: result.aspects[3]?.text,
+          },
+          poem: result.verse,
+        },
+      });
+      setIsJournalSaved(true);
+      onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
+    }
+    if (onOpenCard) {
+      onOpenCard({
+        type: 'stick',
+        title: `เซียมซีใบที่ ${result.stick} · ${result.title}`,
+        details: {
+          stickNumber: result.stick,
+          fortuneTitle: result.title,
+          aspects: {
+            finance: result.aspects[0]?.text,
+            love: result.aspects[1]?.text,
+            health: result.aspects[2]?.text,
+            career: result.aspects[3]?.text,
+          },
+          poem: result.verse,
+        },
+      });
+    }
+  };
+
+  // User confirms fortune through Pua Poi ('read' = text only, 'listen' = random voice & immediate speech)
+  const handleConfirmFortune = (mode: 'read' | 'listen' = 'read') => {
     setPuaPoiVerified(true);
+    setProphecyMode(mode);
     setStep('prophecy');
     setTimeout(() => {
       resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 50);
+
+    if (mode === 'listen' && result) {
+      const fullText = [
+        `เซียมซีใบที่ ${result.stick} ${result.title}`,
+        `คำทำนาย: ${result.level_name}`,
+        result.verse,
+        ...result.aspects.map((a) => `${a.name} ${a.text}`),
+      ].join('\n');
+      // Automatically selects a random persona (sinsei, dharma, meditation) and reads immediately
+      spiritualSpeechEngine.speak(fullText, { withChime: true });
+    } else {
+      spiritualSpeechEngine.stop();
+    }
   };
 
   return (
@@ -160,9 +225,10 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast })
           type="button"
           className={`step-pill ${step === 'prophecy' ? 'active' : ''}`}
           onClick={() => {
-            if (result) setStep('prophecy');
+            if (result && puaPoiVerified) setStep('prophecy');
           }}
-          disabled={!result}
+          disabled={!result || !puaPoiVerified}
+          title={!puaPoiVerified ? 'ต้องเสี่ยงทายไม้ปัวปวยจนเทพเจ้าเห็นชอบก่อน' : 'อ่านคำทำนาย'}
         >
           <span className="step-num">3</span>
           <span>อ่านคำทำนาย</span>
@@ -257,18 +323,52 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast })
             </div>
           </div>
 
-          {/* Spiritual Chanting & Dharma TTS Recitation Player */}
-          <SpiritualTTSPlayer
-            textToRead={[
-              `เซียมซีใบที่ ${result.stick} ${result.title}`,
-              `คำทำนาย: ${result.level_name}`,
-              result.verse,
-              ...result.aspects.map((a) => `${a.name} ${a.text}`),
-            ].join('\n')}
-            title={`เสียงสวดบทกลอนเซียมซี ใบที่ ${result.stick}`}
-            subtitle="สดับรับฟังเสียงสวดบทกลอนแบบช้าๆ กังวาน นุ่มนวล เสมือนซินแสผู้เฒ่าอ่านให้ฟัง"
-            initialExpanded={true}
-          />
+          {/* Prophecy Mode Switcher Bar (อ่าน vs ฟัง) */}
+          <div className="prophecy-mode-switch-row" role="tablist" aria-label="รูปแบบการรับคำทำนาย">
+            <button
+              type="button"
+              className={`btn-prophecy-mode ${prophecyMode === 'read' ? 'is-active' : ''}`}
+              onClick={() => {
+                setProphecyMode('read');
+                spiritualSpeechEngine.stop();
+              }}
+              title="แสดงเฉพาะข้อความคำทำนาย"
+            >
+              <span>📖 เฉพาะข้อความ (อ่าน)</span>
+            </button>
+            <button
+              type="button"
+              className={`btn-prophecy-mode ${prophecyMode === 'listen' ? 'is-active' : ''}`}
+              onClick={() => {
+                setProphecyMode('listen');
+                const fullText = [
+                  `เซียมซีใบที่ ${result.stick} ${result.title}`,
+                  `คำทำนาย: ${result.level_name}`,
+                  result.verse,
+                  ...result.aspects.map((a) => `${a.name} ${a.text}`),
+                ].join('\n');
+                spiritualSpeechEngine.speak(fullText, { withChime: true });
+              }}
+              title="สุ่มเสียงและเริ่มอ่านออกเสียงทันที"
+            >
+              <span>🔊 อ่าน</span>
+            </button>
+          </div>
+
+          {/* Spiritual Chanting & Dharma TTS Recitation Player - only shown in listen mode */}
+          {prophecyMode === 'listen' && (
+            <SpiritualTTSPlayer
+              textToRead={[
+                `เซียมซีใบที่ ${result.stick} ${result.title}`,
+                `คำทำนาย: ${result.level_name}`,
+                result.verse,
+                ...result.aspects.map((a) => `${a.name} ${a.text}`),
+              ].join('\n')}
+              title={`เสียงสวดบทกลอนเซียมซี ใบที่ ${result.stick}`}
+              subtitle="สดับรับฟังเสียงสวดบทกลอนแบบช้าๆ กังวาน นุ่มนวล เสมือนซินแสผู้เฒ่าอ่านให้ฟัง"
+              initialExpanded={true}
+            />
+          )}
 
           <p className="verse">{result.verse}</p>
 
@@ -283,6 +383,16 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast })
 
           {/* Action Row at Bottom of Prophecy */}
           <div className="prophecy-actions-footer">
+            {onOpenCard && (
+              <button
+                type="button"
+                className="btn gold btn-view-lucky-card"
+                onClick={handleSaveAndShare}
+                title="บันทึกและแชร์การ์ดมงคล"
+              >
+                <span>🎴 บันทึก&แชร์</span>
+              </button>
+            )}
             <button
               type="button"
               className="btn ghost btn-reshake-prophecy"

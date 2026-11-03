@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Bridge } from './bridge';
 import type { UserSession } from './types';
 import { MYSTICAL_THEMES } from './data/themes';
 import { detectSmartTheme } from './utils/smartTheme';
+import { LanguageProvider } from './context/LanguageContext';
 import { Header } from './components/Header';
 import { Ambient } from './components/Ambient';
 import { Gate } from './components/Gate';
@@ -19,7 +20,13 @@ import { Footer } from './components/Footer';
 import { Toast } from './components/Toast';
 import { Fireworks, type FireworksHandle } from './components/Fireworks';
 import { MeditationChamber } from './components/MeditationChamber';
+import { AuspiciousCalendar } from './components/AuspiciousCalendar';
+import { LuckyCardModal } from './components/LuckyCardModal';
+import { FortuneJournalModal } from './components/FortuneJournalModal';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { ambientSoundEngine } from './utils/ambientSoundscapes';
+import { getJournalEntries, subscribeJournal } from './utils/fortuneJournal';
+import type { CardData } from './utils/luckyCardCanvas';
 import type { DivinationTopic } from './types';
 
 const FEST_INDEX_MAP: Record<string, number> = {
@@ -44,12 +51,39 @@ export const App: React.FC = () => {
   const toastTimerRef = useRef<number | null>(null);
   const fireworksRef = useRef<FireworksHandle>(null);
 
-  const showToast = (msg: string) => {
+  // Modals for Option A (Lucky Card) & Option B (Fortune Journal)
+  const [activeCardData, setActiveCardData] = useState<CardData | null>(null);
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [isJournalOpen, setIsJournalOpen] = useState(false);
+  const [journalCount, setJournalCount] = useState(0);
+
+  // Sync journal entry count
+  useEffect(() => {
+    setJournalCount(getJournalEntries().length);
+    const unsub = subscribeJournal(() => {
+      setJournalCount(getJournalEntries().length);
+    });
+    return () => unsub();
+  }, []);
+
+  const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = window.setTimeout(() => {
       setToastMsg(null);
     }, 3200);
+  }, []);
+
+  const handleOpenCard = (data: CardData) => {
+    if (session) {
+      data.systemName = data.systemName || session.systemName;
+      data.symbolName = data.symbolName || session.symbolName;
+      data.symbolIcon = data.symbolIcon || session.symbolIcon;
+      data.element = data.element || session.element;
+      data.aura = data.aura || session.aura;
+    }
+    setActiveCardData(data);
+    setIsCardModalOpen(true);
   };
 
   // Initialize bridge and restore saved session
@@ -118,7 +152,6 @@ export const App: React.FC = () => {
   // Update theme, festival ID, and CSS variables
   useEffect(() => {
     if (!bridge) return;
-    const now = new Date();
 
     let targetThemeId: string;
     let targetFestId = 0;
@@ -167,31 +200,103 @@ export const App: React.FC = () => {
   };
 
   const festInfo = bridge?.festivalInfo(festivalId);
-  const activeThemeObj = MYSTICAL_THEMES.find((t) => t.id === activeThemeId);
+
+  const handleOpenAuspicious = useCallback(() => {
+    if (!session && bridge) {
+      const symName = 'มะเมีย (ม้าแก้ว)';
+      const z = bridge.initSession('มะเมีย', 2569, 6);
+      const info = bridge.zodiacInfo(z >= 0 ? z : 6);
+      setSession({
+        systemId: 'thai',
+        systemName: 'ไทย (12 นักษัตร)',
+        symbolName: symName,
+        symbolIcon: '🐎',
+        element: 'ไฟ / ทองคำ',
+        aura: 'ทองคำเรืองรอง',
+        attribute: 'โชคลาภบารมี',
+        year: 2569,
+        zodiac: 6,
+        info,
+      });
+    }
+    setTab('auspicious');
+  }, [bridge, session]);
 
   return (
-    <>
+    <LanguageProvider>
       <Ambient themeKey={activeThemeId} />
       <Header
         onGoHome={session ? handleSessionChange : undefined}
+        onOpenAuspicious={handleOpenAuspicious}
         hasActiveSession={!!session}
       />
 
       <main>
         {loadError && (
-          <section className="panel gate">
-            <p className="error">{loadError}</p>
+          <section className="panel gate shrine-loading-panel">
+            <span className="shrine-loader-emblem" aria-hidden="true">⛩️</span>
+            <p className="error" style={{ marginTop: '1rem', color: 'var(--warn, #ffb36b)' }}>{loadError}</p>
+            <button
+              type="button"
+              className="btn gold"
+              style={{ marginTop: '1.25rem' }}
+              onClick={async () => {
+                setLoadError(null);
+                const b = await Bridge.load();
+                b.setDate();
+                setBridge(b);
+              }}
+            >
+              เข้าสู่ศาลเจ้าอีกครั้ง
+            </button>
+          </section>
+        )}
+
+        {!loadError && !bridge && (
+          <section className="panel gate shrine-loading-panel">
+            <div className="shrine-gate-loader">
+              <span className="shrine-loader-emblem" aria-hidden="true">⛩️</span>
+              <h2 className="shrine-loader-title">กำลังเปิดประตูสู่ศาลเจ้าแห่งโชคลาภ</h2>
+              <p className="shrine-loader-sub">กำลังเชื่อมต่อแกนญาณและคำนวณตำแหน่งดวงดาว...</p>
+              <div className="shrine-loader-track">
+                <div className="shrine-loader-bar" />
+              </div>
+            </div>
           </section>
         )}
 
         {!loadError && bridge && !session && (
-          <Gate
-            bridge={bridge}
-            onSessionStart={(s) => {
-              setSession(s);
-              setTab('stick');
-            }}
-          />
+          <>
+            <Gate
+              bridge={bridge}
+              onSessionStart={(s) => {
+                setSession(s);
+                setTab('stick');
+              }}
+            />
+            <div className="gate-bottom-journal-row">
+              <button
+                type="button"
+                className="btn gold btn-bottom-journal btn-gate-calendar"
+                onClick={handleOpenAuspicious}
+                title="ปฏิทินวันมงคลและฤกษ์งามยามดี พ.ศ. 2569"
+              >
+                <span className="btn-journal-icon">🗓️</span>
+                <span>ปฏิทินฤกษ์มงคล 2569</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn gold btn-bottom-journal"
+                onClick={() => setIsJournalOpen(true)}
+                title="สมุดบันทึกดวงชะตา"
+              >
+                <span className="btn-journal-icon">📖</span>
+                <span>สมุดบันทึกดวง</span>
+                {journalCount > 0 && <span className="header-journal-badge">{journalCount}</span>}
+              </button>
+            </div>
+          </>
         )}
 
         {!loadError && bridge && session && (
@@ -218,15 +323,27 @@ export const App: React.FC = () => {
             {/* Frameless Ritual Stage (Positioned directly under menu with a slight gap) */}
             <div className="ritual-active-wrapper">
               {tab === 'stick' && (
-                <SiameseSticks bridge={bridge} onToast={showToast} />
+                <SiameseSticks
+                  bridge={bridge}
+                  onToast={showToast}
+                  onOpenCard={handleOpenCard}
+                />
               )}
 
               {tab === 'tarot' && (
-                <Tarot bridge={bridge} onToast={showToast} />
+                <Tarot
+                  bridge={bridge}
+                  onToast={showToast}
+                  onOpenCard={handleOpenCard}
+                />
               )}
 
               {tab === 'number' && (
-                <LuckyNumbers bridge={bridge} onToast={showToast} />
+                <LuckyNumbers
+                  bridge={bridge}
+                  onToast={showToast}
+                  onOpenCard={handleOpenCard}
+                />
               )}
 
               {tab === 'ritual' && (
@@ -253,6 +370,13 @@ export const App: React.FC = () => {
                 />
               )}
 
+              {tab === 'auspicious' && (
+                <AuspiciousCalendar
+                  onToast={showToast}
+                  onOpenCard={handleOpenCard}
+                />
+              )}
+
               {tab === 'festival' && (
                 <FestivalStage
                   bridge={bridge}
@@ -274,7 +398,7 @@ export const App: React.FC = () => {
               </span>
             </div>
 
-            {/* Bottom Return to Gate button */}
+            {/* Bottom Return to Gate and Journal buttons */}
             <div className="bottom-home-return-row">
               <button
                 type="button"
@@ -284,6 +408,17 @@ export const App: React.FC = () => {
               >
                 <span>🏠 กลับหน้าหลัก</span>
               </button>
+
+              <button
+                type="button"
+                className="btn gold btn-bottom-journal"
+                onClick={() => setIsJournalOpen(true)}
+                title="สมุดบันทึกดวงชะตา"
+              >
+                <span className="btn-journal-icon">📖</span>
+                <span>สมุดบันทึกดวง</span>
+                {journalCount > 0 && <span className="header-journal-badge">{journalCount}</span>}
+              </button>
             </div>
           </div>
         )}
@@ -292,6 +427,25 @@ export const App: React.FC = () => {
       <Footer />
       <Toast message={toastMsg} />
       <Fireworks ref={fireworksRef} />
-    </>
+
+      {/* Option A: Lucky Card Modal */}
+      <LuckyCardModal
+        isOpen={isCardModalOpen}
+        cardData={activeCardData}
+        onClose={() => setIsCardModalOpen(false)}
+        onToast={showToast}
+      />
+
+      {/* Option B: Fortune Journal Modal */}
+      <FortuneJournalModal
+        isOpen={isJournalOpen}
+        onClose={() => setIsJournalOpen(false)}
+        onOpenCard={handleOpenCard}
+        onToast={showToast}
+      />
+
+      {/* Offline Indicator Banner */}
+      <OfflineIndicator />
+    </LanguageProvider>
   );
 };

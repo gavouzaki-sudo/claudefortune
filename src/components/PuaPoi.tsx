@@ -15,7 +15,7 @@ export interface PuaPoiResult {
 interface PuaPoiProps {
   stickNumber: number;
   stickTitle?: string;
-  onConfirmFortune: () => void;
+  onConfirmFortune: (mode?: 'read' | 'listen') => void;
   onReshakeStick: () => void;
   onToast: (msg: string) => void;
 }
@@ -362,17 +362,41 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
 
       {/* Action Buttons Row - Optimized for Mobile Thumb Reach */}
       <div className="pua-actions-row">
-        {/* If Shengbei (Approved) -> Prominent button to read fortune */}
+        {/* Case 1: Shengbei (Approved / เซ้งปวย / 1 คว่ำ 1 หงาย) -> Choice between 'อ่าน' and 'ฟัง' */}
         {result?.type === 'sheng' ? (
+          <div className="pua-choice-buttons-grid">
+            <button
+              type="button"
+              className="btn primary btn-pua-read glow-gold"
+              onClick={() => onConfirmFortune('read')}
+              title="อ่านคำทำนายด้วยตนเอง (แสดงเฉพาะข้อความ)"
+            >
+              <span className="btn-pua-icon">📖</span>
+              <span className="btn-pua-text">อ่าน</span>
+            </button>
+            <button
+              type="button"
+              className="btn gold btn-pua-listen glow-amber"
+              onClick={() => onConfirmFortune('listen')}
+              title="ฟังเสียงสวดคำทำนาย (สุ่มเสียงซินแส/ธรรมบรรยาย แล้วเริ่มอ่านทันที)"
+            >
+              <span className="btn-pua-icon">🔊</span>
+              <span className="btn-pua-text">ฟัง</span>
+            </button>
+          </div>
+        ) : result?.type === 'yin' ? (
+          /* Case 2: Yinbei (Disapproved / อิ่มปวย / คว่ำทั้งคู่) -> Must reshake cylinder, NO toss button */
           <button
             type="button"
-            className="btn primary btn-pua-primary glow-gold"
-            onClick={onConfirmFortune}
+            className="btn primary btn-pua-primary btn-pua-reshake-prominent"
+            onClick={onReshakeStick}
+            disabled={tossing}
+            title="เทพเจ้าไม่เห็นชอบกับใบนี้ ต้องเริ่มเขย่ากระบอกเซียมซีใหม่"
           >
-            <span>📜 อ่านคำทำนายใบที่ {stickNumber} (สมบูรณ์)</span>
+            <span>🔄 เขย่ากระบอกเซียมซีใหม่</span>
           </button>
         ) : (
-          /* Normal Toss Button */
+          /* Case 3: Initial or Xiaobei (เชี่ยวปวย / หงายทั้งคู่) -> Toss button */
           <button
             type="button"
             className="btn primary btn-pua-primary"
@@ -382,30 +406,6 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
             <span>{tossing ? 'กำลังโยนหมุนเวียน...' : tossCount === 0 ? '🎲 โยนไม้ปัวปวยเสี่ยงทาย' : '🎲 โยนไม้ปัวปวยอีกครั้ง'}</span>
           </button>
         )}
-
-        {/* If Yinbei (Disapproved) -> Allow reshaking stick */}
-        {result?.type === 'yin' && (
-          <button
-            type="button"
-            className="btn ghost btn-pua-reshake"
-            onClick={onReshakeStick}
-            disabled={tossing}
-          >
-            <span>🔄 เขย่ากระบอกเซียมซีใหม่</span>
-          </button>
-        )}
-
-        {/* Fast-Track Skip Option for users in a rush */}
-        <button
-          type="button"
-          className="btn-pua-skip-link"
-          onClick={onConfirmFortune}
-          title="ข้ามขั้นตอนปัวปวยและอ่านคำทำนายทันที"
-        >
-          {result?.type === 'sheng'
-            ? ''
-            : 'หรือ ข้ามไปอ่านคำทำนายทันที (ไม่เสี่ยงปัวปวย) ❯'}
-        </button>
       </div>
     </div>
   );

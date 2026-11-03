@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import type { DivinationTopic } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 export interface RitualMenuItem {
   id: DivinationTopic;
@@ -20,6 +21,7 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
   onSelectTopic,
   festivalName,
 }) => {
+  const { t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const activeTopicRef = useRef<DivinationTopic>(activeTopic);
   activeTopicRef.current = activeTopic;
@@ -36,59 +38,66 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
   const baseRituals: RitualMenuItem[] = [
     {
       id: 'stick',
-      title: 'เสี่ยงเซียมซี',
+      title: t.topicStick,
       icon: '🏮',
       badge: 'ศักดิ์สิทธิ์โบราณ',
-      subtitle: 'เซียมซีมงคล 28 ใบ',
+      subtitle: '28 Fortune Sticks',
     },
     {
       id: 'tarot',
-      title: 'ไพ่ยิปซี',
+      title: t.topicTarot,
       icon: '🔮',
       badge: 'สากลตะวันตก',
-      subtitle: 'ทาโรต์เปิดลิขิตชะตา',
+      subtitle: 'Arcana Tarot',
     },
     {
       id: 'number',
-      title: 'เลขมงคล',
+      title: t.topicNumber,
       icon: '🪦',
       badge: 'ตัวเลขนำโชค',
-      subtitle: 'ศิลาสุสานเที่ยงคืน',
+      subtitle: 'Lucky Numbers',
     },
     {
       id: 'ritual',
-      title: 'สะเดาะเคราะห์',
+      title: t.topicRitual,
       icon: '🪷',
       badge: 'ปัดเป่าเคราะห์',
-      subtitle: 'ต่อดวง / ลอยโคม / แก้ปีชง',
+      subtitle: 'Remedies & Lanterns',
     },
     {
       id: 'love',
-      title: 'ดวงความรัก',
+      title: t.topicLove,
       icon: '💖',
       badge: 'สระบัวสีชมพู',
-      subtitle: 'วาสนาคู่แท้ & ธาตุสมพงษ์',
+      subtitle: 'Love Affinity',
     },
     {
       id: 'scan',
-      title: 'สแกนดวง',
+      title: t.topicScan,
       icon: '🖐',
       badge: 'ไฮเทคสแกน',
-      subtitle: 'เขียนลายมือ & สแกนหน้า',
+      subtitle: 'Aura & Signature',
     },
     {
       id: 'meditation',
-      title: 'สมาธิ',
+      title: t.topicMeditation,
       icon: '🧘',
       badge: 'เสียงแวดล้อมมงคล',
-      subtitle: 'คลื่นเสียงสมาธิ & กำหนดจิต',
+      subtitle: '432Hz Soundscapes',
+    },
+    {
+      id: 'auspicious',
+      title: t.topicAuspicious,
+      icon: '🗓️',
+      badge: 'ฤกษ์ยามโหราศาสตร์',
+      subtitle: 'Auspicious Calendar',
     },
     {
       id: 'festival',
-      title: festivalName ? `ลานขอพร (${festivalName})` : 'ไหว้พระขอพร',
+      title: festivalName ? `${t.topicFestival} (${festivalName})` : t.topicFestival,
       icon: '✨',
       badge: 'ศิริมงคล',
-      subtitle: 'ถวายสักการะ & ปล่อยโคม',
+      subtitle: 'Prayers & Blessings',
     },
   ];
 

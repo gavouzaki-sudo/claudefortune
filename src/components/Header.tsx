@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { toggleMuteChant, isChantMuted, subscribeChantState } from '../utils/chantAudio';
+import { useLanguage } from '../context/LanguageContext';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
   onGoHome?: () => void;
+  onOpenAuspicious?: () => void;
   hasActiveSession?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onGoHome, hasActiveSession }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onGoHome,
+  onOpenAuspicious,
+  hasActiveSession,
+}) => {
+  const { lang, setLang, t } = useLanguage();
   const [muted, setMuted] = useState<boolean>(isChantMuted());
 
+  // Sync chant mute state
   useEffect(() => {
     const unsub = subscribeChantState(() => {
       setMuted(isChantMuted());
@@ -16,7 +25,7 @@ export const Header: React.FC<HeaderProps> = ({ onGoHome, hasActiveSession }) =>
     return () => unsub();
   }, []);
 
-  const handleToggle = () => {
+  const handleToggleAudio = () => {
     const next = toggleMuteChant();
     setMuted(next);
   };
@@ -27,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({ onGoHome, hasActiveSession }) =>
         className="brand"
         onClick={onGoHome}
         style={{ cursor: onGoHome ? 'pointer' : 'default' }}
-        title={onGoHome ? 'คลิกเพื่อกลับหน้าหลัก / เลือกอารยธรรม' : undefined}
+        title={onGoHome ? t.backHome : undefined}
         role={onGoHome ? 'button' : undefined}
         tabIndex={onGoHome ? 0 : undefined}
         onKeyDown={(e) => {
@@ -39,33 +48,81 @@ export const Header: React.FC<HeaderProps> = ({ onGoHome, hasActiveSession }) =>
       >
         <span className="brand-lantern" aria-hidden="true" />
         <div>
-          <h1>ศาลเจ้าแห่งโชคลาภ</h1>
-          <p className="sub">
-            เซียมซี · ไพ่ยิปซี · สะเดาะเคราะห์และโหราศาสตร์สากล
-          </p>
+          <h1>{t.appName}</h1>
+          <p className="sub">{t.appSubtitle}</p>
         </div>
       </div>
 
       <div className="header-actions-right">
+        {/* Quick Auspicious Calendar Button */}
+        {onOpenAuspicious && (
+          <button
+            type="button"
+            className="btn-header-auspicious-action"
+            onClick={onOpenAuspicious}
+            title="ปฏิทินวันมงคลและฤกษ์งามยามดี พ.ศ. 2569"
+            aria-label="ปฏิทินฤกษ์มงคล"
+          >
+            <span className="btn-auspicious-icon">🗓️</span>
+            <span className="btn-auspicious-label-full">ปฏิทินฤกษ์มงคล 2569</span>
+            <span className="btn-auspicious-label-short">ฤกษ์มงคล</span>
+          </button>
+        )}
+
+        {/* Home Button (Active Session) */}
         {hasActiveSession && onGoHome && (
           <button
             type="button"
             className="btn-header-home-action"
             onClick={onGoHome}
-            title="กลับสู่หน้าหลัก"
+            title={t.backHome}
+            aria-label={t.backHome}
           >
-            <span>🏠 กลับหน้าหลัก</span>
+            <span className="btn-home-icon">🏠</span>
+            <span className="btn-home-label-full">{t.backHome}</span>
+            <span className="btn-home-label-short">{t.home}</span>
           </button>
         )}
 
-        {/* Upper-right Audio Speaker Toggle */}
+        {/* Language Segmented Toggle (TH / EN / CN) */}
+        <div className="header-lang-toggle-group" role="group" aria-label="Language selector">
+          <button
+            type="button"
+            className={`btn-lang-toggle ${lang === 'th' ? 'is-active' : ''}`}
+            onClick={() => setLang('th')}
+            title="ภาษาไทย (TH)"
+          >
+            TH
+          </button>
+          <button
+            type="button"
+            className={`btn-lang-toggle ${lang === 'en' ? 'is-active' : ''}`}
+            onClick={() => setLang('en')}
+            title="English (EN)"
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            className={`btn-lang-toggle ${lang === 'zh' ? 'is-active' : ''}`}
+            onClick={() => setLang('zh')}
+            title="中文 (CN)"
+          >
+            CN
+          </button>
+        </div>
+
+        {/* PWA Install Button */}
+        <PWAInstallButton />
+
+        {/* Audio Speaker Toggle */}
         <div className="header-audio-control">
           <button
             type="button"
             className={`btn-speaker-icon-only ${muted ? 'is-muted' : 'is-active'}`}
-            onClick={handleToggle}
-            title={muted ? 'เปิดเสียงดนตรี' : 'ปิดเสียงดนตรี'}
-            aria-label={muted ? 'เปิดเสียงดนตรี' : 'ปิดเสียงดนตรี'}
+            onClick={handleToggleAudio}
+            title={muted ? t.soundOn : t.soundOff}
+            aria-label={muted ? t.soundOn : t.soundOff}
           >
             <span className="speaker-icon">{muted ? '🔇' : '🔊'}</span>
           </button>
@@ -74,4 +131,3 @@ export const Header: React.FC<HeaderProps> = ({ onGoHome, hasActiveSession }) =>
     </header>
   );
 };
-

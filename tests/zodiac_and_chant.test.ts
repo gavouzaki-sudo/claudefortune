@@ -112,5 +112,45 @@ test('Spiritual Text-to-Speech presets include Elder Sinsei, Dharma Calm, and Me
   assert.doesNotThrow(() => spiritualSpeechEngine.stop());
 });
 
+test('Multi-language translation dictionary covers TH, EN, and ZH with identical keys', async () => {
+  const { TRANSLATIONS } = await import('../src/data/translations');
+  assert.ok(TRANSLATIONS.th, 'Missing Thai translations');
+  assert.ok(TRANSLATIONS.en, 'Missing English translations');
+  assert.ok(TRANSLATIONS.zh, 'Missing Chinese translations');
+
+  const thKeys = Object.keys(TRANSLATIONS.th);
+  const enKeys = Object.keys(TRANSLATIONS.en);
+  const zhKeys = Object.keys(TRANSLATIONS.zh);
+
+  assert.equal(thKeys.length, enKeys.length, 'Key count mismatch between TH and EN');
+  assert.equal(thKeys.length, zhKeys.length, 'Key count mismatch between TH and ZH');
+
+  for (const k of thKeys) {
+    assert.ok(k in TRANSLATIONS.en, `Missing EN key: ${k}`);
+    assert.ok(k in TRANSLATIONS.zh, `Missing ZH key: ${k}`);
+  }
+});
+
+test('PWA icon assets and Web App Manifest are present and valid', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+
+  const requiredIcons = [
+    'public/icon.svg',
+    'public/pwa-192x192.png',
+    'public/pwa-512x512.png',
+    'public/pwa-maskable-512x512.png',
+    'public/apple-touch-icon.png',
+  ];
+
+  for (const iconPath of requiredIcons) {
+    const full = path.resolve(process.cwd(), iconPath);
+    assert.ok(fs.existsSync(full), `Required PWA icon not found: ${iconPath}`);
+    const stat = fs.statSync(full);
+    assert.ok(stat.size > 100, `Icon file is suspiciously small or empty: ${iconPath}`);
+  }
+});
+
+
 
 
