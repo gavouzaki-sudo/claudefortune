@@ -227,7 +227,6 @@ export const App: React.FC = () => {
       <Ambient themeKey={activeThemeId} />
       <Header
         onGoHome={session ? handleSessionChange : undefined}
-        onOpenAuspicious={handleOpenAuspicious}
         hasActiveSession={!!session}
       />
 

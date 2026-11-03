@@ -54,21 +54,6 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="header-actions-right">
-        {/* Quick Auspicious Calendar Button */}
-        {onOpenAuspicious && (
-          <button
-            type="button"
-            className="btn-header-auspicious-action"
-            onClick={onOpenAuspicious}
-            title="ปฏิทินวันมงคลและฤกษ์งามยามดี พ.ศ. 2569"
-            aria-label="ปฏิทินฤกษ์มงคล"
-          >
-            <span className="btn-auspicious-icon">🗓️</span>
-            <span className="btn-auspicious-label-full">ปฏิทินฤกษ์มงคล 2569</span>
-            <span className="btn-auspicious-label-short">ฤกษ์มงคล</span>
-          </button>
-        )}
-
         {/* Home Button (Active Session) */}
         {hasActiveSession && onGoHome && (
           <button

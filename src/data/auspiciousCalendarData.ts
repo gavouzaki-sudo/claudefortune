@@ -90,14 +90,14 @@ export interface BirthDayOption {
 }
 
 export const BIRTH_DAYS: BirthDayOption[] = [
-  { id: 'sunday', labelTh: 'วันอาทิตย์', icon: '☀️', rulerPlanet: 'พระอาทิตย์ (๑)', kalakiniDayOfWeek: 5, kalakiniDayNameTh: 'วันศุกร์', sriDayNameTh: 'วันอังคาร' },
-  { id: 'monday', labelTh: 'วันจันทร์', icon: '🌙', rulerPlanet: 'พระจันทร์ (๒)', kalakiniDayOfWeek: 0, kalakiniDayNameTh: 'วันอาทิตย์', sriDayNameTh: 'วันพุธกลางวัน' },
-  { id: 'tuesday', labelTh: 'วันอังคาร', icon: '⚔️', rulerPlanet: 'พระอังคาร (๓)', kalakiniDayOfWeek: 1, kalakiniDayNameTh: 'วันจันทร์', sriDayNameTh: 'วันเสาร์' },
-  { id: 'wednesday_day', labelTh: 'วันพุธ (กลางวัน 06:00 - 17:59)', icon: '🍃', rulerPlanet: 'พระพุธ (๔)', kalakiniDayOfWeek: 2, kalakiniDayNameTh: 'วันอังคาร', sriDayNameTh: 'วันพฤหัสบดี' },
-  { id: 'wednesday_night', labelTh: 'วันพุธ (กลางคืน 18:00 - 05:59 / ราหู)', icon: '🌑', rulerPlanet: 'พระราหู (๘)', kalakiniDayOfWeek: 4, kalakiniDayNameTh: 'วันพฤหัสบดี', sriDayNameTh: 'วันอังคาร' },
+  { id: 'sunday', labelTh: 'วันอาทิตย์', icon: '☀️', rulerPlanet: 'พระอาทิตย์ (๑)', kalakiniDayOfWeek: 5, kalakiniDayNameTh: 'วันศุกร์', sriDayNameTh: 'วันพุธ (กลางวัน)' },
+  { id: 'monday', labelTh: 'วันจันทร์', icon: '🌙', rulerPlanet: 'พระจันทร์ (๒)', kalakiniDayOfWeek: 0, kalakiniDayNameTh: 'วันอาทิตย์', sriDayNameTh: 'วันเสาร์' },
+  { id: 'tuesday', labelTh: 'วันอังคาร', icon: '⚔️', rulerPlanet: 'พระอังคาร (๓)', kalakiniDayOfWeek: 1, kalakiniDayNameTh: 'วันจันทร์', sriDayNameTh: 'วันพฤหัสบดี' },
+  { id: 'wednesday_day', labelTh: 'วันพุธ (กลางวัน 06:00 - 17:59)', icon: '🍃', rulerPlanet: 'พระพุธ (๔)', kalakiniDayOfWeek: 2, kalakiniDayNameTh: 'วันอังคาร', sriDayNameTh: 'วันพุธกลางคืน/ราหู' },
+  { id: 'wednesday_night', labelTh: 'วันพุธ (กลางคืน 18:00 - 05:59 / ราหู)', icon: '🌑', rulerPlanet: 'พระราหู (๘)', kalakiniDayOfWeek: 4, kalakiniDayNameTh: 'วันพฤหัสบดี', sriDayNameTh: 'วันจันทร์' },
   { id: 'thursday', labelTh: 'วันพฤหัสบดี', icon: '📜', rulerPlanet: 'พระพฤหัสบดี (๕)', kalakiniDayOfWeek: 6, kalakiniDayNameTh: 'วันเสาร์', sriDayNameTh: 'วันอาทิตย์' },
-  { id: 'friday', labelTh: 'วันศุกร์', icon: '💎', rulerPlanet: 'พระศุกร์ (๖)', kalakiniDayOfWeek: 3, kalakiniDayNameTh: 'วันพุธกลางคืน/ราหู', sriDayNameTh: 'วันจันทร์' },
-  { id: 'saturday', labelTh: 'วันเสาร์', icon: '🛡️', rulerPlanet: 'พระเสาร์ (๗)', kalakiniDayOfWeek: 3, kalakiniDayNameTh: 'วันพุธกลางวัน', sriDayNameTh: 'วันศุกร์' },
+  { id: 'friday', labelTh: 'วันศุกร์', icon: '💎', rulerPlanet: 'พระศุกร์ (๖)', kalakiniDayOfWeek: 3, kalakiniDayNameTh: 'วันพุธ (กลางคืน/ราหู)', sriDayNameTh: 'วันอังคาร' },
+  { id: 'saturday', labelTh: 'วันเสาร์', icon: '🛡️', rulerPlanet: 'พระเสาร์ (๗)', kalakiniDayOfWeek: 3, kalakiniDayNameTh: 'วันพุธ (กลางวัน)', sriDayNameTh: 'วันศุกร์' },
 ];
 
 export const WORK_CATEGORIES_INFO: Record<
@@ -114,7 +114,7 @@ export const WORK_CATEGORIES_INFO: Record<
   },
   house: {
     id: 'house',
-    titleTh: 'ฤกษ์ขึ้นบ้านใหม่ / ย้ายเข้าที่อยู่อาศัย',
+    titleTh: 'ฤกษ์ขึ้นบ้านใหม่ / ย้ายเข้าที่อยู่อาศัยใหม่',
     icon: '🏡',
     shortDesc: 'ตั้งหลักปักฐานมั่นคง ร่มเย็นเป็นสุข ปลอดภัย ไร้โรคภัย ทรัพย์พูนทวี',
     preferredRuk: ['bhumipalo', 'thewi', 'mahatthano', 'raja'],
@@ -130,15 +130,15 @@ export const WORK_CATEGORIES_INFO: Record<
   },
   vehicle_business: {
     id: 'vehicle_business',
-    titleTh: 'ฤกษ์ออกรถใหม่ / เปิดกิจการร้านค้า',
+    titleTh: 'ฤกษ์ออกรถใหม่ / ขึ้นบ้านใหม่ / เปิดกิจการร้านค้า',
     icon: '🚗',
     shortDesc: 'ยานพาหนะแคล้วคลาด ปลอดภัย ค้าขายกำไรพุ่ง กิจการเติบโตก้าวหน้า',
     preferredRuk: ['mahatthano', 'raja', 'bhumipalo'],
-    taboosTh: 'หลีกเลี่ยงวันกาลกิณีของเจ้าของรถ/เจ้าของกิจการโดยเด็ดขาด และห้ามวันโลกาวินาศ',
+    taboosTh: 'หลีกเลี่ยงวันกาลกิณีของเจ้าของรถ/เจ้าของกิจการโดยเด็ดขาด และห้ามวันโลกาวินาศ/วันอุบาทว์',
   },
   others: {
     id: 'others',
-    titleTh: 'ฤกษ์มงคลอื่นๆ (เจรจาค้าขาย / ศัลยกรรม / ลงทุน)',
+    titleTh: 'ฤกษ์มงคลอื่นๆ (ถ้ามี เช่น เจรจาค้าขาย, ทำศัลยกรรม)',
     icon: '✨',
     shortDesc: 'เจรจาสำเร็จราบรื่น ทำศัลยกรรมใบหน้าสง่างาม เสริมดวงเสี่ยงโชค ปิดดีลธุรกิจ',
     preferredRuk: ['mahatthano', 'thewi', 'raja', 'daliddo'],
@@ -260,10 +260,24 @@ export function getKalaYogaForYear(yearBE: number): {
 
 // Maha Thaksa Relationship Calculation (คำนวณทักษาปกรณ์เปรียบเทียบวันเกิดกับวันในปฏิทิน)
 export function getThaksaRelation(birthDayId: BirthDayId, dayOfWeek: number): ThaksaRelation {
-  // Mapping birth days to their 8 order positions
+  const birthOption = BIRTH_DAYS.find((b) => b.id === birthDayId);
+
+  // 1. Direct authoritative check for Kalakini day
+  if (birthOption && birthOption.kalakiniDayOfWeek === dayOfWeek) {
+    return {
+      relation: 'kalakini',
+      nameTh: 'กาลกิณี',
+      isKalakini: true,
+      isFavorable: false,
+      scoreBonus: -100,
+      badgeText: '⚠️ วันกาลกิณี (ควรหลีกเลี่ยง)',
+      badgeStyle: 'bad',
+      advice: `เป็นวันกาลกิณีของคนเกิด${birthOption.labelTh} ตามหลักมหาทักษาโบราณ ควรหลีกเลี่ยงการจัดพิธีมงคล ออกรถ แต่งงาน หรือขึ้นบ้านใหม่`,
+    };
+  }
+
+  // 2. Standard Thaksa sequence: บริวาร, อายุ, เดช, ศรี, มูละ, อุตสาหะ, มนตรี, กาลกิณี
   // Sunday=0, Monday=1, Tuesday=2, WedDay=3, Saturday=4, Thursday=5, Rahu/WedNight=6, Friday=7
-  const order = [0, 1, 2, 3, 6, 4, 3.5, 5]; // mapping of dayOfWeek to thaksa cycle
-  // Standard Thaksa sequence: บริวาร, อายุ, เดช, ศรี, มูละ, อุตสาหะ, มนตรี, กาลกิณี
   const birthMap: Record<BirthDayId, number> = {
     sunday: 0,
     monday: 1,
@@ -1411,6 +1425,11 @@ export const NOVEMBER_2569_DAYS: AuspiciousDay[] = [
 
 // Dynamic Generator for any Month and Year
 export function generateMonthAuspiciousDays(yearBE: number, month: number): AuspiciousDay[] {
+  // Guard the public engine boundary so invalid UI/search input cannot create
+  // malformed dates or silently generate an empty/invalid calendar.
+  if (!Number.isInteger(yearBE) || yearBE < 2400 || yearBE > 9999) return [];
+  if (!Number.isInteger(month) || month < 1 || month > 12) return [];
+
   if (yearBE === 2569 && month === 11) {
     return NOVEMBER_2569_DAYS;
   }
@@ -1519,7 +1538,7 @@ export function generateMonthAuspiciousDays(yearBE: number, month: number): Ausp
       dithiName: isMaster ? 'ดิถีอำมฤตโชค (ความสำเร็จสูงสุด)' : 'ดิถีสิทธิโชค (สำเร็จราบรื่น)',
       isMasterAuspicious: isMaster,
       rating,
-      suitableCategories,
+      suitableCategories: Array.from(new Set(suitableCategories)),
       bestHours: {
         primaryTime: '09:09 - 10:39 น.',
         secondaryTime: '13:19 - 14:49 น.',

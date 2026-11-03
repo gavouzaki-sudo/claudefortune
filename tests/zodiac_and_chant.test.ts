@@ -151,6 +151,62 @@ test('PWA icon assets and Web App Manifest are present and valid', async () => {
   }
 });
 
+test('Thai Astrological Calendar: 5 work categories and titles match user requirements', async () => {
+  const { WORK_CATEGORIES_INFO } = await import('../src/data/auspiciousCalendarData');
+  assert.equal(WORK_CATEGORIES_INFO.wedding.titleTh, 'ฤกษ์แต่งงาน / จดทะเบียนสมรส');
+  assert.equal(WORK_CATEGORIES_INFO.house.titleTh, 'ฤกษ์ขึ้นบ้านใหม่ / ย้ายเข้าที่อยู่อาศัยใหม่');
+  assert.equal(WORK_CATEGORIES_INFO.merit.titleTh, 'ฤกษ์ทำบุญประจำปี / ทำบุญบริษัท / ทำบุญบ้าน');
+  assert.equal(WORK_CATEGORIES_INFO.vehicle_business.titleTh, 'ฤกษ์ออกรถใหม่ / ขึ้นบ้านใหม่ / เปิดกิจการร้านค้า');
+  assert.equal(WORK_CATEGORIES_INFO.others.titleTh, 'ฤกษ์มงคลอื่นๆ (ถ้ามี เช่น เจรจาค้าขาย, ทำศัลยกรรม)');
+});
+
+test('Thai Astrological Calendar: Kala Yoga calculation for B.E. 2569', async () => {
+  const { getKalaYogaForYear } = await import('../src/data/auspiciousCalendarData');
+  const kala2569 = getKalaYogaForYear(2569);
+  assert.equal(kala2569.ubatha, 4, 'B.E. 2569 Ubatha should be Thursday (4)');
+  assert.equal(kala2569.lokawinas, 6, 'B.E. 2569 Lokawinas should be Saturday (6)');
+  assert.equal(kala2569.thongchai, 3, 'B.E. 2569 Thongchai should be Wednesday (3)');
+  assert.equal(kala2569.athipadi, 2, 'B.E. 2569 Athipadi should be Tuesday (2)');
+});
+
+test('Thai Astrological Calendar: Thaksa Kalakini and Sri relations are 100% authentic', async () => {
+  const { getThaksaRelation } = await import('../src/data/auspiciousCalendarData');
+
+  // Verify Kalakini for each day of birth
+  assert.equal(getThaksaRelation('sunday', 5).isKalakini, true, 'Sunday Kalakini is Friday (5)');
+  assert.equal(getThaksaRelation('monday', 0).isKalakini, true, 'Monday Kalakini is Sunday (0)');
+  assert.equal(getThaksaRelation('tuesday', 1).isKalakini, true, 'Tuesday Kalakini is Monday (1)');
+  assert.equal(getThaksaRelation('wednesday_day', 2).isKalakini, true, 'Wed Day Kalakini is Tuesday (2)');
+  assert.equal(getThaksaRelation('wednesday_night', 4).isKalakini, true, 'Wed Night Kalakini is Thursday (4)');
+  assert.equal(getThaksaRelation('thursday', 6).isKalakini, true, 'Thursday Kalakini is Saturday (6)');
+  assert.equal(getThaksaRelation('friday', 3).isKalakini, true, 'Friday Kalakini is Wednesday (3)');
+  assert.equal(getThaksaRelation('saturday', 3).isKalakini, true, 'Saturday Kalakini is Wednesday (3)');
+
+  // Verify non-Kalakini day is favorable
+  assert.equal(getThaksaRelation('friday', 2).isKalakini, false);
+  assert.equal(getThaksaRelation('friday', 2).relation, 'sri');
+});
+
+test('Thai Astrological Calendar: November 2569 days and dynamic month generation', async () => {
+  const { generateMonthAuspiciousDays } = await import('../src/data/auspiciousCalendarData');
+  const nov2569 = generateMonthAuspiciousDays(2569, 11);
+  assert.equal(nov2569.length, 30);
+
+  // Ubatha & Lokawinas days must not recommend wedding/house
+  const ubathaDays = nov2569.filter((d) => d.kalaYoga === 'ubatha');
+  const lokawinasDays = nov2569.filter((d) => d.kalaYoga === 'lokawinas');
+  assert.ok(ubathaDays.length >= 4, 'Nov 2569 has at least 4 Thursdays');
+  assert.ok(lokawinasDays.length >= 4, 'Nov 2569 has at least 4 Saturdays');
+
+  for (const d of ubathaDays) {
+    assert.ok(!d.suitableCategories.includes('wedding'), `Day ${d.dayOfMonth} is Ubatha and must not recommend wedding`);
+    assert.ok(!d.suitableCategories.includes('house'), `Day ${d.dayOfMonth} is Ubatha and must not recommend house`);
+  }
+  for (const d of lokawinasDays) {
+    assert.ok(!d.suitableCategories.includes('wedding'), `Day ${d.dayOfMonth} is Lokawinas and must not recommend wedding`);
+  }
+});
+
 
 
 
