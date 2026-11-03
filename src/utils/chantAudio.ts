@@ -772,3 +772,82 @@ export function playChant(sysId: string): void {
       console.warn('CulturalAudioEngine error:', err);
     });
 }
+
+/**
+ * Procedural authentic wood clatter sound when Pua Poi wooden blocks hit the altar floor
+ */
+export function playWoodClatter(): void {
+  if (isMuted) return;
+  engine
+    .init()
+    .then(() => {
+      if (!engine.ctx || !engine.out) return;
+      const c = engine.ctx;
+      const t0 = c.currentTime + 0.01;
+      // 3 percussive wooden bounces
+      const bounces = [0, 0.08, 0.17];
+      bounces.forEach((offset, idx) => {
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        const flt = c.createBiquadFilter();
+
+        osc.type = 'triangle';
+        const baseFreq = 540 - idx * 70 + (Math.random() * 40 - 20);
+        osc.frequency.setValueAtTime(baseFreq, t0 + offset);
+        osc.frequency.exponentialRampToValueAtTime(180, t0 + offset + 0.035);
+
+        flt.type = 'bandpass';
+        flt.frequency.value = 1100 - idx * 120;
+        flt.Q.value = 3.5;
+
+        const vol = (0.28 / (idx + 1)) * (0.85 + Math.random() * 0.3);
+        gain.gain.setValueAtTime(0.0001, t0 + offset);
+        gain.gain.linearRampToValueAtTime(vol, t0 + offset + 0.003);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + offset + 0.05);
+
+        osc.connect(flt).connect(gain).connect(engine.out!);
+        osc.start(t0 + offset);
+        osc.stop(t0 + offset + 0.06);
+      });
+    })
+    .catch(() => {});
+}
+
+/**
+ * Procedural fire crackle & ember sizzle sound effect when the talisman burns
+ */
+export function playFireCrackle(): void {
+  if (isMuted) return;
+  engine
+    .init()
+    .then(() => {
+      if (!engine.ctx || !engine.out) return;
+      const c = engine.ctx;
+      const t0 = c.currentTime + 0.01;
+      // Synthesize noise sparks for crackling fire
+      const sparks = [0, 0.06, 0.12, 0.19, 0.27, 0.35];
+      sparks.forEach((offset) => {
+        const osc = c.createOscillator();
+        const flt = c.createBiquadFilter();
+        const gain = c.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(800 + Math.random() * 1200, t0 + offset);
+        osc.frequency.exponentialRampToValueAtTime(120, t0 + offset + 0.04);
+
+        flt.type = 'highpass';
+        flt.frequency.value = 1400 + Math.random() * 800;
+
+        gain.gain.setValueAtTime(0.0001, t0 + offset);
+        gain.gain.linearRampToValueAtTime(0.22, t0 + offset + 0.002);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + offset + 0.038);
+
+        osc.connect(flt).connect(gain).connect(engine.out!);
+        osc.start(t0 + offset);
+        osc.stop(t0 + offset + 0.045);
+      });
+    })
+    .catch(() => {});
+}
+
+

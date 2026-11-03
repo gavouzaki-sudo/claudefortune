@@ -77,6 +77,13 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
       subtitle: 'เขียนลายมือ & สแกนหน้า',
     },
     {
+      id: 'meditation',
+      title: 'สมาธิ',
+      icon: '🧘',
+      badge: 'เสียงแวดล้อมมงคล',
+      subtitle: 'คลื่นเสียงสมาธิ & กำหนดจิต',
+    },
+    {
       id: 'festival',
       title: festivalName ? `ลานขอพร (${festivalName})` : 'ไหว้พระขอพร',
       icon: '✨',

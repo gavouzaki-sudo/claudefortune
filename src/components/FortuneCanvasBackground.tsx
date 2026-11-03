@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-export type FortuneTopic = 'stick' | 'tarot' | 'number' | 'ritual' | 'scan' | 'festival' | 'love' | 'cosmic';
+export type FortuneTopic = 'stick' | 'tarot' | 'number' | 'ritual' | 'scan' | 'festival' | 'love' | 'cosmic' | 'meditation';
 
 interface FortuneCanvasBackgroundProps {
   activeTopic: FortuneTopic;
@@ -1822,6 +1822,7 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       scan: new ScanScene(),
       festival: new TempleScene(),
       cosmic: new CosmicScene(),
+      meditation: new CosmicScene(),
     };
 
     let curSceneKey = activeTopic === 'tarot' ? (tarotVariant === 1 ? 'tarot1' : 'tarot0') : activeTopic;

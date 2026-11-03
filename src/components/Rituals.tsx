@@ -17,6 +17,22 @@ const CHONG_ZODIAC_OPTIONS = [
   { value: 11, label: "กุน (หมู / ช้างมงคล)" },
 ];
 
+const WISH_PRESETS = [
+  { icon: '🕊️', title: 'หมดเคราะห์', text: 'ขอให้หมดเคราะห์หมดโศก โรคภัยมลายสิ้น มีแต่ความสุขสงบ' },
+  { icon: '💰', title: 'โชคลาภเงินทอง', text: 'ขอให้เงินทองไหลมาเทมา มีโชคลาภ ค้าขายร่ำรวยมั่งคั่ง' },
+  { icon: '💼', title: 'การงานราบรื่น', text: 'ขอให้การงานราบรื่น ก้าวหน้ามั่นคง ได้รับการสนับสนุนที่ดี' },
+  { icon: '💖', title: 'ความรักสมหวัง', text: 'ขอให้พบเจอคู่แท้ ครอบครัวอบอุ่น มีกัลยาณมิตรที่จริงใจ' },
+  { icon: '🌿', title: 'สุขภาพแข็งแรง', text: 'ขอให้สุขภาพร่างกายแข็งแรง จิตใจแจ่มใส ปราศจากโรคภัย' },
+];
+
+const AMBIENT_LANTERNS = [
+  { id: 1, left: '15%', bottom: '40px', size: 14, delay: '0s', drift: '25px' },
+  { id: 2, left: '28%', bottom: '20px', size: 10, delay: '3s', drift: '-20px' },
+  { id: 3, left: '72%', bottom: '50px', size: 12, delay: '1.5s', drift: '30px' },
+  { id: 4, left: '85%', bottom: '30px', size: 16, delay: '4.5s', drift: '-25px' },
+  { id: 5, left: '48%', bottom: '70px', size: 9, delay: '6s', drift: '15px' },
+];
+
 interface RitualsProps {
   bridge: Bridge;
   userZodiac: number;
@@ -24,7 +40,24 @@ interface RitualsProps {
 }
 
 export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast }) => {
-  const [activeRit, setActiveRit] = useState<'candle' | 'lantern' | 'chong'>('candle');
+  const [activeRit, setActiveRit] = useState<'candle' | 'lantern' | 'chong'>(() => {
+    try {
+      const saved = sessionStorage.getItem('shrine.activeRit');
+      if (saved === 'candle' || saved === 'lantern' || saved === 'chong') return saved;
+    } catch {
+      // Ignore
+    }
+    return 'candle';
+  });
+
+  const handleSelectRit = (rit: 'candle' | 'lantern' | 'chong') => {
+    setActiveRit(rit);
+    try {
+      sessionStorage.setItem('shrine.activeRit', rit);
+    } catch {
+      // Ignore
+    }
+  };
 
   // Candle state
   const [candleLevel, setCandleLevel] = useState(0);
@@ -101,20 +134,19 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   const handleLaunchLantern = async () => {
     const trimmed = lanternText.trim();
     if (!trimmed) {
-      onToast('พิมพ์ความในใจก่อนปล่อยโคมนะ');
+      onToast('กรุณาพิมพ์หรือเลือกคำอธิษฐานก่อนปล่อยโคมนะ');
       return;
     }
 
     setLanternStyle({
-      left: `${20 + Math.random() * 60}%`,
-      dx: `${Math.round(Math.random() * 80 - 40)}px`,
+      left: `${30 + Math.random() * 40}%`,
+      dx: `${Math.round(Math.random() * 90 - 45)}px`,
     });
     setLanternFlying(true);
 
     try {
       const res = bridge.offering(1, trimmed);
       setLanternResult(res);
-      setLanternText(''); // The wish leaves the device with the lantern
     } catch {
       onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
     }
@@ -122,6 +154,10 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
     setTimeout(() => {
       setLanternFlying(false);
     }, 6200);
+  };
+
+  const handleSelectPreset = (text: string) => {
+    setLanternText(text);
   };
 
   // Chong Logic
@@ -150,36 +186,45 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   return (
     <section id="tab-ritual" className="ritual-frameless-stage tab" role="tabpanel">
       <h2 className="title">สะเดาะเคราะห์ออนไลน์</h2>
-      <div className="pills" role="tablist" aria-label="พิธีกรรม">
+
+      {/* High-visibility Ceremonial Ritual Tabs */}
+      <div className="pills" role="tablist" aria-label="พิธีกรรมสะเดาะเคราะห์">
         <button
           className={`pill ${activeRit === 'candle' ? 'active' : ''}`}
           type="button"
-          onClick={() => setActiveRit('candle')}
+          onClick={() => handleSelectRit('candle')}
+          aria-selected={activeRit === 'candle'}
         >
-          จุดเทียนต่อดวง
+          <span aria-hidden="true">🕯️</span>
+          <span>จุดเทียนต่อดวง</span>
         </button>
         <button
           className={`pill ${activeRit === 'lantern' ? 'active' : ''}`}
           type="button"
-          onClick={() => setActiveRit('lantern')}
+          onClick={() => handleSelectRit('lantern')}
+          aria-selected={activeRit === 'lantern'}
         >
-          ลอยโคมสะเดาะเคราะห์
+          <span aria-hidden="true">🏮</span>
+          <span>ลอยโคมสะเดาะเคราะห์</span>
         </button>
         <button
           className={`pill ${activeRit === 'chong' ? 'active' : ''}`}
           type="button"
-          onClick={() => setActiveRit('chong')}
+          onClick={() => handleSelectRit('chong')}
+          aria-selected={activeRit === 'chong'}
         >
-          แก้ปีชง
+          <span aria-hidden="true">☯️</span>
+          <span>แก้ปีชง</span>
         </button>
       </div>
 
-      {/* Candle */}
+      {/* Candle Ritual */}
       {activeRit === 'candle' && (
         <div id="rit-candle" className="rit">
           <p className="lead">
-            แตะค้างหรือกดเมาส์ค้างที่เทียน ยิ่งนานเทียนยิ่งสว่าง ค้างไว้ 4 วินาทีเพื่อปลดล็อกบทสวดและเลขมงคล
+            แตะค้างหรือกดเมาส์ค้างที่เทียนหรือปุ่มด้านล่าง ยิ่งนานเทียนยิ่งสว่าง ค้างไว้ 4 วินาทีเพื่อปลดล็อกบทสวดและเลขมงคล
           </p>
+
           <div
             id="candle-wrap"
             className="candle-wrap"
@@ -230,9 +275,26 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
               <div id="candle-ring" style={{ width: `${candleLevel}%` }} />
             </div>
           </div>
+
           <p id="candle-hint" className="center hint">
             {candleHint}
           </p>
+
+          {/* Prominent High-Contrast Action Button */}
+          <div className="candle-action-row">
+            <button
+              id="btn-candle-hold"
+              className="btn primary btn-candle-press"
+              type="button"
+              onPointerDown={pressCandle}
+              onPointerUp={releaseCandle}
+              onPointerCancel={releaseCandle}
+              aria-label="กดค้างเพื่อจุดเทียนต่อดวง"
+            >
+              <span>🕯️ กดค้างที่นี่ (หรือที่ตัวเทียน) เพื่อต่อดวงชะตา</span>
+              {candleLevel > 0 && <span className="candle-btn-pct">({candleLevel.toFixed(0)}%)</span>}
+            </button>
+          </div>
 
           {candleResult && (
             <article id="candle-result" className="result" aria-live="polite">
@@ -254,37 +316,157 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
         </div>
       )}
 
-      {/* Lantern */}
+      {/* Lantern Ritual */}
       {activeRit === 'lantern' && (
         <div id="rit-lantern" className="rit">
           <p className="lead">
-            พิมพ์ความทุกข์ใจหรือความกังวลลงไป แล้วปล่อยโคมให้ลอยขึ้นฟ้า — ข้อความไม่ถูกส่งออกจากเครื่องของคุณ
+            เขียนความทุกข์ใจ ความกังวล หรือคำอธิษฐานลงบนโคม แล้วปล่อยให้ลอยขึ้นสู่ฟากฟ้า เพื่อปัดเป่าเคราะห์ภัยให้สลายไป
           </p>
-          <div id="sky" className="sky" aria-hidden="true">
+
+          {/* Interactive Sky with Ambient and Main Ceremonial Lantern */}
+          <div id="sky" className="sky">
+            <div className="sky-moon" aria-hidden="true" />
+
+            {/* Ambient distant floating lanterns */}
+            {AMBIENT_LANTERNS.map((l) => (
+              <div
+                key={l.id}
+                className="ambient-distant-lantern"
+                style={{
+                  left: l.left,
+                  bottom: l.bottom,
+                  width: `${l.size}px`,
+                  height: `${l.size * 1.3}px`,
+                  animationDelay: l.delay,
+                  '--drift': l.drift,
+                } as React.CSSProperties}
+                aria-hidden="true"
+              />
+            ))}
+
+            {/* Main Ceremonial Lantern (Resting/Hovering before launch) */}
+            {!lanternFlying && (
+              <div
+                className="ceremonial-lantern-preview"
+                role="button"
+                tabIndex={0}
+                onClick={handleLaunchLantern}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleLaunchLantern();
+                  }
+                }}
+                title="แตะที่โคมหรือกดปุ่มด้านล่างเพื่อปล่อยโคม"
+                aria-label="โคมลอยสะเดาะเคราะห์ แตะเพื่อปล่อย"
+              >
+                <svg viewBox="0 0 100 140" className="lantern-body-svg" aria-hidden="true">
+                  <defs>
+                    <radialGradient id="lanternGlow" cx="50%" cy="65%" r="60%">
+                      <stop offset="0%" stopColor="#fff8e7" />
+                      <stop offset="35%" stopColor="#ffb347" />
+                      <stop offset="70%" stopColor="#e64a19" />
+                      <stop offset="100%" stopColor="#8d1b09" />
+                    </radialGradient>
+                    <linearGradient id="goldRim" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#c79c64" />
+                      <stop offset="50%" stopColor="#fff1d3" />
+                      <stop offset="100%" stopColor="#b3823c" />
+                    </linearGradient>
+                  </defs>
+                  {/* Bamboo top frame */}
+                  <rect x="25" y="8" width="50" height="6" rx="3" fill="url(#goldRim)" />
+                  {/* Lantern parchment body */}
+                  <path
+                    d="M26 14 C12 40, 10 95, 28 120 L72 120 C90 95, 88 40, 74 14 Z"
+                    fill="url(#lanternGlow)"
+                    stroke="rgba(255,215,100,0.85)"
+                    strokeWidth="1.5"
+                  />
+                  {/* Internal candle flame */}
+                  <circle cx="50" cy="98" r="14" fill="#fff" opacity="0.8" />
+                  <path d="M50 82 C55 92 56 102 50 108 C44 102 45 92 50 82Z" fill="#ffecb3" />
+                  {/* Bottom bamboo rim */}
+                  <rect x="26" y="118" width="48" height="6" rx="2" fill="url(#goldRim)" />
+                  {/* Auspicious red hanging tassel */}
+                  <line x1="50" y1="124" x2="50" y2="138" stroke="#d32f2f" strokeWidth="2.5" />
+                  <circle cx="50" cy="138" r="3" fill="#ffb300" />
+                </svg>
+                <div className="lantern-inner-wish-text">
+                  {lanternText.trim() ? lanternText.trim() : 'คำอธิษฐาน'}
+                </div>
+                <span className="lantern-tap-prompt">✨ แตะที่ตัวโคมเพื่อปล่อยลอย</span>
+              </div>
+            )}
+
+            {/* Flying Lantern Ascending into Sky */}
             {lanternFlying && lanternStyle && (
               <div
-                className="lantern"
-                style={
-                  {
-                    left: lanternStyle.left,
-                    '--dx': lanternStyle.dx,
-                  } as React.CSSProperties
-                }
-              />
+                className="flying-lantern"
+                style={{
+                  left: lanternStyle.left,
+                  '--dx': lanternStyle.dx,
+                } as React.CSSProperties}
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 100 140" className="lantern-body-svg">
+                  <defs>
+                    <radialGradient id="flyGlow" cx="50%" cy="65%" r="60%">
+                      <stop offset="0%" stopColor="#fff8e7" />
+                      <stop offset="35%" stopColor="#ffb347" />
+                      <stop offset="70%" stopColor="#e64a19" />
+                      <stop offset="100%" stopColor="#8d1b09" />
+                    </radialGradient>
+                  </defs>
+                  <rect x="25" y="8" width="50" height="6" rx="3" fill="#ffd54f" />
+                  <path
+                    d="M26 14 C12 40, 10 95, 28 120 L72 120 C90 95, 88 40, 74 14 Z"
+                    fill="url(#flyGlow)"
+                    stroke="#ffe082"
+                    strokeWidth="1.5"
+                  />
+                  <circle cx="50" cy="98" r="14" fill="#fff" opacity="0.95" />
+                  <rect x="26" y="118" width="48" height="6" rx="2" fill="#ffd54f" />
+                  <line x1="50" y1="124" x2="50" y2="138" stroke="#d32f2f" strokeWidth="2.5" />
+                </svg>
+              </div>
             )}
           </div>
+
+          {/* Quick Wish Presets */}
+          <div className="wish-presets-group">
+            <span className="wish-presets-label">
+              <span>เลือกคำอธิษฐานด่วน</span>
+              <span aria-hidden="true">👇</span>
+            </span>
+            <div className="wish-preset-chips">
+              {WISH_PRESETS.map((p, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className={`wish-preset-chip ${lanternText === p.text ? 'selected' : ''}`}
+                  onClick={() => handleSelectPreset(p.text)}
+                >
+                  <span>{p.icon}</span>
+                  <span>{p.title}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <label className="block">
-            ความในใจของคุณ
+            ความในใจ หรือคำอธิษฐานสะเดาะเคราะห์ของคุณ
             <textarea
               id="lantern-text"
               maxLength={300}
               rows={3}
-              placeholder="เช่น กังวลเรื่องงาน อยากให้ทุกอย่างดีขึ้น..."
+              placeholder="เช่น ขอให้หมดเคราะห์หมดโศก สุขภาพแข็งแรง การงานการเงินเจริญรุ่งเรือง..."
               value={lanternText}
               onChange={(e) => setLanternText(e.target.value)}
             />
           </label>
-          <div className="row center">
+
+          <div className="row center" style={{ marginTop: '0.8rem', gap: '0.8rem', flexWrap: 'wrap' }}>
             <button
               id="btn-lantern"
               className="btn primary"
@@ -292,8 +474,21 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
               onClick={handleLaunchLantern}
               disabled={lanternFlying}
             >
-              ปล่อยโคมลอยขึ้นฟ้า
+              <span>🏮</span>
+              <span>{lanternFlying ? 'โคมลอยกำลังนำพาคำอธิษฐานขึ้นสู่ฟากฟ้า...' : 'ปล่อยโคมลอยสะเดาะเคราะห์ขึ้นฟ้า'}</span>
             </button>
+            {lanternResult && (
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => {
+                  setLanternResult(null);
+                  setLanternText('');
+                }}
+              >
+                <span>🏮 ปล่อยโคมอีกดวง</span>
+              </button>
+            )}
           </div>
 
           {lanternResult && (
@@ -304,7 +499,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
             >
               {lanternResult.care ? (
                 <>
-                  <h3>มีคนรับฟังอยู่</h3>
+                  <h3>มีคนรับฟังอยู่เสมอ</h3>
                   <p>{lanternResult.message}</p>
                   <p className="center">
                     <a className="btn primary" href="tel:1323">
@@ -314,15 +509,15 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                 </>
               ) : (
                 <>
-                  <h3>โคมลอยขึ้นฟ้าแล้ว</h3>
+                  <h3>โคมลอยขึ้นสู่ฟากฟ้าสำเร็จแล้ว</h3>
                   <p className="center">
-                    เรื่องที่กังวล: <span className="badge lv1">{lanternResult.category}</span>
+                    เรื่องที่ปัดเป่า: <span className="badge lv1">{lanternResult.category}</span>
                   </p>
                   <p>{lanternResult.message}</p>
                   <p className="center">
                     คะแนนบุญวันนี้ {lanternResult.merit} · เลขมงคล{' '}
-                    <span className="badge lv0">{lanternResult.lucky}</span> · สีมงคล
-                    {lanternResult.color}
+                    <span className="badge lv0">{lanternResult.lucky}</span> · สีมงคล{' '}
+                    <span className="badge lv1">{lanternResult.color}</span>
                   </p>
                 </>
               )}
@@ -331,15 +526,15 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
         </div>
       )}
 
-      {/* Chong */}
+      {/* Chong Ritual */}
       {activeRit === 'chong' && (
         <div id="rit-chong" className="rit">
           <p className="lead">
-            เลือกนักษัตรและเรื่องที่กังวล เพื่อดูว่าปีนี้ชงหรือไม่ พร้อมวิธีเสริมดวง
+            เลือกนักษัตรและเรื่องที่กังวล เพื่อตรวจสอบว่าปีนี้ชงหรือไม่ พร้อมรับยันต์มงคลและวิธีเสริมดวงชะตา
           </p>
           <div className="grid2">
             <label>
-              นักษัตร
+              นักษัตรของคุณ
               <select
                 id="chong-zodiac"
                 value={chongZodiac}
@@ -353,16 +548,16 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
               </select>
             </label>
             <label>
-              เรื่องที่กังวล
+              เรื่องที่กังวลใจ
               <select
                 id="chong-problem"
                 value={chongProblem}
                 onChange={(e) => setChongProblem(parseInt(e.target.value, 10))}
               >
-                <option value={0}>การเงิน</option>
-                <option value={1}>ความรัก</option>
-                <option value={2}>สุขภาพ</option>
-                <option value={3}>การงาน</option>
+                <option value={0}>การเงินและโชคลาภ</option>
+                <option value={1}>ความรักและความสัมพันธ์</option>
+                <option value={2}>สุขภาพและอุบัติเหตุ</option>
+                <option value={3}>การงานและธุรกิจ</option>
               </select>
             </label>
           </div>
@@ -392,7 +587,8 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
               onClick={handlePerformChong}
               disabled={chongSpinning}
             >
-              ทำพิธีปัดเป่า
+              <span>☯️</span>
+              <span>{chongSpinning ? 'กำลังสวดปัดเป่าดวงชะตา...' : 'ทำพิธีปัดเป่าเคราะห์'}</span>
             </button>
           </div>
 

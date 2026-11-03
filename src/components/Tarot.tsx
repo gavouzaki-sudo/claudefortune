@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bridge } from '../bridge';
 import type { TarotCard } from '../types';
+import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
 
 interface TarotProps {
   bridge: Bridge;
@@ -94,6 +95,28 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast }) => {
           </button>
         )}
       </div>
+
+      {/* Spiritual Chanting & Dharma TTS for Tarot Readings */}
+      {cards.length > 0 && Object.keys(flipped).length > 0 && (
+        <SpiritualTTSPlayer
+          textToRead={cards
+            .map((card, idx) => {
+              const isFlipped = !!flipped[idx];
+              if (!isFlipped) return null;
+              const pos = positions[idx] || `ตำแหน่งที่ ${idx + 1}`;
+              return [
+                `ตำแหน่ง ${pos}: ไพ่ ${card.name} (${card.en})`,
+                card.reversed ? 'สถานะ: ไพ่กลับหัว' : 'สถานะ: ไพ่หัวตั้ง',
+                `ความหมายและคำทำนาย: ${card.meaning}`,
+              ].join('\n');
+            })
+            .filter(Boolean)
+            .join('\n\n')}
+          title="เสียงซินแสอ่านคำทำนายไพ่ยิปซี"
+          subtitle="สดับรับฟังเสียงอ่านความหมายไพ่และคำแนะนำชะตาชีวิต"
+          initialExpanded={false}
+        />
+      )}
 
       <div id="tarot-table" className="tarot-table" aria-live="polite">
         {cards.map((card, idx) => {

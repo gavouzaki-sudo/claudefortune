@@ -1,20 +1,25 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Bridge } from '../bridge';
 import type { StickResult } from '../types';
+import { PuaPoi } from './PuaPoi';
+import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
 
 interface SiameseSticksProps {
   bridge: Bridge;
   onToast: (msg: string) => void;
 }
 
+type StickRitualStep = 'cylinder' | 'puapoi' | 'prophecy';
+
 export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast }) => {
+  const [step, setStep] = useState<StickRitualStep>('cylinder');
   const [shakeMeter, setShakeMeter] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [fallenNum, setFallenNum] = useState<number | null>(null);
   const [showFallen, setShowFallen] = useState(false);
   const [result, setResult] = useState<StickResult | null>(null);
-  const [motionAvailable, setMotionAvailable] = useState(false);
+  const [puaPoiVerified, setPuaPoiVerified] = useState<boolean>(false);
 
   const shakeValueRef = useRef(0);
   const shakeRawRef = useRef(0);
@@ -30,18 +35,21 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast })
     try {
       const res = bridge.drawStick(shakeRawRef.current);
       setFallenNum(res.stick);
+      setResult(res);
       setShowFallen(false);
 
-      // force reflow trigger animation
+      // Trigger fallen stick animation
       setTimeout(() => {
         setShowFallen(true);
       }, 20);
 
       const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-      await new Promise((r) => setTimeout(r, reduceMotion ? 0 : 700));
+      await new Promise((r) => setTimeout(r, reduceMotion ? 100 : 750));
 
-      setResult(res);
-      resultRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+      // Transition to authentic Pua Poi verification step
+      setStep('puapoi');
+      setPuaPoiVerified(false);
+      onToast(`✨ ไม้เซียมซีใบที่ ${res.stick} หล่นออกมาแล้ว! โปรดโยนไม้ปัวปวยขอยืนยัน`);
     } catch {
       onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
     } finally {
@@ -102,126 +110,168 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast })
     lastPointerRef.current = null;
   };
 
-  // Device Motion
-  useEffect(() => {
-    let prev = 0;
-    const onMotion = (e: DeviceMotionEvent) => {
-      const a = e.accelerationIncludingGravity;
-      if (!a) return;
-      const mag = Math.hypot(a.x || 0, a.y || 0, a.z || 0);
-      const delta = Math.abs(mag - prev);
-      prev = mag;
-      if (delta > 5) addShake(delta * 0.5);
-    };
+  // User resets to shake a new stick
+  const handleResetToShake = () => {
+    setStep('cylinder');
+    setFallenNum(null);
+    setShowFallen(false);
+    setResult(null);
+    setPuaPoiVerified(false);
+    shakeValueRef.current = 0;
+    shakeRawRef.current = 0;
+    setShakeMeter(0);
+  };
 
-    const isDeviceMotionSupported = typeof window !== 'undefined' && typeof window.DeviceMotionEvent !== 'undefined';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dm = window.DeviceMotionEvent as any;
-    if (isDeviceMotionSupported && typeof dm.requestPermission === 'function') {
-      setMotionAvailable(true);
-    } else if (isDeviceMotionSupported) {
-      window.addEventListener('devicemotion', onMotion);
-      return () => window.removeEventListener('devicemotion', onMotion);
-    }
-  }, [addShake]);
-
-  const requestMotionPermission = async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dm = window.DeviceMotionEvent as any;
-    try {
-      const res = await dm.requestPermission();
-      if (res === 'granted') {
-        const onMotion = (e: DeviceMotionEvent) => {
-          const a = e.accelerationIncludingGravity;
-          if (!a) return;
-          const mag = Math.hypot(a.x || 0, a.y || 0, a.z || 0);
-          addShake(mag * 0.3);
-        };
-        window.addEventListener('devicemotion', onMotion);
-        setMotionAvailable(false);
-        onToast('เปิดเซ็นเซอร์แล้ว เขย่ามือถือได้เลย');
-      } else {
-        onToast('ไม่ได้รับอนุญาตใช้เซ็นเซอร์');
-      }
-    } catch {
-      onToast('ใช้เซ็นเซอร์ไม่ได้บนอุปกรณ์นี้');
-    }
+  // User confirms fortune through Pua Poi or skips
+  const handleConfirmFortune = () => {
+    setPuaPoiVerified(true);
+    setStep('prophecy');
+    setTimeout(() => {
+      resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
   };
 
   return (
     <section id="tab-stick" className="ritual-frameless-stage tab" role="tabpanel">
-      <h2 className="title">เสี่ยงเซียมซี</h2>
-      <p className="lead">
-        ตั้งจิตอธิษฐาน แล้วเขย่ากระบอกจนไม้เซียมซีหล่นออกมา — กดปุ่ม ลากเมาส์ หรือเขย่ามือถือก็ได้
-      </p>
-
-      <div className="stick-stage">
-        <div
-          id="cylinder"
-          className={`cylinder ${isShaking ? 'shaking' : ''}`}
-          aria-label="กระบอกเซียมซี"
-          role="img"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-        >
-          <div className="sticks">
-            <i />
-            <i />
-            <i />
-            <i />
-            <i />
-            <i />
-            <i />
-          </div>
-          <div className="cyl-body">
-            <span className="cyl-mark">福</span>
-          </div>
-        </div>
-        <div id="fallen" className={`fallen ${showFallen ? 'show' : ''}`} aria-hidden="true">
-          <span id="fallen-num">{fallenNum ?? 0}</span>
-        </div>
-      </div>
-
-      <div className="meter" aria-hidden="true">
-        <div id="shake-meter" style={{ width: `${shakeMeter}%` }} />
-      </div>
-
-      <div className="row center">
+      {/* Step Indicator Header (Compact & Mobile-friendly) */}
+      <div className="stick-step-progress" aria-label="ขั้นตอนพิธีกรรมเซียมซี">
         <button
-          id="btn-shake"
-          className="btn primary"
           type="button"
-          onClick={handleButtonClick}
-          disabled={busy}
+          className={`step-pill ${step === 'cylinder' ? 'active' : ''}`}
+          onClick={handleResetToShake}
         >
-          เขย่าเซียมซี
+          <span className="step-num">1</span>
+          <span>เขย่าเซียมซี</span>
         </button>
-        {motionAvailable && (
-          <button
-            id="btn-motion"
-            className="btn ghost"
-            type="button"
-            onClick={requestMotionPermission}
-          >
-            เปิดเซ็นเซอร์เขย่ามือถือ
-          </button>
-        )}
+        <span className="step-divider">&gt;</span>
+        <button
+          type="button"
+          className={`step-pill ${step === 'puapoi' ? 'active' : ''}`}
+          onClick={() => {
+            if (result) setStep('puapoi');
+          }}
+          disabled={!result}
+        >
+          <span className="step-num">2</span>
+          <span>เสี่ยงปัวปวย (筊杯)</span>
+        </button>
+        <span className="step-divider">&gt;</span>
+        <button
+          type="button"
+          className={`step-pill ${step === 'prophecy' ? 'active' : ''}`}
+          onClick={() => {
+            if (result) setStep('prophecy');
+          }}
+          disabled={!result}
+        >
+          <span className="step-num">3</span>
+          <span>อ่านคำทำนาย</span>
+        </button>
       </div>
 
-      {result && (
-        <article ref={resultRef} id="stick-result" className="result" aria-live="polite">
-          <h3>
-            ใบที่ {result.stick} · {result.title}
-          </h3>
-          <p className="center">
-            ผลเซียมซี{' '}
-            <span className={`badge lv${result.level}`}>
-              {result.level_name}
-            </span>
+      {/* PHASE 1: CYLINDER SHAKING */}
+      {step === 'cylinder' && (
+        <div className="stick-cylinder-phase">
+          <h2 className="title">เสี่ยงเซียมซีโบราณ</h2>
+          <p className="lead">
+            ตั้งจิตอธิษฐาน แล้วเขย่ากระบอกจนไม้เซียมซีหล่นออกมา — กดปุ่มเขย่า หรือใช้นิ้วลาก/ปัดที่กระบอกเซียมซี
           </p>
+
+          <div className="stick-stage">
+            <div
+              id="cylinder"
+              className={`cylinder ${isShaking ? 'shaking' : ''}`}
+              aria-label="กระบอกเซียมซี"
+              role="img"
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+            >
+              <div className="sticks">
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+              </div>
+              <div className="cyl-body">
+                <span className="cyl-mark">福</span>
+              </div>
+            </div>
+            <div id="fallen" className={`fallen ${showFallen ? 'show' : ''}`} aria-hidden="true">
+              <span id="fallen-num">{fallenNum ?? 0}</span>
+            </div>
+          </div>
+
+          <div className="meter" aria-hidden="true">
+            <div id="shake-meter" style={{ width: `${shakeMeter}%` }} />
+          </div>
+
+          <div className="row center">
+            <button
+              id="btn-shake"
+              className="btn primary"
+              type="button"
+              onClick={handleButtonClick}
+              disabled={busy}
+            >
+              เขย่าเซียมซี
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* PHASE 2: PUA POI VERIFICATION (ไม้ปัวปวย) */}
+      {step === 'puapoi' && result && (
+        <PuaPoi
+          stickNumber={result.stick}
+          stickTitle={result.title}
+          onConfirmFortune={handleConfirmFortune}
+          onReshakeStick={handleResetToShake}
+          onToast={onToast}
+        />
+      )}
+
+      {/* PHASE 3: REVEALED PROPHECY (คำทำนายเซียมซี) */}
+      {step === 'prophecy' && result && (
+        <article ref={resultRef} id="stick-result" className="result prophecy-result-card" aria-live="polite">
+          <div className="prophecy-header-row">
+            <div className="prophecy-title-block">
+              <h3>
+                ใบที่ {result.stick} · {result.title}
+              </h3>
+              <p className="prophecy-level-line">
+                ผลเซียมซี{' '}
+                <span className={`badge lv${result.level}`}>
+                  {result.level_name}
+                </span>
+                {puaPoiVerified && (
+                  <span className="badge-pua-verified" title="ผ่านการโยนไม้ปัวปวยยืนยันความศักดิ์สิทธิ์">
+                    ✓ ปัวปวยยืนยันแล้ว
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Spiritual Chanting & Dharma TTS Recitation Player */}
+          <SpiritualTTSPlayer
+            textToRead={[
+              `เซียมซีใบที่ ${result.stick} ${result.title}`,
+              `คำทำนาย: ${result.level_name}`,
+              result.verse,
+              ...result.aspects.map((a) => `${a.name} ${a.text}`),
+            ].join('\n')}
+            title={`เสียงสวดบทกลอนเซียมซี ใบที่ ${result.stick}`}
+            subtitle="สดับรับฟังเสียงสวดบทกลอนแบบช้าๆ กังวาน นุ่มนวล เสมือนซินแสผู้เฒ่าอ่านให้ฟัง"
+            initialExpanded={true}
+          />
+
           <p className="verse">{result.verse}</p>
+
           <div className="aspects">
             {result.aspects.map((a, i) => (
               <div key={i} className="aspect">
@@ -229,6 +279,25 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast })
                 <span>{a.text}</span>
               </div>
             ))}
+          </div>
+
+          {/* Action Row at Bottom of Prophecy */}
+          <div className="prophecy-actions-footer">
+            <button
+              type="button"
+              className="btn ghost btn-reshake-prophecy"
+              onClick={handleResetToShake}
+            >
+              <span>🔄 เสี่ยงเซียมซีใบใหม่</span>
+            </button>
+            <button
+              type="button"
+              className="btn ghost btn-retest-puapoi"
+              onClick={() => setStep('puapoi')}
+              title="กลับไปหน้าเสี่ยงทายไม้ปัวปวย"
+            >
+              <span>🎲 โยนไม้ปัวปวยอีกครั้ง</span>
+            </button>
           </div>
         </article>
       )}

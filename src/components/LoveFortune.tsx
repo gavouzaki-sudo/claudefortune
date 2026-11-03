@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { UserSession } from '../types';
+import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
 
 interface LoveFortuneProps {
   session: UserSession;
@@ -171,6 +172,22 @@ export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) =>
 
           <h3 className="love-verdict-title">{reading.verdict}</h3>
           <p className="love-prediction-text">{reading.prediction}</p>
+
+          {/* Spiritual Voice Reader for Love Oracle & Mantra */}
+          <SpiritualTTSPlayer
+            textToRead={[
+              `คำทำนายดวงความรัก ${reading.status}`,
+              reading.verdict,
+              reading.prediction,
+              `ธาตุคู่แท้ที่สมพงษ์: ${reading.soulmateElement}`,
+              `ลักษณะเด่นคู่ชะตา: ${reading.soulmateTrait}`,
+              `บทสวดพระคาถาเสริมเมตตามหาเสน่ห์:`,
+              reading.mantra,
+            ].join('\n')}
+            title="เสียงสวดมนต์เมตตามหานิยม & ดวงความรัก"
+            subtitle="สดับรับฟังเสียงสวดพระคาถาเมตตามหาเสน่ห์และคำทำนายคู่แท้"
+            initialExpanded={false}
+          />
 
           <div className="love-traits-grid">
             <div className="trait-box">

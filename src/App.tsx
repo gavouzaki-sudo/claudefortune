@@ -18,6 +18,8 @@ import { HorizontalRitualMenu } from './components/HorizontalRitualMenu';
 import { Footer } from './components/Footer';
 import { Toast } from './components/Toast';
 import { Fireworks, type FireworksHandle } from './components/Fireworks';
+import { MeditationChamber } from './components/MeditationChamber';
+import { ambientSoundEngine } from './utils/ambientSoundscapes';
 import type { DivinationTopic } from './types';
 
 const FEST_INDEX_MAP: Record<string, number> = {
@@ -204,7 +206,12 @@ export const App: React.FC = () => {
             {/* Horizontal Scroll Menu (Positioned at almost the very top) */}
             <HorizontalRitualMenu
               activeTopic={tab}
-              onSelectTopic={(selected) => setTab(selected)}
+              onSelectTopic={(selected) => {
+                if (selected !== 'meditation') {
+                  ambientSoundEngine.setSoundscape('none');
+                }
+                setTab(selected);
+              }}
               festivalName={festInfo?.name}
             />
 
@@ -236,6 +243,14 @@ export const App: React.FC = () => {
 
               {tab === 'scan' && (
                 <ScanFortune bridge={bridge} onToast={showToast} />
+              )}
+
+              {tab === 'meditation' && (
+                <MeditationChamber
+                  systemId={session.systemId}
+                  systemName={session.systemName}
+                  onToast={showToast}
+                />
               )}
 
               {tab === 'festival' && (

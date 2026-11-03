@@ -471,11 +471,6 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                       </button>
                     </div>
                   )}
-
-                  {/* Drag Gesture Affordance Indicator */}
-                  <div className="sigil-drag-handle" title="ลากหรือปัดเพื่อปิด">
-                    <span className="handle-bar" />
-                  </div>
                 </div>
 
                 {/* The Circular Radial Wheel of Symbols */}
@@ -488,10 +483,13 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                     // Calculate angle around 360 degrees, starting from top (-90 deg)
                     const angleDeg = (360 / total) * idx - 90;
                     const angleRad = (angleDeg * Math.PI) / 180;
-                    // Responsive radius: 155px for mobile, 205px for desktop to provide generous center space
-                    const radius = isMobile ? 155 : 205;
-                    const posX = Math.round(Math.cos(angleRad) * radius);
-                    const posY = Math.round(Math.sin(angleRad) * radius);
+                    // Vertical ellipse arrangement (วงรีแนวตั้ง):
+                    // Narrower horizontal radius (radiusX) prevents overflowing off mobile screen
+                    // Taller vertical radius (radiusY) forms an elegant vertical oval
+                    const radiusX = isMobile ? 112 : 160;
+                    const radiusY = isMobile ? 180 : 230;
+                    const posX = Math.round(Math.cos(angleRad) * radiusX);
+                    const posY = Math.round(Math.sin(angleRad) * radiusY);
                     const isSelected = activeSymbolIndex === idx;
 
                     return (
