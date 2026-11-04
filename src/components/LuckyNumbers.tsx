@@ -6,6 +6,7 @@ import { LuckyMiniGames } from './LuckyMiniGames';
 import { playFireCrackle } from '../utils/chantAudio';
 import { saveJournalEntry } from '../utils/fortuneJournal';
 import type { CardData } from '../utils/luckyCardCanvas';
+import { logger } from '../utils/logger';
 
 interface LuckyNumbersProps {
   bridge: Bridge;
@@ -38,7 +39,8 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
           const num = res.three && res.three.length > 0 ? res.three[0] : '728';
           setLuckyNumber(num);
         }
-      } catch {
+      } catch (err) {
+        logger.error('Error in bridge.luckyNumbers:', err);
         setTimeout(() => {
           onToast('เกิดข้อผิดพลาดในการคำนวณเลขมงคล');
         }, 0);
@@ -70,8 +72,8 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
         navigator.vibrate([30, 60, 40]);
-      } catch {
-        // Ignore
+      } catch (err) {
+        logger.debug('Vibration API error:', err);
       }
     }
 
@@ -95,17 +97,19 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
   // Save to journal and open card modal
   const handleSaveAndShare = () => {
     if (burnLevel < 3) return;
+    const detailsObj = {
+      luckyNumbers: {
+        twoDigits: category === 0 ? [luckyNumber] : ['89'],
+        threeDigits: category === 1 ? [luckyNumber] : ['728'],
+      },
+    };
+
     if (!isJournalSaved) {
       saveJournalEntry({
         type: 'number',
         title: `เลขมงคล (${category === 0 ? 'เลขท้าย 2 ตัว' : 'เลขท้าย 3 ตัว'})`,
         summary: `เลขเด่น: ${luckyNumber} — เผายันต์สำเร็จ`,
-        details: {
-          luckyNumbers: {
-            twoDigits: category === 0 ? [luckyNumber] : ['89'],
-            threeDigits: category === 1 ? [luckyNumber] : ['728'],
-          },
-        },
+        details: detailsObj,
       });
       setIsJournalSaved(true);
       onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
@@ -114,12 +118,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
       onOpenCard({
         type: 'number',
         title: `เลขมงคลประจำตัว (${category === 0 ? 'เลข 2 ตัว' : 'เลข 3 ตัว'})`,
-        details: {
-          luckyNumbers: {
-            twoDigits: [luckyNumber],
-            threeDigits: category === 1 ? [luckyNumber] : ['728'],
-          },
-        },
+        details: detailsObj,
       });
     }
   };
@@ -148,7 +147,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
         เลือกเลขท้าย 2 หรือ 3 ตัว — เล่นมินิเกมให้ชนะ 3 ตา เพื่อจุดไฟเผาแผ่นยันต์จนมอดไหม้เผยตัวเลขมงคล!
       </p>
 
-      {/* Category selector chips (Strictly only 2-digit & 3-digit as requested) */}
+      {/* Category selector chips */}
       <div className="chips lucky-category-chips" role="radiogroup" aria-label="เลือกประเภทเลข">
         <label className="chip">
           <input

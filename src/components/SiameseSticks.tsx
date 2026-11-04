@@ -6,6 +6,8 @@ import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
 import { spiritualSpeechEngine } from '../utils/spiritualSpeech';
 import { saveJournalEntry } from '../utils/fortuneJournal';
 import type { CardData } from '../utils/luckyCardCanvas';
+import { buildStickCardData } from '../utils/cardDataBuilder';
+import { logger } from '../utils/logger';
 
 interface SiameseSticksProps {
   bridge: Bridge;
@@ -30,7 +32,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
   const shakeValueRef = useRef(0);
   const shakeRawRef = useRef(0);
   const shakeTimeoutRef = useRef<number | null>(null);
-  const lastPointerRef = useRef<[number, number] | null>(null);
+  const lastPointerRef = useRef<[number, number]>([0, 0]);
   const resultRef = useRef<HTMLDivElement>(null);
 
   const finishShake = useCallback(async () => {
@@ -44,7 +46,6 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
       setResult(res);
       setShowFallen(false);
 
-      // Trigger fallen stick animation
       setTimeout(() => {
         setShowFallen(true);
       }, 20);
@@ -52,11 +53,11 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
       const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
       await new Promise((r) => setTimeout(r, reduceMotion ? 100 : 750));
 
-      // Transition to authentic Pua Poi verification step
       setStep('puapoi');
       setPuaPoiVerified(false);
       onToast(`✨ ไม้เซียมซีใบที่ ${res.stick} หล่นออกมาแล้ว! โปรดโยนไม้ปัวปวยขอยืนยัน`);
-    } catch {
+    } catch (err) {
+      logger.error('Error drawing Siamese stick:', err);
       onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
     } finally {
       shakeValueRef.current = 0;
@@ -66,27 +67,30 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
     }
   }, [bridge, onToast]);
 
-  const addShake = useCallback((amount: number) => {
-    if (busy) return;
-    if (shakeValueRef.current === 0) {
-      setShowFallen(false);
-    }
+  const addShake = useCallback(
+    (amount: number) => {
+      if (busy) return;
+      if (shakeValueRef.current === 0) {
+        setShowFallen(false);
+      }
 
-    shakeValueRef.current += amount;
-    shakeRawRef.current += amount * 10;
-    const bounded = Math.min(100, shakeValueRef.current);
-    setShakeMeter(bounded);
-    setIsShaking(true);
+      shakeValueRef.current += amount;
+      shakeRawRef.current += amount * 10;
+      const bounded = Math.min(100, shakeValueRef.current);
+      setShakeMeter(bounded);
+      setIsShaking(true);
 
-    if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
-    shakeTimeoutRef.current = window.setTimeout(() => {
-      if (!busy) setIsShaking(false);
-    }, 220);
+      if (shakeTimeoutRef.current) clearTimeout(shakeTimeoutRef.current);
+      shakeTimeoutRef.current = window.setTimeout(() => {
+        if (!busy) setIsShaking(false);
+      }, 220);
 
-    if (shakeValueRef.current >= 100) {
-      finishShake();
-    }
-  }, [busy, finishShake]);
+      if (shakeValueRef.current >= 100) {
+        finishShake();
+      }
+    },
+    [busy, finishShake]
+  );
 
   const handleButtonClick = () => {
     if (busy) return;
@@ -99,9 +103,12 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
     }, 40);
   };
 
-  // Pointer drag on the cylinder
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch (err) {
+      logger.debug('Pointer capture error:', err);
+    }
     lastPointerRef.current = [e.clientX, e.clientY];
   };
 
@@ -112,11 +119,6 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
     addShake(d / 18);
   };
 
-  const handlePointerUp = () => {
-    lastPointerRef.current = null;
-  };
-
-  // User resets to shake a new stick
   const handleResetToShake = () => {
     spiritualSpeechEngine.stop();
     setStep('cylinder');
@@ -131,49 +133,24 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
     setShakeMeter(0);
   };
 
-  // Manual save to fortune journal upon button click
   const handleSaveAndShare = () => {
     if (!result) return;
+    const cardData = buildStickCardData(result);
     if (!isJournalSaved) {
       saveJournalEntry({
         type: 'stick',
-        title: `เซียมซีใบที่ ${result.stick} · ${result.title}`,
+        title: cardData.title,
         summary: `${result.level_name}: ${result.verse.slice(0, 80)}`,
-        details: {
-          stickNumber: result.stick,
-          fortuneTitle: result.title,
-          aspects: {
-            finance: result.aspects[0]?.text,
-            love: result.aspects[1]?.text,
-            health: result.aspects[2]?.text,
-            career: result.aspects[3]?.text,
-          },
-          poem: result.verse,
-        },
+        details: cardData.details,
       });
       setIsJournalSaved(true);
       onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
     }
     if (onOpenCard) {
-      onOpenCard({
-        type: 'stick',
-        title: `เซียมซีใบที่ ${result.stick} · ${result.title}`,
-        details: {
-          stickNumber: result.stick,
-          fortuneTitle: result.title,
-          aspects: {
-            finance: result.aspects[0]?.text,
-            love: result.aspects[1]?.text,
-            health: result.aspects[2]?.text,
-            career: result.aspects[3]?.text,
-          },
-          poem: result.verse,
-        },
-      });
+      onOpenCard(cardData);
     }
   };
 
-  // User confirms fortune through Pua Poi ('read' = text only, 'listen' = random voice & immediate speech)
   const handleConfirmFortune = (mode: 'read' | 'listen' = 'read') => {
     setPuaPoiVerified(true);
     setProphecyMode(mode);
@@ -189,7 +166,6 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
         result.verse,
         ...result.aspects.map((a) => `${a.name} ${a.text}`),
       ].join('\n');
-      // Automatically selects a random persona (sinsei, dharma, meditation) and reads immediately
       spiritualSpeechEngine.speak(fullText, { withChime: true });
     } else {
       spiritualSpeechEngine.stop();
@@ -198,7 +174,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
 
   return (
     <section id="tab-stick" className="ritual-frameless-stage tab" role="tabpanel">
-      {/* Step Indicator Header (Compact & Mobile-friendly) */}
+      {/* Step Indicator Header */}
       <div className="stick-step-progress" aria-label="ขั้นตอนพิธีกรรมเซียมซี">
         <button
           type="button"
@@ -251,8 +227,6 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
               role="img"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
             >
               <div className="sticks">
                 <i />
@@ -290,7 +264,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
         </div>
       )}
 
-      {/* PHASE 2: PUA POI VERIFICATION (ไม้ปัวปวย) */}
+      {/* PHASE 2: PUA POI VERIFICATION */}
       {step === 'puapoi' && result && (
         <PuaPoi
           stickNumber={result.stick}
@@ -301,7 +275,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
         />
       )}
 
-      {/* PHASE 3: REVEALED PROPHECY (คำทำนายเซียมซี) */}
+      {/* PHASE 3: REVEALED PROPHECY */}
       {step === 'prophecy' && result && (
         <article ref={resultRef} id="stick-result" className="result prophecy-result-card" aria-live="polite">
           <div className="prophecy-header-row">
@@ -323,7 +297,6 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
             </div>
           </div>
 
-          {/* Prophecy Mode Switcher Bar (อ่าน vs ฟัง) */}
           <div className="prophecy-mode-switch-row" role="tablist" aria-label="รูปแบบการรับคำทำนาย">
             <button
               type="button"
@@ -355,7 +328,6 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
             </button>
           </div>
 
-          {/* Spiritual Chanting & Dharma TTS Recitation Player - only shown in listen mode */}
           {prophecyMode === 'listen' && (
             <SpiritualTTSPlayer
               textToRead={[
@@ -381,7 +353,6 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
             ))}
           </div>
 
-          {/* Action Row at Bottom of Prophecy */}
           <div className="prophecy-actions-footer">
             {onOpenCard && (
               <button

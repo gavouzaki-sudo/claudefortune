@@ -4,6 +4,8 @@
 
 import { stopChant } from './chantAudio';
 import { ambientSoundEngine } from './ambientSoundscapes';
+import { logger } from './logger';
+import { clamp } from './formatters';
 
 export type SpiritualVoicePresetId = 'sinsei' | 'dharma' | 'meditation';
 
@@ -52,7 +54,7 @@ export interface SpiritualSpeechState {
   isSpeaking: boolean;
   isPaused: boolean;
   activePresetId: SpiritualVoicePresetId;
-  rateMultiplier: number; // 0.8 to 1.3 relative factor
+  rateMultiplier: number;
   pitchMultiplier: number;
   currentLineIndex: number;
   totalLines: number;
@@ -86,39 +88,51 @@ class SpiritualSpeechEngine {
 
   constructor() {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      this.synth = window.speechSynthesis;
-      this.loadVoices();
-      if (this.synth.onvoiceschanged !== undefined) {
-        this.synth.onvoiceschanged = () => this.loadVoices();
+      try {
+        this.synth = window.speechSynthesis;
+        this.loadVoices();
+        if (this.synth && this.synth.onvoiceschanged !== undefined) {
+          this.synth.onvoiceschanged = () => this.loadVoices();
+        }
+      } catch (err) {
+        logger.warn('Failed to initialize SpeechSynthesis:', err);
       }
     }
   }
 
   private loadVoices(): void {
     if (!this.synth) return;
-    const voices = this.synth.getVoices();
-    if (!voices || voices.length === 0) return;
+    try {
+      const voices = this.synth.getVoices();
+      if (!voices || voices.length === 0) return;
 
-    this.state.availableVoices = voices;
-    const thaiVoice = voices.find(
-      (v) =>
-        v.lang.toLowerCase().includes('th') ||
-        v.name.toLowerCase().includes('thai') ||
-        v.name.toLowerCase().includes('kanya') ||
-        v.name.toLowerCase().includes('niwat') ||
-        v.name.toLowerCase().includes('premwadee')
-    );
+      this.state.availableVoices = voices;
+      const thaiVoice = voices.find(
+        (v) =>
+          v.lang.toLowerCase().includes('th') ||
+          v.name.toLowerCase().includes('thai') ||
+          v.name.toLowerCase().includes('kanya') ||
+          v.name.toLowerCase().includes('niwat') ||
+          v.name.toLowerCase().includes('premwadee')
+      );
 
-    this.state.hasThaiVoice = !!thaiVoice;
-    if (!this.state.selectedVoiceName && thaiVoice) {
-      this.state.selectedVoiceName = thaiVoice.name;
+      this.state.hasThaiVoice = !!thaiVoice;
+      if (!this.state.selectedVoiceName && thaiVoice) {
+        this.state.selectedVoiceName = thaiVoice.name;
+      }
+      this.notify();
+    } catch (err) {
+      logger.warn('Failed to load speech synthesis voices:', err);
     }
-    this.notify();
   }
 
   subscribe(cb: (state: SpiritualSpeechState) => void): () => void {
     this.listeners.add(cb);
-    cb({ ...this.state });
+    try {
+      cb({ ...this.state });
+    } catch (err) {
+      logger.error('Error in speech subscribe callback:', err);
+    }
     return () => {
       this.listeners.delete(cb);
     };
@@ -129,7 +143,9 @@ class SpiritualSpeechEngine {
     this.listeners.forEach((cb) => {
       try {
         cb(copy);
-      } catch {}
+      } catch (err) {
+        logger.error('Error in speech listener notification:', err);
+      }
     });
   }
 
@@ -140,7 +156,6 @@ class SpiritualSpeechEngine {
   setPreset(presetId: SpiritualVoicePresetId): void {
     this.state.activePresetId = presetId;
     this.notify();
-    // If currently speaking, restart with new preset
     if (this.state.isSpeaking && this.state.currentText) {
       const text = this.state.currentText;
       const curLine = this.state.currentLineIndex;
@@ -150,7 +165,7 @@ class SpiritualSpeechEngine {
   }
 
   setRateMultiplier(rate: number): void {
-    this.state.rateMultiplier = Math.max(0.7, Math.min(1.4, rate));
+    this.state.rateMultiplier = clamp(rate, 0.7, 1.4);
     this.notify();
   }
 
@@ -159,7 +174,6 @@ class SpiritualSpeechEngine {
     this.notify();
   }
 
-  // Play an authentic soothing temple singing bowl / bronze bell chime before recitation
   playTempleChime(): void {
     try {
       const AudioCtx =
@@ -171,7 +185,6 @@ class SpiritualSpeechEngine {
       if (ctx.state !== 'running') ctx.resume();
 
       const t0 = ctx.currentTime;
-      // Resonant harmonic chime at 528Hz (Solfeggio frequency of clarity and peace)
       const frequencies = [528, 1056, 1584];
       const masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(0.0001, t0);
@@ -189,12 +202,11 @@ class SpiritualSpeechEngine {
         osc.start(t0);
         osc.stop(t0 + 2.9);
       });
-    } catch {
-      // Audio context may be restricted before user touch
+    } catch (err) {
+      logger.debug('Temple chime audio context error (likely awaiting user gesture):', err);
     }
   }
 
-  // Clean and prepare poetic text for spiritual chanting
   private prepareLines(text: string): string[] {
     return text
       .split('\n')
@@ -204,17 +216,15 @@ class SpiritualSpeechEngine {
 
   async speak(rawText: string, options: { startLine?: number; withChime?: boolean } = {}): Promise<void> {
     if (!this.synth) {
-      console.warn('SpeechSynthesis is not supported in this browser environment');
+      logger.warn('SpeechSynthesis is not supported in this environment');
       return;
     }
 
     this.stop();
 
-    // Prevent audio clash: stop background music & soundscapes when speech begins
     stopChant();
     ambientSoundEngine.setSoundscape('none');
 
-    // Randomize spiritual preset automatically without needing manual selection
     const presetKeys: SpiritualVoicePresetId[] = ['sinsei', 'dharma', 'meditation'];
     const chosenPreset = presetKeys[Math.floor(Math.random() * presetKeys.length)];
     this.state.activePresetId = chosenPreset;
@@ -231,7 +241,6 @@ class SpiritualSpeechEngine {
     this.state.isPaused = false;
     this.notify();
 
-    // Small delay after chime for temple ambience
     await new Promise((r) => setTimeout(r, options.withChime !== false ? 500 : 80));
 
     this.speakLine(this.state.currentLineIndex);
@@ -241,7 +250,6 @@ class SpiritualSpeechEngine {
     if (!this.synth || !this.state.isSpeaking) return;
 
     if (index >= this.textLines.length) {
-      // Finished all lines
       this.state.isSpeaking = false;
       this.state.isPaused = false;
       this.state.currentLineIndex = -1;
@@ -255,66 +263,61 @@ class SpiritualSpeechEngine {
     const lineText = this.textLines[index];
     const preset = SPIRITUAL_PRESETS[this.state.activePresetId] || SPIRITUAL_PRESETS.sinsei;
 
-    // Build utterance
-    const utter = new SpeechSynthesisUtterance(lineText);
+    try {
+      const utter = new SpeechSynthesisUtterance(lineText);
 
-    // Apply voice settings
-    const calcRate = Math.max(0.5, Math.min(1.2, preset.rate * this.state.rateMultiplier));
-    const calcPitch = Math.max(0.5, Math.min(1.3, preset.pitch * this.state.pitchMultiplier));
-    utter.rate = calcRate;
-    utter.pitch = calcPitch;
+      const calcRate = clamp(preset.rate * this.state.rateMultiplier, 0.5, 1.2);
+      const calcPitch = clamp(preset.pitch * this.state.pitchMultiplier, 0.5, 1.3);
+      utter.rate = calcRate;
+      utter.pitch = calcPitch;
 
-    // Choose voice
-    let voiceToUse: SpeechSynthesisVoice | undefined;
-    if (this.state.selectedVoiceName) {
-      voiceToUse = this.state.availableVoices.find((v) => v.name === this.state.selectedVoiceName);
-    }
-    if (!voiceToUse) {
-      voiceToUse = this.state.availableVoices.find(
-        (v) =>
-          v.lang.toLowerCase().includes('th') ||
-          v.name.toLowerCase().includes('thai') ||
-          v.name.toLowerCase().includes('kanya') ||
-          v.name.toLowerCase().includes('niwat')
-      );
-    }
-    if (voiceToUse) {
-      utter.voice = voiceToUse;
-      utter.lang = voiceToUse.lang || 'th-TH';
-    } else {
-      utter.lang = 'th-TH';
-    }
-
-    utter.onend = () => {
-      if (!this.state.isSpeaking) return;
-      // Authentic rhythmic pause between lines (ราว 400ms - 650ms for calm dharma tempo)
-      const pauseDuration = preset.id === 'meditation' ? 700 : 450;
-      this.speechTimeout = window.setTimeout(() => {
-        this.speakLine(index + 1);
-      }, pauseDuration);
-    };
-
-    utter.onerror = (e) => {
-      // Don't report canceled errors
-      if (e.error !== 'canceled' && e.error !== 'interrupted') {
-        console.warn('SpeechSynthesis error:', e.error);
+      let voiceToUse: SpeechSynthesisVoice | undefined;
+      if (this.state.selectedVoiceName) {
+        voiceToUse = this.state.availableVoices.find((v) => v.name === this.state.selectedVoiceName);
       }
-      if (this.state.isSpeaking && index + 1 < this.textLines.length) {
+      if (!voiceToUse) {
+        voiceToUse = this.state.availableVoices.find(
+          (v) =>
+            v.lang.toLowerCase().includes('th') ||
+            v.name.toLowerCase().includes('thai') ||
+            v.name.toLowerCase().includes('kanya') ||
+            v.name.toLowerCase().includes('niwat')
+        );
+      }
+      if (voiceToUse) {
+        utter.voice = voiceToUse;
+        utter.lang = voiceToUse.lang || 'th-TH';
+      } else {
+        utter.lang = 'th-TH';
+      }
+
+      utter.onend = () => {
+        if (!this.state.isSpeaking) return;
+        const pauseDuration = preset.id === 'meditation' ? 700 : 450;
         this.speechTimeout = window.setTimeout(() => {
           this.speakLine(index + 1);
-        }, 300);
-      } else {
-        this.state.isSpeaking = false;
-        this.state.isPaused = false;
-        this.state.currentLineIndex = -1;
-        this.notify();
-      }
-    };
+        }, pauseDuration);
+      };
 
-    try {
+      utter.onerror = (e) => {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+          logger.warn('SpeechSynthesis utterance error:', e.error);
+        }
+        if (this.state.isSpeaking && index + 1 < this.textLines.length) {
+          this.speechTimeout = window.setTimeout(() => {
+            this.speakLine(index + 1);
+          }, 300);
+        } else {
+          this.state.isSpeaking = false;
+          this.state.isPaused = false;
+          this.state.currentLineIndex = -1;
+          this.notify();
+        }
+      };
+
       this.synth.speak(utter);
     } catch (err) {
-      console.warn('Failed to speak utterance:', err);
+      logger.error('Failed to speak utterance:', err);
       this.state.isSpeaking = false;
       this.notify();
     }
@@ -322,19 +325,27 @@ class SpiritualSpeechEngine {
 
   pause(): void {
     if (!this.synth || !this.state.isSpeaking) return;
-    this.synth.pause();
-    this.state.isPaused = true;
-    this.notify();
+    try {
+      this.synth.pause();
+      this.state.isPaused = true;
+      this.notify();
+    } catch (err) {
+      logger.warn('Error pausing SpeechSynthesis:', err);
+    }
   }
 
   resume(): void {
     if (!this.synth) return;
-    if (this.state.isPaused) {
-      this.synth.resume();
-      this.state.isPaused = false;
-      this.notify();
-    } else if (this.state.currentText && !this.state.isSpeaking) {
-      this.speak(this.state.currentText, { startLine: Math.max(0, this.state.currentLineIndex) });
+    try {
+      if (this.state.isPaused) {
+        this.synth.resume();
+        this.state.isPaused = false;
+        this.notify();
+      } else if (this.state.currentText && !this.state.isSpeaking) {
+        this.speak(this.state.currentText, { startLine: Math.max(0, this.state.currentLineIndex) });
+      }
+    } catch (err) {
+      logger.warn('Error resuming SpeechSynthesis:', err);
     }
   }
 
@@ -346,7 +357,9 @@ class SpiritualSpeechEngine {
     if (this.synth) {
       try {
         this.synth.cancel();
-      } catch {}
+      } catch (err) {
+        logger.debug('Error canceling SpeechSynthesis:', err);
+      }
     }
     this.state.isSpeaking = false;
     this.state.isPaused = false;
@@ -355,5 +368,4 @@ class SpiritualSpeechEngine {
   }
 }
 
-// Global Spiritual Speech Singleton
 export const spiritualSpeechEngine = new SpiritualSpeechEngine();

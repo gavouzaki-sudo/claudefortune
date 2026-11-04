@@ -1,6 +1,8 @@
 // Web Audio Cultural Audio Engine for 10 Civilizations
 // Generates authentic procedural melodic sequences, instrument modeling, and physical impulse response reverb.
 
+import { logger } from './logger';
+
 export interface ChantMetadata {
   id: string;
   civilization: string;
@@ -93,7 +95,6 @@ export const CHANT_INFO: Record<string, ChantMetadata> = {
   },
 };
 
-// Map civilization system IDs to presets
 const CIV_TO_PRESET: Record<string, string> = {
   chinese: 'china',
   thai: 'thai',
@@ -107,7 +108,6 @@ const CIV_TO_PRESET: Record<string, string> = {
   aztec_mayan: 'aztec',
 };
 
-// Seeded RNG: mulberry32
 function mulberry32(seed: number): () => number {
   return () => {
     seed = (seed + 0x6d2b79f5) | 0;
@@ -363,24 +363,26 @@ class CulturalAudioEngine {
 
   async init(): Promise<void> {
     if (typeof window === 'undefined') return;
-    if (!this.ctx) {
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtx) return;
-      const c = (this.ctx = new AudioCtx());
-      this.out = c.createGain();
-      this.out.gain.value = 0.8;
-      const limiter = c.createDynamicsCompressor();
-      limiter.threshold.value = -6;
-      limiter.ratio.value = 12;
-      this.out.connect(limiter).connect(c.destination);
-      this.noise = this.makeNoise(2);
-    }
-    if (this.ctx && this.ctx.state !== 'running') {
-      try {
+    try {
+      if (!this.ctx) {
+        const AudioCtx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (!AudioCtx) return;
+        const c = (this.ctx = new AudioCtx());
+        this.out = c.createGain();
+        this.out.gain.value = 0.8;
+        const limiter = c.createDynamicsCompressor();
+        limiter.threshold.value = -6;
+        limiter.ratio.value = 12;
+        this.out.connect(limiter).connect(c.destination);
+        this.noise = this.makeNoise(2);
+      }
+      if (this.ctx && this.ctx.state !== 'running') {
         await this.ctx.resume();
-      } catch {}
+      }
+    } catch (err) {
+      logger.debug('AudioContext initialization note (awaiting user interaction):', err);
     }
   }
 
@@ -485,12 +487,16 @@ class CulturalAudioEngine {
   stop(): void {
     if (!this.current || !this.ctx) return;
     const g = this.current;
-    g.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
-    setTimeout(() => {
-      try {
-        g.disconnect();
-      } catch {}
-    }, 400);
+    try {
+      g.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
+      setTimeout(() => {
+        try {
+          g.disconnect();
+        } catch {}
+      }, 400);
+    } catch (err) {
+      logger.debug('Error disconnecting audio gain:', err);
+    }
     this.current = null;
   }
 
@@ -728,7 +734,11 @@ const listeners = new Set<(chantId: string | null) => void>();
 
 export function subscribeChantState(cb: (chantId: string | null) => void): () => void {
   listeners.add(cb);
-  cb(activeChantId);
+  try {
+    cb(activeChantId);
+  } catch (err) {
+    logger.error('Error in subscribeChantState initial call:', err);
+  }
   return () => {
     listeners.delete(cb);
   };
@@ -736,7 +746,13 @@ export function subscribeChantState(cb: (chantId: string | null) => void): () =>
 
 function notifyListeners(id: string | null) {
   activeChantId = id;
-  listeners.forEach((cb) => cb(id));
+  listeners.forEach((cb) => {
+    try {
+      cb(id);
+    } catch (err) {
+      logger.error('Error in chant listener notification:', err);
+    }
+  });
 }
 
 export function stopChant(): void {
@@ -769,13 +785,10 @@ export function playChant(sysId: string): void {
       notifyListeners(sysId);
     })
     .catch((err) => {
-      console.warn('CulturalAudioEngine error:', err);
+      logger.warn('CulturalAudioEngine error:', err);
     });
 }
 
-/**
- * Procedural authentic wood clatter sound when Pua Poi wooden blocks hit the altar floor
- */
 export function playWoodClatter(): void {
   if (isMuted) return;
   engine
@@ -784,7 +797,6 @@ export function playWoodClatter(): void {
       if (!engine.ctx || !engine.out) return;
       const c = engine.ctx;
       const t0 = c.currentTime + 0.01;
-      // 3 percussive wooden bounces
       const bounces = [0, 0.08, 0.17];
       bounces.forEach((offset, idx) => {
         const osc = c.createOscillator();
@@ -813,9 +825,6 @@ export function playWoodClatter(): void {
     .catch(() => {});
 }
 
-/**
- * Procedural fire crackle & ember sizzle sound effect when the talisman burns
- */
 export function playFireCrackle(): void {
   if (isMuted) return;
   engine
@@ -824,7 +833,6 @@ export function playFireCrackle(): void {
       if (!engine.ctx || !engine.out) return;
       const c = engine.ctx;
       const t0 = c.currentTime + 0.01;
-      // Synthesize noise sparks for crackling fire
       const sparks = [0, 0.06, 0.12, 0.19, 0.27, 0.35];
       sparks.forEach((offset) => {
         const osc = c.createOscillator();
@@ -849,5 +857,3 @@ export function playFireCrackle(): void {
     })
     .catch(() => {});
 }
-
-

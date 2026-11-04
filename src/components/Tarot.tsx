@@ -4,6 +4,8 @@ import type { TarotCard } from '../types';
 import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
 import { saveJournalEntry } from '../utils/fortuneJournal';
 import type { CardData } from '../utils/luckyCardCanvas';
+import { logger } from '../utils/logger';
+import { pad2 } from '../utils/formatters';
 
 interface TarotProps {
   bridge: Bridge;
@@ -34,7 +36,8 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
       setFlipped({});
       setIsJournalSaved(false);
       onToast('✨ สับไพ่เรียบร้อย แตะไพ่เพื่อพลิกดูชะตา');
-    } catch {
+    } catch (err) {
+      logger.error('Error drawing tarot cards:', err);
       onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
     }
   };
@@ -42,20 +45,22 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
   const handleSaveAndShare = () => {
     if (cards.length === 0) return;
     const activeCards = cards.slice(0, spread);
+    const tarotDetails = {
+      tarotCards: activeCards.map((c, i) => ({
+        name: c.name,
+        nameEn: c.en,
+        glyph: GLYPHS[c.id] || '🔮',
+        reversed: c.reversed,
+        position: SPREAD_POSITIONS[spread]?.[i] || `ใบที่ ${i + 1}`,
+      })),
+    };
+
     if (!isJournalSaved) {
       saveJournalEntry({
         type: 'tarot',
         title: `ไพ่ยิปซี (${spread} ใบ)`,
         summary: activeCards.map((c) => `${c.name}${c.reversed ? ' (กลับหัว)' : ''}`).join(' · '),
-        details: {
-          tarotCards: activeCards.map((c, i) => ({
-            name: c.name,
-            nameEn: c.en,
-            glyph: GLYPHS[c.id] || '🔮',
-            reversed: c.reversed,
-            position: SPREAD_POSITIONS[spread]?.[i] || `ใบที่ ${i + 1}`,
-          })),
-        },
+        details: tarotDetails,
       });
       setIsJournalSaved(true);
       onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
@@ -64,15 +69,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
       onOpenCard({
         type: 'tarot',
         title: `ไพ่ยิปซี (${spread} ใบ)`,
-        details: {
-          tarotCards: activeCards.map((c, i) => ({
-            name: c.name,
-            nameEn: c.en,
-            glyph: GLYPHS[c.id] || '🔮',
-            reversed: c.reversed,
-            position: SPREAD_POSITIONS[spread]?.[i] || `ใบที่ ${i + 1}`,
-          })),
-        },
+        details: tarotDetails,
       });
     }
   };
@@ -80,14 +77,14 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
   const handleSpreadChange = (newSpread: number) => {
     setSpread(newSpread);
     setIsJournalSaved(false);
-    // If cards were already drawn, automatically redraw new cards for the new spread count!
     if (cards.length > 0) {
       try {
         const res = bridge.drawTarot(newSpread);
         setCards(res.cards);
         setFlipped({});
         onToast(`✨ ปรับเป็น ${newSpread} ใบ — สับไพ่ใหม่เรียบร้อย`);
-      } catch {
+      } catch (err) {
+        logger.warn('Error redrawing tarot on spread change:', err);
         setCards((prev) => prev.slice(0, newSpread));
         setFlipped({});
       }
@@ -169,7 +166,6 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
         )}
       </div>
 
-      {/* Spiritual Chanting & Dharma TTS for Tarot Readings */}
       {cards.length > 0 && Object.keys(flipped).length > 0 && (
         <SpiritualTTSPlayer
           textToRead={cards
@@ -216,7 +212,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
                 <div className="tcard-in">
                   <div className="tface tback" />
                   <div className={`tface tfront ${card.reversed ? 'rev' : ''}`}>
-                    <div className="num">{String(card.id).padStart(2, '0')}</div>
+                    <div className="num">{pad2(card.id)}</div>
                     <div className="glyph">{GLYPHS[card.id] || '🎴'}</div>
                     <div>
                       <div className="nm">{card.name}</div>

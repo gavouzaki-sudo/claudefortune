@@ -3,6 +3,8 @@
 // to ensure zero preview or runtime failures across all browser sandboxes and CSP environments.
 
 import { CORE_WASM_BASE64 } from "./wasm/coreWasmBytes";
+import { logger } from "./utils/logger";
+import { pad2, pad3, clamp } from "./utils/formatters";
 import type {
   ZodiacInfo,
   StickResult,
@@ -387,7 +389,7 @@ class JsCoreEngine implements ICoreEngine {
   }
 
   drawTarotCards(count: number): TarotResult {
-    const c = Math.max(1, Math.min(10, count));
+    const c = clamp(count, 1, 10);
     const deck = Array.from({ length: 22 }, (_, i) => i);
     for (let i = 21; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -410,8 +412,6 @@ class JsCoreEngine implements ICoreEngine {
   }
 
   generateLuckyNumbers(category: number): LuckyNumbersResult {
-    const pad2 = (n: number) => String(n).padStart(2, '0');
-    const pad3 = (n: number) => String(n).padStart(3, '0');
     const rnd2 = () => pad2(Math.floor(Math.random() * 100));
     const rnd3 = () => pad3(Math.floor(Math.random() * 1000));
 
@@ -439,7 +439,7 @@ class JsCoreEngine implements ICoreEngine {
 
   calculateBadLuckRemedy(zodiac: number, problem: number): RemedyResult {
     const z = zodiac >= 0 ? zodiac : this.valid ? this.z : 0;
-    const p = Math.max(0, Math.min(3, problem));
+    const p = clamp(problem, 0, 3);
     const curYearIdx = this.yearBranch(this.curY);
 
     const BREAK_PAIR = [9, 4, 11, 6, 1, 8, 3, 10, 5, 0, 7, 2];
@@ -487,21 +487,19 @@ class JsCoreEngine implements ICoreEngine {
       yantra: "นะ โม พุท ธา ยะ",
       mantra: [
         "นะโม ตัสสะ ภะคะวะโต อะระหะโต สัมมาสัมพุทธัสสะ (3 จบ)",
-        "สัพเพ สัตตา อะเวรา โหนตุ อัพยาปัชฌา โหนตุ อะนีฆา โหนตุ สุขี อัตตานัง ปะริหะรันตุ",
+        "สัพเพ สัตตา สุขิตา โหนตุ",
       ],
     };
   }
 
   candleUnlock(holdMs: number): CandleResult {
-    const h = Math.max(0, Math.min(60000, holdMs));
+    const h = clamp(holdMs, 0, 60000);
     const unlocked = h >= 4000;
     const DEDICATIONS = [
       "ขอให้ใจสงบ สว่างดั่งแสงเทียน",
       "ขอให้ทุกข์เบาบาง สุขเข้ามาแทนที่",
       "ขอให้ปัญญานำทาง พ้นเคราะห์ภัยทั้งปวง",
     ];
-    const pad2 = (n: number) => String(n).padStart(2, '0');
-    const pad3 = (n: number) => String(n).padStart(3, '0');
 
     return {
       unlocked,
@@ -525,7 +523,7 @@ class JsCoreEngine implements ICoreEngine {
   }
 
   festivalInfo(id: number): FestivalInfo {
-    const idx = Math.max(0, Math.min(5, id));
+    const idx = clamp(id, 0, 5);
     return {
       name: FESTIVAL_NAMES[idx],
       tagline: FESTIVAL_TAGS[idx],
@@ -533,10 +531,10 @@ class JsCoreEngine implements ICoreEngine {
   }
 
   drawFestivalBlessing(id: number): BlessingResult {
-    const idx = Math.max(0, Math.min(5, id));
+    const idx = clamp(id, 0, 5);
     const k = Math.floor(Math.random() * 3);
     const item = BLESSINGS[idx][k];
-    const lucky = String(Math.floor(Math.random() * 100)).padStart(2, '0');
+    const lucky = pad2(Math.floor(Math.random() * 100));
     const res: BlessingResult = {
       title: item[0],
       text: item[1],
@@ -589,212 +587,124 @@ class JsCoreEngine implements ICoreEngine {
       "ความกังวลเรื่องเงินเป็นเรื่องจริง ลองแบ่งปัญหาเป็นก้อนเล็กๆ แล้วจัดการทีละก้อน และขอคำปรึกษาจากคนที่ไว้ใจหรือหน่วยงานให้คำปรึกษาได้",
       "หัวใจที่เหนื่อยต้องการเวลา ให้ตัวเองพักก่อนตัดสินใจ และเล่าความรู้สึกให้คนที่ไว้ใจฟัง",
       "ร่างกายกำลังบอกให้พัก ลองนอนให้พอ และพบแพทย์ถ้ามีอาการต่อเนื่อง",
-      "งานที่หนักจะเบาลงเมื่อแบ่งเป็นขั้นตอน เลือกเรื่องสำคัญที่สุดเพียงหนึ่งเรื่องแล้วเริ่มจากตรงนั้น",
-      "สิ่งที่คุณปล่อยลอยไปวันนี้คือความกังวลที่แบกไว้ ขอให้ใจเบาลงและเห็นทางออกในเร็ววัน",
+      "งานที่หนักหน่วงผ่านไปได้ด้วยการทำทีละเรื่อง และอย่าลืมเติมพลังใจให้ตัวเอง",
+      "ความตั้งใจที่ดีคือจุดเริ่มต้นของสิ่งมงคล ขอให้ก้าวต่อไปด้วยใจเบาและมั่นคง",
     ];
 
-    const catName = best < 4 ? ASPECT_NAMES[best] : "ทั่วไป";
+    const CATS = ["การเงิน", "ความรัก", "สุขภาพ", "การงาน", "ทั่วไป"];
+
     return {
-      category: catName,
+      category: CATS[best],
       message: GUIDES[best],
-      merit: 10 + Math.floor(Math.random() * 90),
-      lucky: String(Math.floor(Math.random() * 100)).padStart(2, '0'),
-      color: ZOD_LIST[this.z % 12].color,
-      care: false,
+      merit: Math.min(100, Math.max(10, Math.floor(t.length / 5) * 10 || 10)),
     };
   }
 
   processImageScan(rgba: Uint8ClampedArray | Uint8Array, mode: number): ImageScanResult {
-    const ELEM = ["ไฟ", "ดิน", "โลหะ", "น้ำ", "ไม้"];
-    const READINGS = [
-      [
-        "บุคลิกร้อนแรงมีพลัง เป็นผู้นำโดยธรรมชาติ ควรใจเย็นเมื่อตัดสินใจ",
-        "มั่นคงน่าไว้ใจ สะสมความสำเร็จช้าแต่แน่นอน",
-        "เฉียบคม มีระเบียบ ละเอียดรอบคอบ เหมาะกับงานที่ต้องการความแม่นยำ",
-        "ปรับตัวเก่ง ลึกซึ้ง ใช้สัญชาตญาณและความคิดสร้างสรรค์ได้ดี",
-        "เติบโตเรื่อยๆ ใจกว้าง ชอบเรียนรู้และช่วยเหลือผู้อื่น",
-      ],
-      [
-        "เส้นพลังงานเด่น ชอบลงมือทำ เหมาะกับการเริ่มต้นสิ่งใหม่",
-        "เส้นชีวิตมั่นคง ชีวิตเติบโตแบบสะสม ค่อยเป็นค่อยไป",
-        "เส้นการงานชัด วินัยดี ผลงานเป็นระเบียบ",
-        "เส้นใจลึกซึ้ง อ่อนไหวและเข้าใจผู้อื่น",
-        "เส้นโชคแตกกิ่ง มีโอกาสหลายทาง ขอให้เลือกอย่างมีสติ",
-      ],
-    ];
-
     let sum = 0;
-    const len = Math.min(rgba.length, 1024);
-    for (let i = 0; i < len; i += 4) {
-      sum += rgba[i] + rgba[i + 1] + rgba[i + 2];
+    const len = rgba.length;
+    for (let i = 0; i < len; i += 16) {
+      sum += rgba[i];
     }
-    const el = Math.abs(sum) % 5;
-    const m = mode === 1 ? 1 : 0;
+    const val = sum % 100;
+    const ELEMENTS = ["ทองคำ", "น้ำ", "ไม้", "ไฟ", "ดิน"];
+    const el = ELEMENTS[val % 5];
+    const fp = pad2(val);
+
+    const scores = {
+      wealth: ((val * 7) % 5) + 1,
+      love: ((val * 3) % 5) + 1,
+      health: ((val * 11) % 5) + 1,
+      career: ((val * 13) % 5) + 1,
+    };
+
+    const isFace = mode === 0;
+    const reading = isFace
+      ? `โหงวเฮ้งสีหน้าโดดเด่น ธาตุประจำภาพคือ ${el} พลังสายตาและความสดใสมีเกณฑ์เกื้อหนุนให้พบโชคใหญ่`
+      : `เส้นลายฝ่ามือและเนินหัตถ์เด่น ธาตุประจำภาพคือ ${el} บ่งบอกถึงจังหวะชีวิตที่กำลังพลิกฟื้นสู่ความมั่นคง`;
 
     return {
-      element: ELEM[el],
-      reading: READINGS[m][el],
-      scores: {
-        wealth: 3 + ((sum + 1) % 3),
-        love: 3 + ((sum + 2) % 3),
-        health: 3 + ((sum + 3) % 3),
-        career: 3 + ((sum + 4) % 3),
-      },
-      fingerprint: (Math.abs(sum * 2654435761) >>> 0).toString(16).toUpperCase().padStart(8, '0'),
+      element: el,
+      fingerprint: fp,
+      scores,
+      reading,
     };
   }
 
   processSignature(points: [number, number, number][]): SignatureResult {
     const n = points.length;
-    if (n < 8) throw new Error("signature too short");
-    let strokes = 1;
-    let lastS = points[0][2];
-    for (let i = 1; i < n; i++) {
-      if (points[i][2] !== lastS) {
+    let strokes = 0;
+    let maxStroke = -1;
+    for (let i = 0; i < n; i++) {
+      if (points[i][2] > maxStroke) {
+        maxStroke = points[i][2];
         strokes++;
-        lastS = points[i][2];
       }
     }
 
+    const val = (n * 17 + strokes * 31) % 100;
+    const traits = [
+      strokes > 3 ? "เส้นตวัดสม่ำเสมอ มั่นใจในความคิด" : "เส้นตวัดกระชับ ตัดสินใจไว",
+      n > 100 ? "ใส่ใจรายละเอียด มีความละเมียดละไม" : "คล่องตัว ไม่ยึดติดกับรูปแบบเดิมๆ",
+      "มีออร่าความเป็นผู้นำ มักเป็นที่พึ่งให้คนรอบข้าง",
+    ];
+
+    const scores = {
+      wealth: ((val * 7) % 5) + 1,
+      love: ((val * 3) % 5) + 1,
+      career: ((val * 11) % 5) + 1,
+      luck: ((val * 13) % 5) + 1,
+    };
+
     return {
-      traits: [
-        "ลายเซ็นขนาดพอดี สะท้อนความสมดุลระหว่างตัวตนและผู้อื่น",
-        "เส้นพุ่งขึ้น สะท้อนความหวังและมองโลกในแง่ดี",
-        "เส้นลื่นไหล สะท้อนความอ่อนโยนและปรับตัวเก่ง",
-      ],
-      scores: {
-        wealth: 4,
-        love: 4,
-        career: 4,
-        luck: 4,
-      },
       strokes,
+      traits,
+      scores,
     };
   }
 }
 
 // -----------------------------------------------------------------------------
-// Universal Bridge class exported for app usage
+// Bridge Class Definition
 // -----------------------------------------------------------------------------
 export class Bridge {
   private engine: ICoreEngine;
 
-  constructor(engineOrInstance: ICoreEngine | WebAssembly.Instance) {
-    if ('initSession' in engineOrInstance) {
-      this.engine = engineOrInstance;
-    } else {
-      this.engine = new WasmCoreEngine(engineOrInstance);
-    }
+  private constructor(engine: ICoreEngine) {
+    this.engine = engine;
   }
 
-  static async load(url = "/wasm/core.wasm"): Promise<Bridge> {
+  static async load(): Promise<Bridge> {
     try {
-      let bytes: Uint8Array | null = null;
-
-      // 1. Try fetching from absolute root path first
-      try {
-        const res = await fetch(url);
-        if (res.ok) {
-          bytes = new Uint8Array(await res.arrayBuffer());
-        }
-      } catch {
-        // Fetch failed
+      const binaryString = atob(CORE_WASM_BASE64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
       }
-
-      // 2. Try relative path if root failed
-      if (!bytes && url !== "./wasm/core.wasm") {
-        try {
-          const res = await fetch("./wasm/core.wasm");
-          if (res.ok) {
-            bytes = new Uint8Array(await res.arrayBuffer());
-          }
-        } catch {
-          // Ignore
-        }
-      }
-
-      // 3. Fallback to embedded base64 if fetch fails
-      if (!bytes && CORE_WASM_BASE64) {
-        try {
-          const binStr = atob(CORE_WASM_BASE64);
-          const len = binStr.length;
-          bytes = new Uint8Array(len);
-          for (let i = 0; i < len; i++) {
-            bytes[i] = binStr.charCodeAt(i);
-          }
-        } catch {
-          // Ignore
-        }
-      }
-
-      // 4. Try instantiating Wasm if bytes exist and WebAssembly is available
-      if (bytes && typeof WebAssembly !== "undefined" && typeof WebAssembly.instantiate === "function") {
-        try {
-          const result = await WebAssembly.instantiate(bytes, {});
-          const instance = ('instance' in result
-            ? (result as { instance: WebAssembly.Instance }).instance
-            : (result as unknown as WebAssembly.Instance));
-          const b = new Bridge(new WasmCoreEngine(instance));
-          b.seed();
-          return b;
-        } catch (wasmErr) {
-          console.warn("Wasm instantiation blocked or failed; activating TypeScript divination fallback.", wasmErr);
-        }
-      }
+      const { instance } = await WebAssembly.instantiate(bytes.buffer, {});
+      logger.info("Loaded WebAssembly Divination Core successfully");
+      return new Bridge(new WasmCoreEngine(instance));
     } catch (err) {
-      console.warn("Bridge loading error; activating TypeScript divination fallback.", err);
+      logger.warn("WebAssembly load failed or disabled, falling back to Pure TS Core Engine:", err);
+      return new Bridge(new JsCoreEngine());
     }
-
-    // 5. Guaranteed fallback: 100% pure TypeScript engine, never fails or throws
-    const fallbackEngine = new JsCoreEngine();
-    const b = new Bridge(fallbackEngine);
-    b.seed();
-    return b;
   }
 
-  static async fromBytes(bytes: Uint8Array): Promise<Bridge> {
+  setDate(date: Date = new Date()): void {
     try {
-      const result = await WebAssembly.instantiate(bytes, {});
-      const instance = ('instance' in result
-        ? (result as { instance: WebAssembly.Instance }).instance
-        : (result as unknown as WebAssembly.Instance));
-      const b = new Bridge(new WasmCoreEngine(instance));
-      b.seed();
-      return b;
-    } catch {
-      const b = new Bridge(new JsCoreEngine());
-      b.seed();
-      return b;
+      this.engine.setDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    } catch (err) {
+      logger.warn("Failed to set engine date:", err);
     }
   }
 
-  /** Mix fresh browser entropy into RNG. */
-  seed(): void {
-    const a = new Uint32Array(4);
-    if (typeof globalThis !== "undefined" && typeof globalThis.crypto?.getRandomValues === "function") {
-      crypto.getRandomValues(a);
-    } else {
-      for (let i = 0; i < 4; i++) a[i] = (Math.random() * 4294967296) >>> 0;
-    }
-    const t = Date.now();
-    this.engine.seedEntropy(a[0], a[1], a[2], a[3]);
-    this.engine.seedEntropy((t / 4294967296) >>> 0, t >>> 0, ((performance.now() * 1000) >>> 0), 0);
-  }
-
-  setDate(d: Date = new Date()): void {
-    this.engine.setDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
-  }
-
-  version(): number {
-    return this.engine.version();
-  }
-
-  initSession(name: string, birthYear: number, zodiac = -1): number {
+  initSession(name: string, birthYear: number, zodiac: number): number {
     return this.engine.initSession(name, birthYear, zodiac);
   }
 
-  zodiacInfo(z = -1): ZodiacInfo {
-    return this.engine.getZodiacInfo(z);
+  zodiacInfo(zodiac: number): ZodiacInfo {
+    return this.engine.getZodiacInfo(zodiac);
   }
 
   drawStick(power: number): StickResult {
@@ -809,15 +719,15 @@ export class Bridge {
     return this.engine.generateLuckyNumbers(category);
   }
 
-  remedy(zodiac: number, problem: number): RemedyResult {
+  badLuckRemedy(zodiac: number, problem: number): RemedyResult {
     return this.engine.calculateBadLuckRemedy(zodiac, problem);
   }
 
-  candle(holdMs: number): CandleResult {
+  candleUnlock(holdMs: number): CandleResult {
     return this.engine.candleUnlock(holdMs);
   }
 
-  festival(month: number, day: number): number {
+  getFestival(month: number, day: number): number {
     return this.engine.getFestival(month, day);
   }
 
@@ -825,19 +735,40 @@ export class Bridge {
     return this.engine.festivalInfo(id);
   }
 
-  blessing(id: number): BlessingResult {
+  drawBlessing(id: number): BlessingResult {
     return this.engine.drawFestivalBlessing(id);
   }
 
-  offering(type: number, text: string): OfferingResult {
+  digitalOffering(type: number, text: string): OfferingResult {
     return this.engine.processDigitalOffering(type, text);
   }
 
-  imageScan(rgba: Uint8ClampedArray | Uint8Array, mode = 0): ImageScanResult {
+  imageScan(rgba: Uint8ClampedArray | Uint8Array, mode: number): ImageScanResult {
     return this.engine.processImageScan(rgba, mode);
   }
 
   signature(points: [number, number, number][]): SignatureResult {
     return this.engine.processSignature(points);
+  }
+
+  // Alias methods for component compatibility
+  blessing(id: number): BlessingResult {
+    return this.drawBlessing(id);
+  }
+
+  seed(a = Math.random() * 1000000, b = Date.now(), c = Math.random() * 1000000, d = Math.random() * 1000000): void {
+    this.engine.seedEntropy(a | 0, b | 0, c | 0, d | 0);
+  }
+
+  candle(holdMs: number): CandleResult {
+    return this.candleUnlock(holdMs);
+  }
+
+  offering(type: number, text: string): OfferingResult {
+    return this.digitalOffering(type, text);
+  }
+
+  remedy(zodiac: number, problem: number): RemedyResult {
+    return this.badLuckRemedy(zodiac, problem);
   }
 }
