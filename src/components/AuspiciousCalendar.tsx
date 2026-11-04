@@ -464,61 +464,6 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
       .catch(() => onToast('คัดลอกไม่สำเร็จ โปรดคัดลอกข้อความด้วยตนเอง'));
   };
 
-  // Handle Copy Full Monthly Astrological Consultation Report
-  const handleCopyMonthReport = () => {
-    const monthName = THAI_MONTHS[selectedMonth - 1];
-    let report = `✨ ปฏิทินวันมงคลและฤกษ์งามยามดี ✨\n`;
-    report += `ประจำเดือน ${monthName} พ.ศ. ${selectedYearBE}\n`;
-    report += `คำนวณและวิเคราะห์โดย: ผู้เชี่ยวชาญด้านโหราศาสตร์ไทยและการคำนวณฤกษ์ยาม\n`;
-
-    if (selectedBirthDay !== 'none') {
-      const bInfo = BIRTH_DAYS.find((b) => b.id === selectedBirthDay);
-      report += avoidKalakini
-        ? `👤 เงื่อนไขดวงชะตา: สำหรับคนเกิด${bInfo?.labelTh} (ตัดวันกาลกิณี: ${bInfo?.kalakiniDayNameTh})\n`
-        : `👤 ข้อมูลวันเกิด: คนเกิด${bInfo?.labelTh} (ไม่ได้เปิดตัวเลือกหลีกเลี่ยงวันกาลกิณี)\n`;
-    }
-
-    report += `\n⚠️ ประกาศวันกาลโยคที่ต้องระวังประจำเดือน ${monthName} ${selectedYearBE}:\n`;
-    report += `• วันอุบาทว์: ${kalaYoga.ubathaNameTh} (วันที่ ${monthStats.ubathaDates.join(', ') || '-'}) - ควรงดเว้นการประกอบพิธีมงคล\n`;
-    report += `• วันโลกาวินาศ: ${kalaYoga.lokawinasNameTh} (วันที่ ${monthStats.lokawinasDates.join(', ') || '-'}) - ห้ามประกอบพิธีมงคลเด็ดขาด\n`;
-    report += `• วันธงชัย: ${kalaYoga.thongchaiNameTh} (มงคลเลิศล้ำ)\n`;
-    report += `• วันอธิบดี: ${kalaYoga.athipadiNameTh} (เกียรติยศ อำนาจบารมี)\n\n`;
-
-    report += `═════════════════════════════════════════\n`;
-    report += `วิเคราะห์ฤกษ์มงคลแยกตาม ๕ ประเภทงาน:\n`;
-    report += `═════════════════════════════════════════\n\n`;
-
-    const reportDays = allMonthDays.filter((d) =>
-      !(selectedBirthDay !== 'none' && avoidKalakini && thaksaByDate.get(d.date)?.isKalakini)
-    );
-    (Object.keys(WORK_CATEGORIES_INFO) as AuspiciousWorkCategory[]).forEach((catKey, idx) => {
-      const cat = WORK_CATEGORIES_INFO[catKey];
-      const days = reportDays.filter((d) => d.suitableCategories.includes(catKey));
-      report += `${idx + 1}. ${cat.titleTh} (${cat.icon})\n`;
-      report += `   ข้อพึงระวัง: ${cat.taboosTh}\n`;
-      if (days.length === 0) {
-        report += `   - ไม่พบวันมงคลที่ตรงกับเงื่อนไขในเดือนนี้\n\n`;
-      } else {
-        days.forEach((d) => {
-          report += `   • ${d.dayNameTh}ที่ ${d.dayOfMonth} ${monthName} ${selectedYearBE} (${d.lunarDateTh})\n`;
-          report += `     - ฤกษ์โหราศาสตร์: ${d.thaiRukNameTh} (${d.thaiRukHighlight})\n`;
-          report += `     - ยามมงคลที่ดีที่สุด: ${d.bestHours.primaryTime} (${d.bestHours.ubakongYama})\n`;
-          report += `     - ทิศมงคล: ${d.auspiciousDirection} | สีมงคล: ${d.luckyColors.join(', ')}\n`;
-          if (d.ceremonyTips[catKey]) {
-            report += `     - คำแนะนำ/เคล็ดพิธี: ${d.ceremonyTips[catKey]}\n`;
-          }
-        });
-        report += `\n`;
-      }
-    });
-
-    report += `— ออกรายงานโดย โหราจารย์ประจำ Lucky Shrine ศาลเจ้าแห่งโชคลาภ`;
-
-    navigator.clipboard
-      .writeText(report)
-      .then(() => onToast('คัดลอกรายงานปฏิทินฤกษ์มงคลฉบับเต็มเรียบร้อยแล้ว 📋✨'))
-      .catch(() => onToast('ไม่สามารถคัดลอกได้ โปรดลองอีกครั้ง'));
-  };
 
   // Handle Generate Lucky Card
   const handleOpenLuckyCard = (day: AuspiciousDay) => {
@@ -546,401 +491,261 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     onOpenCard(cardData);
   };
 
+  const currentPresetValue =
+    searchQuery === 'thongchai_athipadi'
+      ? 'thongchai_athipadi'
+      : selectedCategory !== 'all'
+      ? selectedCategory
+      : 'all';
+
+  const handlePresetChange = (val: string) => {
+    if (val === 'wedding') {
+      setSelectedCategory('wedding');
+      setSearchInputValue('ฤกษ์แต่งงาน / จดทะเบียนสมรส');
+      setSearchQuery('');
+      onToast('💍 แสดงฤกษ์แต่งงาน / จดทะเบียนสมรส');
+    } else if (val === 'house') {
+      setSelectedCategory('house');
+      setSearchInputValue('ฤกษ์ขึ้นบ้านใหม่ / ย้ายเข้าที่อยู่อาศัยใหม่');
+      setSearchQuery('');
+      onToast('🏡 แสดงฤกษ์ขึ้นบ้านใหม่ / ย้ายเข้าที่อยู่อาศัยใหม่');
+    } else if (val === 'vehicle_business') {
+      setSelectedCategory('vehicle_business');
+      setSearchInputValue('ฤกษ์ออกรถใหม่ / ขึ้นบ้านใหม่ / เปิดกิจการร้านค้า');
+      setSearchQuery('');
+      onToast('🚗 แสดงฤกษ์ออกรถใหม่ / เปิดกิจการร้านค้า');
+    } else if (val === 'merit') {
+      setSelectedCategory('merit');
+      setSearchInputValue('ฤกษ์ทำบุญประจำปี / ทำบุญบริษัท / ทำบุญบ้าน');
+      setSearchQuery('');
+      onToast('🙏 แสดงฤกษ์ทำบุญประจำปี / ทำบุญบริษัท / ทำบุญบ้าน');
+    } else if (val === 'others') {
+      setSelectedCategory('others');
+      setSearchInputValue('ฤกษ์มงคลอื่นๆ (เจรจาค้าขาย, ทำศัลยกรรม)');
+      setSearchQuery('');
+      onToast('✨ แสดงฤกษ์มงคลอื่นๆ (เจรจาค้าขาย/ศัลยกรรม)');
+    } else if (val === 'thongchai_athipadi') {
+      setSelectedCategory('all');
+      setSelectedBirthDay('none');
+      setAvoidKalakini(false);
+      setSearchInputValue('วันธงชัย & วันอธิบดี');
+      setSearchQuery('thongchai_athipadi');
+      onToast('⭐ แสดงเฉพาะวันธงชัยและวันอธิบดี');
+    } else if (val === 'reset' || val === 'all') {
+      setSelectedCategory('all');
+      setSelectedBirthDay('none');
+      setAvoidKalakini(false);
+      setSearchInputValue('');
+      setSearchQuery('');
+      onToast('รีเซ็ตแสดงวันมงคลทุกประเภท');
+    }
+    setTimeout(() => {
+      document.getElementById('auspicious-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
   return (
     <div className="auspicious-container">
-      {/* Title & Introduction */}
-      <div className="auspicious-header-box">
-        <div className="auspicious-header-badge">
-          <span className="badge-flair">โหราศาสตร์ไทย & การคำนวณฤกษ์ยาม</span>
-          <span className="badge-be">พ.ศ. {selectedYearBE}</span>
-        </div>
-        <h2 className="auspicious-main-title">ปฏิทินวันมงคลและฤกษ์งามยามดี</h2>
-        <p className="auspicious-main-desc">
-          วิเคราะห์เจาะลึก 5 หมวดหมู่งานมงคล ตามหลักบูรณฤกษ์ทั้ง ๙, ดิถีอำมฤตโชค, ยามอุบากอง
-          และมหาทักษาพยากรณ์ประจำวันเกิด เพื่อความสำเร็จ ไร้อุปสรรค และความเจริญรุ่งเรือง
-        </p>
-      </div>
-
-      {/* Kala Yoga Warning Banner (กาลโยคประจำปี) */}
-      <section className="kala-yoga-banner" aria-label="แจ้งเตือนกาลโยคประจำปี">
-        <div className="kala-banner-header">
-          <div className="kala-badge-item thongchai">
-            <span className="kala-dot" />
-            <span className="kala-label">วันธงชัย:</span>
-            <span className="kala-day-val">{kalaYoga.thongchaiNameTh}</span>
-          </div>
-          <div className="kala-badge-item athipadi">
-            <span className="kala-dot" />
-            <span className="kala-label">วันอธิบดี:</span>
-            <span className="kala-day-val">{kalaYoga.athipadiNameTh}</span>
-          </div>
-          <div className="kala-badge-item ubatha">
-            <span className="kala-dot" />
-            <span className="kala-label">วันอุบาทว์:</span>
-            <span className="kala-day-val">{kalaYoga.ubathaNameTh}</span>
-          </div>
-          <div className="kala-badge-item lokawinas">
-            <span className="kala-dot" />
-            <span className="kala-label">วันโลกาวินาศ:</span>
-            <span className="kala-day-val">{kalaYoga.lokawinasNameTh}</span>
-          </div>
-        </div>
-
-        <div className="kala-alert-box">
-          <div className="kala-alert-icon">⚠️</div>
-          <div className="kala-alert-content">
-            <h4 className="kala-alert-title">
-              แจ้งเตือนวันกาลโยคที่ต้องระวังประจำเดือน {THAI_MONTHS[selectedMonth - 1]} พ.ศ. {selectedYearBE}
-            </h4>
-            <p className="kala-alert-text">
-              ตามหลักกาลโยคโบราณ{' '}
-              <strong className="text-bad">
-                {kalaYoga.ubathaNameTh} (วันที่ {monthStats.ubathaDates.join(', ')}) เป็น &quot;วันอุบาทว์&quot;
-              </strong>{' '}
-              และ{' '}
-              <strong className="text-bad">
-                {kalaYoga.lokawinasNameTh} (วันที่ {monthStats.lokawinasDates.join(', ')}) เป็น &quot;วันโลกาวินาศ&quot;
-              </strong>{' '}
-              พึงหลีกเลี่ยงการจัดพิธีแต่งงาน ขึ้นบ้านใหม่ ออกรถ หรือเปิดกิจการในวันดังกล่าวเพื่อความปลอดภัยและความสบายใจ
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Control Panel: Month / Year / Birthday / Filters */}
-      <section className="auspicious-controls-panel">
-        <div className="control-row-grid">
-          {/* Month & Year Selectors */}
-          <div className="control-group">
-            <label htmlFor="month-select" className="control-label">
-              <span>📅 เดือนและปี พ.ศ.</span>
-            </label>
-            <div className="control-inputs-inline">
-              <div className="month-stepper-group">
-                <button
-                  type="button"
-                  className="btn-month-nav"
-                  onClick={handlePrevMonth}
-                  title="เดือนก่อนหน้า"
-                  aria-label="เปลี่ยนเป็นเดือนก่อนหน้า"
-                >
-                  ◀
-                </button>
-                <select
-                  id="month-select"
-                  className="input-select month-select"
-                  value={selectedMonth}
-                  onChange={(e) => handleMonthChange(Number(e.target.value))}
-                  aria-label="เลือกเดือน"
-                >
-                  {THAI_MONTHS.map((m, idx) => (
-                    <option key={m} value={idx + 1}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className="btn-month-nav"
-                  onClick={handleNextMonth}
-                  title="เดือนถัดไป"
-                  aria-label="เปลี่ยนเป็นเดือนถัดไป"
-                >
-                  ▶
-                </button>
-              </div>
-
-              <select
-                className="input-select year-select"
-                value={selectedYearBE}
-                onChange={(e) => handleYearChange(Number(e.target.value))}
-                aria-label="เลือกปี พ.ศ."
-              >
-                {Array.from({ length: Math.max(2575, selectedYearBE + 5) - Math.min(2567, selectedYearBE - 5) + 1 }, (_, i) => Math.min(2567, selectedYearBE - 5) + i).map((y) => (
-                  <option key={y} value={y}>
-                    พ.ศ. {y}
-                  </option>
-                ))}
-              </select>
-
-              {/* Quick Reset to Nov 2569 Button if not already selected */}
-              {(selectedMonth !== 11 || selectedYearBE !== 2569) && (
-                <button
-                  type="button"
-                  className="btn-quick-chip"
-                  onClick={() => {
-                    handleMonthChange(11);
-                    handleYearChange(2569);
-                    onToast('เปลี่ยนกลับมายัง พฤศจิกายน 2569 แล้ว');
-                  }}
-                  title="กลับสู่ พฤศจิกายน 2569"
-                >
-                  พ.ย. 2569
-                </button>
-              )}
-            </div>
+      {/* Unified Compact Astrological Search Card with Integrated Controls */}
+      <div className="astrological-search-card">
+        {/* Compact Dropdown Toolbar Row: เดือน -> ปี -> ฤกษ์ -> วันกาลกิณี */}
+        <div className="auspicious-compact-toolbar-row">
+          {/* 1. เดือน */}
+          <div className="dropdown-compact-item month-compact-stepper" title="เลือกเดือน">
+            <button
+              type="button"
+              className="btn-month-nav"
+              onClick={handlePrevMonth}
+              title="เดือนก่อนหน้า"
+              aria-label="เปลี่ยนเป็นเดือนก่อนหน้า"
+            >
+              ◀
+            </button>
+            <select
+              id="month-select"
+              className="dropdown-compact-select month-select"
+              value={selectedMonth}
+              onChange={(e) => handleMonthChange(Number(e.target.value))}
+              aria-label="เลือกเดือน"
+              title="เลือกเดือน"
+            >
+              {THAI_MONTHS.map((m, idx) => (
+                <option key={m} value={idx + 1}>
+                  เดือน {m}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="btn-month-nav"
+              onClick={handleNextMonth}
+              title="เดือนถัดไป"
+              aria-label="เปลี่ยนเป็นเดือนถัดไป"
+            >
+              ▶
+            </button>
           </div>
 
-          {/* Birthday Selector (มหาทักษาพยากรณ์) */}
-          <div className="control-group">
-            <label htmlFor="birthday-select" className="control-label">
-              <span>👤 วันเกิดของเจ้าชะตา (สำหรับเทียบทักษา & หลีกเลี่ยงกาลกิณี)</span>
-            </label>
-            <div className="control-inputs-inline">
-              <select
-                id="birthday-select"
-                className="input-select birthday-select"
-                value={selectedBirthDay}
-                onChange={(e) => {
-                  const val = e.target.value as BirthDayId | 'none';
-                  setSelectedBirthDay(val);
-                  if (val !== 'none') setAvoidKalakini(true);
-                }}
-              >
-                <option value="none">-- ทุกวันเกิด (ดูภาพรวมทุกวัน) --</option>
-                {BIRTH_DAYS.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.icon} {b.labelTh} (กาลกิณี: {b.kalakiniDayNameTh})
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* 2. ปี */}
+          <div className="dropdown-compact-item" title="เลือกปี พ.ศ.">
+            <select
+              id="year-select"
+              className="dropdown-compact-select year-select"
+              value={selectedYearBE}
+              onChange={(e) => handleYearChange(Number(e.target.value))}
+              aria-label="เลือกปี พ.ศ."
+              title="เลือกปี พ.ศ."
+            >
+              {Array.from({ length: Math.max(2575, selectedYearBE + 5) - Math.min(2567, selectedYearBE - 5) + 1 }, (_, i) => Math.min(2567, selectedYearBE - 5) + i).map((y) => (
+                <option key={y} value={y}>
+                  พ.ศ. {y}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            {selectedBirthDay !== 'none' ? (
-              <label className="checkbox-toggle-wrap" style={{ marginTop: '0.4rem' }}>
-                <input
-                  type="checkbox"
-                  checked={avoidKalakini}
-                  onChange={(e) => setAvoidKalakini(e.target.checked)}
-                />
-                <span className="checkbox-custom" />
-                <span className="toggle-label-text">
-                  <strong>หลีกเลี่ยงวันกาลกิณี</strong> ของคนเกิด
-                  {BIRTH_DAYS.find((b) => b.id === selectedBirthDay)?.labelTh} (ซ่อน
-                  {BIRTH_DAYS.find((b) => b.id === selectedBirthDay)?.kalakiniDayNameTh} อัตโนมัติ)
-                </span>
-              </label>
-            ) : (
-              <span className="birthday-hint-text" style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
-                💡 เลือกวันเกิดของคุณเพื่อเปิดระบบตัดวันกาลกิณีเฉพาะบุคคลอัตโนมัติ
-              </span>
-            )}
+          {/* 3. ฤกษ์ */}
+          <div className="dropdown-compact-item" title="เลือกฤกษ์มงคลยอดนิยม">
+            <select
+              id="preset-select"
+              className="dropdown-compact-select preset-select"
+              value={currentPresetValue}
+              onChange={(e) => handlePresetChange(e.target.value)}
+              aria-label="เลือกฤกษ์มงคล"
+              title="เลือกฤกษ์มงคล"
+            >
+              <option value="all">✨ ฤกษ์: ทั้งหมด</option>
+              <option value="wedding">💍 ฤกษ์แต่งงาน</option>
+              <option value="house">🏡 ฤกษ์ขึ้นบ้านใหม่</option>
+              <option value="vehicle_business">🚗 ฤกษ์ออกรถ/เปิดร้าน</option>
+              <option value="merit">🙏 ฤกษ์ทำบุญ</option>
+              <option value="others">💎 ฤกษ์ศัลยกรรม/ค้าขาย</option>
+              <option value="thongchai_athipadi">⭐ วันธงชัย & อธิบดี</option>
+              <option value="reset">🔄 แสดงทุกวัน (รีเซ็ต)</option>
+            </select>
+          </div>
+
+          {/* 4. วันกาลกิณี */}
+          <div className="dropdown-compact-item" title="เลือกวันเกิดเทียบทักษาตัดวันกาลกิณี">
+            <select
+              id="birthday-select"
+              className="dropdown-compact-select birthday-select-compact"
+              value={selectedBirthDay}
+              onChange={(e) => {
+                const val = e.target.value as BirthDayId | 'none';
+                setSelectedBirthDay(val);
+                if (val !== 'none') setAvoidKalakini(true);
+              }}
+              title="เลือกวันเกิดเทียบทักษาตัดวันกาลกิณี"
+              aria-label="เลือกวันเกิดเทียบทักษาตัดวันกาลกิณี"
+            >
+              <option value="none">👤 กาลกิณี: ทุกวันเกิด</option>
+              {BIRTH_DAYS.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.icon} เกิด{b.labelTh} (เลี่ยง{b.kalakiniDayNameTh})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Mini Kala Yoga Status Pills */}
+          <div className="kala-status-compact-pills">
+            <span className="kala-mini-pill thongchai" title={`วันธงชัย: ${kalaYoga.thongchaiNameTh}`}>
+              ⭐ ธงชัย: <strong>{kalaYoga.thongchaiNameTh}</strong>
+            </span>
+            <span className="kala-mini-pill athipadi" title={`วันอธิบดี: ${kalaYoga.athipadiNameTh}`}>
+              👑 อธิบดี: <strong>{kalaYoga.athipadiNameTh}</strong>
+            </span>
+            <span className="kala-mini-pill ubatha" title={`วันอุบาทว์: ${kalaYoga.ubathaNameTh}`}>
+              ⚠️ อุบาทว์: <strong>{kalaYoga.ubathaNameTh}</strong>
+            </span>
+            <span className="kala-mini-pill lokawinas" title={`วันโลกาวินาศ: ${kalaYoga.lokawinasNameTh}`}>
+              ⛔ โลกาวินาศ: <strong>{kalaYoga.lokawinasNameTh}</strong>
+            </span>
           </div>
         </div>
 
-        {/* Astrological Smart Search & Calculation Command Bar */}
-        <div className="astrological-search-card">
-          <form
-            className="search-form-row"
-            onSubmit={(e) => {
-              e.preventDefault();
-              executeAstrologicalSearch(searchInputValue);
-            }}
-          >
-            <div className="search-filter-wrap">
-              <span className="search-icon" aria-hidden="true">
-                🔮
-              </span>
-              <input
-                type="text"
-                className="search-input"
-                placeholder="พิมพ์คำขอหรือระบุฤกษ์ เช่น: ฤกษ์แต่งงาน พฤศจิกายน 2569 คนเกิดวันจันทร์, ออกรถใหม่, ขึ้นบ้านใหม่..."
-                value={searchInputValue}
-                onChange={(e) => setSearchInputValue(e.target.value)}
-                aria-label="ช่องค้นหาและคำนวณฤกษ์มงคล"
-              />
-              {searchInputValue && (
-                <button
-                  type="button"
-                  className="btn-clear-search"
-                  onClick={() => {
-                    setSearchInputValue('');
-                    setSearchQuery('');
-                    onToast('ล้างคำค้นหาแล้ว แสดงวันมงคลทั้งหมด');
-                  }}
-                  title="ล้างข้อความค้นหา"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              className="btn gold btn-search-execute"
-              title="กดเพื่อคำนวณฤกษ์มงคลตามคำขอทันที"
-            >
-              <span>✨ คำนวณฤกษ์มงคล</span>
-            </button>
-          </form>
-
-          {/* Quick-Click Prompt Suggestion Chips */}
-          <div className="search-quick-chips">
-            <span className="quick-chips-label">⚡ คำขอและฤกษ์ยอดนิยม:</span>
-            <button
-              type="button"
-              className={`quick-chip ${selectedCategory === 'wedding' ? 'active-chip' : ''}`}
-              onClick={() => {
-                setSelectedCategory('wedding');
-                setSelectedMonth(11);
-                setSelectedYearBE(2569);
-                setSearchInputValue('ฤกษ์แต่งงาน / จดทะเบียนสมรส');
-                setSearchQuery('');
-                onToast('💍 แสดงฤกษ์แต่งงาน / จดทะเบียนสมรส พฤศจิกายน 2569');
-                setTimeout(() => {
-                  document.getElementById('auspicious-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-              }}
-            >
-              💍 ฤกษ์แต่งงาน / จดทะเบียนสมรส
-            </button>
-            <button
-              type="button"
-              className={`quick-chip ${selectedCategory === 'house' ? 'active-chip' : ''}`}
-              onClick={() => {
-                setSelectedCategory('house');
-                setSelectedMonth(11);
-                setSelectedYearBE(2569);
-                setSearchInputValue('ฤกษ์ขึ้นบ้านใหม่ / ย้ายเข้าที่อยู่อาศัยใหม่');
-                setSearchQuery('');
-                onToast('🏡 แสดงฤกษ์ขึ้นบ้านใหม่ / ย้ายเข้าที่อยู่อาศัยใหม่ พฤศจิกายน 2569');
-                setTimeout(() => {
-                  document.getElementById('auspicious-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-              }}
-            >
-              🏡 ฤกษ์ขึ้นบ้านใหม่
-            </button>
-            <button
-              type="button"
-              className={`quick-chip ${selectedCategory === 'vehicle_business' ? 'active-chip' : ''}`}
-              onClick={() => {
-                setSelectedCategory('vehicle_business');
-                setSelectedMonth(11);
-                setSelectedYearBE(2569);
-                setSearchInputValue('ฤกษ์ออกรถใหม่ / ขึ้นบ้านใหม่ / เปิดกิจการร้านค้า');
-                setSearchQuery('');
-                onToast('🚗 แสดงฤกษ์ออกรถใหม่ / เปิดกิจการร้านค้า พฤศจิกายน 2569');
-                setTimeout(() => {
-                  document.getElementById('auspicious-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-              }}
-            >
-              🚗 ฤกษ์ออกรถ / เปิดร้าน
-            </button>
-            <button
-              type="button"
-              className={`quick-chip ${selectedCategory === 'merit' ? 'active-chip' : ''}`}
-              onClick={() => {
-                setSelectedCategory('merit');
-                setSelectedMonth(11);
-                setSelectedYearBE(2569);
-                setSearchInputValue('ฤกษ์ทำบุญประจำปี / ทำบุญบริษัท / ทำบุญบ้าน');
-                setSearchQuery('');
-                onToast('🙏 แสดงฤกษ์ทำบุญประจำปี / ทำบุญบริษัท / ทำบุญบ้าน พฤศจิกายน 2569');
-                setTimeout(() => {
-                  document.getElementById('auspicious-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-              }}
-            >
-              🙏 ฤกษ์ทำบุญบ้าน/บริษัท
-            </button>
-            <button
-              type="button"
-              className={`quick-chip ${selectedCategory === 'others' ? 'active-chip' : ''}`}
-              onClick={() => {
-                setSelectedCategory('others');
-                setSelectedMonth(11);
-                setSelectedYearBE(2569);
-                setSearchInputValue('ฤกษ์มงคลอื่นๆ (เจรจาค้าขาย, ทำศัลยกรรม)');
-                setSearchQuery('');
-                onToast('✨ แสดงฤกษ์มงคลอื่นๆ (เจรจาค้าขาย/ศัลยกรรม) พฤศจิกายน 2569');
-                setTimeout(() => {
-                  document.getElementById('auspicious-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-              }}
-            >
-              ✨ ฤกษ์ศัลยกรรม/ค้าขาย
-            </button>
-            <button
-              type="button"
-              className="quick-chip gold-chip"
-              onClick={() => {
-                setSelectedCategory('all');
-                setSelectedBirthDay('none');
-                setAvoidKalakini(false);
-                setSelectedMonth(11);
-                setSelectedYearBE(2569);
-                setSearchInputValue('วันธงชัย & วันอธิบดี');
-                setSearchQuery('thongchai_athipadi');
-                onToast('⭐ แสดงเฉพาะวันธงชัยและวันอธิบดี พฤศจิกายน 2569');
-                setTimeout(() => {
-                  document.getElementById('auspicious-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
-              }}
-            >
-              ⭐ วันธงชัย & วันอธิบดี
-            </button>
-            {(searchQuery || selectedCategory !== 'all' || selectedBirthDay !== 'none') && (
+        {/* Input box & Calculate Button */}
+        <form
+          className="search-form-row"
+          onSubmit={(e) => {
+            e.preventDefault();
+            executeAstrologicalSearch(searchInputValue);
+          }}
+        >
+          <div className="search-filter-wrap">
+            <span className="search-icon" aria-hidden="true">
+              🔮
+            </span>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="พิมพ์คำขอหรือระบุฤกษ์ เช่น: ฤกษ์แต่งงาน พฤศจิกายน 2569 คนเกิดวันจันทร์..."
+              value={searchInputValue}
+              onChange={(e) => setSearchInputValue(e.target.value)}
+              aria-label="ช่องค้นหาและคำนวณฤกษ์มงคล"
+            />
+            {searchInputValue && (
               <button
                 type="button"
-                className="quick-chip reset-chip"
+                className="btn-clear-search"
                 onClick={() => {
-                  setSelectedCategory('all');
-                  setSelectedBirthDay('none');
-                  setAvoidKalakini(false);
                   setSearchInputValue('');
                   setSearchQuery('');
-                  onToast('รีเซ็ตตัวกรองแล้ว แสดงวันมงคลทั้งหมดของเดือน');
-                  setTimeout(() => {
-                    document.getElementById('auspicious-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }, 100);
+                  onToast('ล้างคำค้นหาแล้ว แสดงวันมงคลทั้งหมด');
                 }}
+                title="ล้างข้อความค้นหา"
               >
-                🔄 รีเซ็ตแสดงทุกวัน
+                ✕
               </button>
             )}
           </div>
-        </div>
 
-        {/* Category Pills (5 หมวดหมู่งาน) */}
-        <div className="category-pills-bar" role="tablist" aria-label="เลือกประเภทงานมงคล">
           <button
-            type="button"
-            className={`pill-btn ${selectedCategory === 'all' ? 'active' : ''}`}
-            onClick={() => {
-              setSelectedCategory('all');
-              setSearchQuery('');
-              setTimeout(() => {
-                document.getElementById('auspicious-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }, 100);
-            }}
+            type="submit"
+            className="btn gold btn-search-execute"
+            title="กดเพื่อคำนวณฤกษ์มงคลตามคำขอทันที"
           >
-            <span>🌟 ทุกประเภทงาน</span>
+            <span>✨ คำนวณฤกษ์มงคล</span>
           </button>
-          {(Object.keys(WORK_CATEGORIES_INFO) as AuspiciousWorkCategory[]).map((catKey) => {
-            const cat = WORK_CATEGORIES_INFO[catKey];
-            const isActive = selectedCategory === catKey;
-            return (
-              <button
-                key={catKey}
-                type="button"
-                className={`pill-btn ${isActive ? 'active' : ''}`}
-                onClick={() => {
-                  setSelectedCategory(catKey);
-                  setSearchQuery('');
-                  setTimeout(() => {
-                    document.getElementById('auspicious-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }, 100);
-                }}
-              >
-                <span className="pill-icon">{cat.icon}</span>
-                <span className="pill-title">{cat.titleTh}</span>
-              </button>
-            );
-          })}
+        </form>
+
+        {/* View Mode Tabs: Table vs Catalog view vs Calendar Grid - Directly Adjacent to Input Box */}
+        <div className="view-mode-tabs-bar attached-to-search">
+          <div className="view-mode-group" role="tablist">
+            <button
+              type="button"
+              className={`btn-view-mode ${viewMode === 'table' ? 'active' : ''}`}
+              onClick={() => setViewMode('table')}
+              title="แสดงผลในรูปแบบ Table (ตาราง)"
+            >
+              <span>📊 Table (ตาราง)</span>
+            </button>
+            <button
+              type="button"
+              className={`btn-view-mode ${viewMode === 'category' ? 'active' : ''}`}
+              onClick={() => setViewMode('category')}
+              title="แสดงผลในรูปแบบ Catalog view (แยกตามหมวดหมู่)"
+            >
+              <span>🗂️ Catalog view (แยกหมวด)</span>
+            </button>
+            <button
+              type="button"
+              className={`btn-view-mode ${viewMode === 'calendar' ? 'active' : ''}`}
+              onClick={() => setViewMode('calendar')}
+              title="แสดงผลในรูปแบบ Calendar Grid (ปฏิทินรายเดือน)"
+            >
+              <span>🗓️ Calendar Grid (ปฏิทิน)</span>
+            </button>
+          </div>
+
+          <div className="view-results-actions-row">
+            <div className="view-results-count">
+              พบวันมงคล <strong>{filteredDays.length}</strong> วัน (จากทั้งหมด {allMonthDays.length} วัน)
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
 
       {/* Calculation Results Section Anchor & Banner */}
       <div id="auspicious-results-section" className="auspicious-results-anchor">
@@ -973,50 +778,6 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
           </div>
           <div className="summary-card-badge">
             พบวันมงคล <span className="highlight-count">{filteredDays.length}</span> วัน
-          </div>
-        </div>
-      </div>
-
-      {/* View Mode Tabs: Table vs Category vs Calendar */}
-      <div className="view-mode-tabs-bar">
-        <div className="view-mode-group" role="tablist">
-          <button
-            type="button"
-            className={`btn-view-mode ${viewMode === 'table' ? 'active' : ''}`}
-            onClick={() => setViewMode('table')}
-            title="แสดงผลในรูปแบบ ตาราง (Table)"
-          >
-            <span>📊 ตาราง (Table)</span>
-          </button>
-          <button
-            type="button"
-            className={`btn-view-mode ${viewMode === 'category' ? 'active' : ''}`}
-            onClick={() => setViewMode('category')}
-            title="แสดงผลในรูปแบบ รายการแยกตามประเภทงาน (Category View)"
-          >
-            <span>📑 รายการแยกตามประเภทงาน (Category View)</span>
-          </button>
-          <button
-            type="button"
-            className={`btn-view-mode ${viewMode === 'calendar' ? 'active' : ''}`}
-            onClick={() => setViewMode('calendar')}
-            title="แสดงผลในรูปแบบ ปฏิทินรายเดือน (Calendar Grid)"
-          >
-            <span>🗓️ ปฏิทินรายเดือน (Calendar Grid)</span>
-          </button>
-        </div>
-
-        <div className="view-results-actions-row">
-          <button
-            type="button"
-            className="btn-copy-report-top"
-            onClick={handleCopyMonthReport}
-            title="คัดลอกรายงานปฏิทินวันมงคลและฤกษ์งามยามดีประจำเดือนฉบับเต็ม"
-          >
-            <span>📋 คัดลอกรายงานสรุปฤกษ์มงคล</span>
-          </button>
-          <div className="view-results-count">
-            พบวันมงคล <strong>{filteredDays.length}</strong> วัน (จากทั้งหมด {allMonthDays.length} วัน)
           </div>
         </div>
       </div>
