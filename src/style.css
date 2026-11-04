@@ -7547,14 +7547,21 @@ select.input-select:focus,
   transform: translateY(-1px);
 }
 
-/* Category View: High contrast matching Calendar Grid, radiant permanent visibility */
-.auspicious-category-view {
-  display: flex;
-  flex-direction: column;
-  gap: 1.6rem;
+/* Category / Catalog View: High contrast matching Calendar Grid, radiant permanent visibility */
+.auspicious-category-view,
+.auspicious-catalog-view,
+.catalog-view-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100%;
 }
 
 .category-section-block {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-bottom: 1.6rem;
   background: linear-gradient(180deg, #29120b, #1c0b07) !important;
   border: 2.5px solid #ffd700 !important;
   border-radius: 16px !important;
@@ -8110,24 +8117,148 @@ select.input-select:focus,
   .cell-ruk-name { font-size: 0.68rem; }
 }
 
-/* Calendar Grid visibility and responsive layout patch.
-   Append this block AFTER the existing auspicious calendar stylesheet. */
-.auspicious-views-viewport {
+/* =========================================================================
+   Display Modes Visibility & Non-Clipping Enforcement:
+   Applies 'display: block !important;' and 'visibility: visible !important;'
+   to the container classes of the Table, Catalog, and Calendar views
+   to ensure they are ALWAYS visible without requiring hover interactions.
+   ========================================================================= */
+
+/* Container Classes for Table, Catalog, and Calendar Views */
+.auspicious-table-wrapper,
+.auspicious-table-container,
+.auspicious-table-view,
+.auspicious-category-view,
+.auspicious-catalog-view,
+.catalog-view-container,
+.auspicious-calendar-grid-view,
+.auspicious-calendar-view,
+.calendar-view-container,
+.auspicious-views-viewport,
+.auspicious-views-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
   min-width: 0;
   width: 100%;
 }
 
-.auspicious-calendar-grid-view {
-  display: block;
+/* 1. Mode Switcher Buttons (Always Visible by default) */
+.view-mode-tabs-bar,
+.results-view-mode-bar {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+}
+
+.btn-view-mode {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* 2. Table View Mode Containers & Elements (Always Visible by default) */
+.auspicious-table-wrapper,
+.auspicious-table-container,
+.auspicious-table-view {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  width: 100%;
+}
+
+.auspicious-table {
+  display: table !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.auspicious-table thead {
+  display: table-header-group !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.auspicious-table tbody {
+  display: table-row-group !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.auspicious-table tr,
+.table-row {
+  display: table-row !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.auspicious-table th,
+.auspicious-table td {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* 3. Catalog / Category View Mode Containers & Elements (Always Visible by default) */
+.auspicious-category-view,
+.auspicious-catalog-view,
+.catalog-view-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  width: 100%;
+}
+
+.category-section-block {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  width: 100%;
+  margin-bottom: 1.6rem;
+}
+
+.category-cards-grid {
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+}
+
+.category-item-card {
+  display: flex !important;
+  flex-direction: column !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+}
+
+/* 4. Calendar Grid View Mode Containers & Elements (Always Visible by default) */
+.auspicious-calendar-grid-view,
+.auspicious-calendar-view,
+.calendar-view-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
   width: 100%;
   min-width: 0;
-  overflow: visible;
 }
 
 .calendar-weekdays-row,
 .calendar-cells-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
   width: 100%;
 }
 
@@ -8137,9 +8268,14 @@ select.input-select:focus,
 }
 
 .calendar-cell {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
   box-sizing: border-box;
   min-height: clamp(76px, 9vw, 112px);
-  overflow: hidden;
 }
 
 .calendar-cell.cell-empty {
@@ -8157,7 +8293,7 @@ select.input-select:focus,
 }
 
 .calendar-cell.cell-dimmed {
-  opacity: 0.42;
+  opacity: 0.42 !important;
 }
 
 @media (max-width: 640px) {
