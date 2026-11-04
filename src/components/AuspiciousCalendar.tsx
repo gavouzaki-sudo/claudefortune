@@ -19,7 +19,7 @@ interface AuspiciousCalendarProps {
   onOpenCard?: (card: CardData) => void;
 }
 
-export type ViewMode = 'table' | 'category' | 'calendar';
+export type ViewMode = 'calendar';
 
 export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
   initialBirthDay,
@@ -34,10 +34,8 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
   );
   const [avoidKalakini, setAvoidKalakini] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<AuspiciousWorkCategory | 'all'>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [inspectedDay, setInspectedDay] = useState<AuspiciousDay | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [searchInputValue, setSearchInputValue] = useState<string>('');
 
   // Month names in Thai
   const THAI_MONTHS = [
@@ -98,200 +96,7 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     }
   }, [selectedMonth, handleMonthChange, selectedYearBE, onToast]);
 
-  // Smart Natural Language & Astrological Intent Parser
-  const executeAstrologicalSearch = useCallback(
-    (rawQuery: string) => {
-      const q = rawQuery.trim();
-      const lower = q.toLowerCase();
-      const detectedChanges: string[] = [];
 
-      // 1. Month detection: full Thai names, common abbreviations, and forms without dots
-      const monthAliases = [
-        ['มกราคม', 'ม.ค.', 'มค'],
-        ['กุมภาพันธ์', 'ก.พ.', 'กพ'],
-        ['มีนาคม', 'มี.ค.', 'มีค'],
-        ['เมษายน', 'เม.ย.', 'เมย'],
-        ['พฤษภาคม', 'พ.ค.', 'พค'],
-        ['มิถุนายน', 'มิ.ย.', 'มิย'],
-        ['กรกฎาคม', 'ก.ค.', 'กค'],
-        ['สิงหาคม', 'ส.ค.', 'สค'],
-        ['กันยายน', 'ก.ย.', 'กย'],
-        ['ตุลาคม', 'ต.ค.', 'ตค'],
-        ['พฤศจิกายน', 'พ.ย.', 'พย'],
-        ['ธันวาคม', 'ธ.ค.', 'ธค'],
-      ];
-      const normalizeThai = (value: string) => value.toLowerCase().replace(/[.\s]/g, '');
-      let monthTarget = selectedMonth;
-      const normalizedQuery = normalizeThai(lower);
-      monthAliases.forEach((aliases, idx) => {
-        if (aliases.some((alias) => normalizedQuery.includes(normalizeThai(alias)))) {
-          monthTarget = idx + 1;
-          setSelectedMonth(monthTarget);
-          detectedChanges.push(`เดือน ${THAI_MONTHS[idx]}`);
-        }
-      });
-
-      // 2. Year detection (B.E. 2567-2575 or C.E. 2024-2032)
-      let yearTarget = selectedYearBE;
-      const matchYearBE = lower.match(/(?<!\d)25(?:6[7-9]|7[0-5])(?!\d)/);
-      const matchYearCE = lower.match(/(?<!\d)(?:202[4-9]|203[0-2])(?!\d)/);
-      if (matchYearBE) {
-        yearTarget = parseInt(matchYearBE[0], 10);
-        setSelectedYearBE(yearTarget);
-        detectedChanges.push(`พ.ศ. ${yearTarget}`);
-      } else if (matchYearCE) {
-        yearTarget = parseInt(matchYearCE[0], 10) + 543;
-        setSelectedYearBE(yearTarget);
-        detectedChanges.push(`พ.ศ. ${yearTarget}`);
-      }
-
-      // 3. Category detection (handling multi-category requests and prompt-pasting)
-      const catMatches: AuspiciousWorkCategory[] = [];
-      if (lower.includes('แต่งงาน') || lower.includes('สมรส') || lower.includes('หมั้น') || lower.includes('wedding')) catMatches.push('wedding');
-      if (lower.includes('ขึ้นบ้านใหม่') || lower.includes('ย้ายบ้าน') || lower.includes('ย้ายเข้า') || lower.includes('ปลูกบ้าน')) catMatches.push('house');
-      if (lower.includes('ทำบุญ') || lower.includes('สังฆทาน') || lower.includes('ทำบุญบริษัท') || lower.includes('ทำบุญบ้าน')) catMatches.push('merit');
-      if (lower.includes('ออกรถ') || lower.includes('เปิดร้าน') || lower.includes('เปิดกิจการ') || lower.includes('รถใหม่')) catMatches.push('vehicle_business');
-      if (lower.includes('ศัลยกรรม') || lower.includes('เจรจา') || lower.includes('ค้าขาย') || lower.includes('ลงทุน') || lower.includes('สัญญา')) catMatches.push('others');
-
-      if (catMatches.length >= 2 || lower.includes('ทุกประเภท') || lower.includes('ทั้งหมด') || lower.includes('แยกตามประเภทงาน')) {
-        setSelectedCategory('all');
-        detectedChanges.push('ทุกประเภทงาน (วิเคราะห์ครบ 5 หมวด)');
-      } else if (catMatches.length === 1) {
-        setSelectedCategory(catMatches[0]);
-        detectedChanges.push(`หมวด${WORK_CATEGORIES_INFO[catMatches[0]].titleTh.split('/')[0].trim()}`);
-      }
-
-      // 4. Birthday detection — labels and Kalakini weekday come from the engine data.
-      const selectBirthday = (id: BirthDayId) => {
-        const option = BIRTH_DAYS.find((b) => b.id === id);
-        setSelectedBirthDay(id);
-        setAvoidKalakini(true);
-        if (option) {
-          detectedChanges.push(`คนเกิด${option.labelTh} (หลีกเลี่ยง${option.kalakiniDayNameTh})`);
-        }
-      };
-
-      if (lower.includes('พุธกลางคืน') || lower.includes('ราหู')) {
-        selectBirthday('wednesday_night');
-      } else if (lower.includes('วันอาทิตย์') || lower.includes('เกิดอาทิตย์')) {
-        selectBirthday('sunday');
-      } else if (lower.includes('วันจันทร์') || lower.includes('เกิดจันทร์')) {
-        selectBirthday('monday');
-      } else if (lower.includes('วันอังคาร') || lower.includes('เกิดอังคาร')) {
-        selectBirthday('tuesday');
-      } else if (lower.includes('วันพุธ') || lower.includes('เกิดพุธ')) {
-        selectBirthday('wednesday_day');
-      } else if (lower.includes('วันพฤหัส') || lower.includes('เกิดพฤหัส')) {
-        selectBirthday('thursday');
-      } else if (lower.includes('วันศุกร์') || lower.includes('เกิดศุกร์')) {
-        selectBirthday('friday');
-      } else if (lower.includes('วันเสาร์') || lower.includes('เกิดเสาร์')) {
-        selectBirthday('saturday');
-      }
-
-      // 5. View mode detection
-      if (lower.includes('ตาราง') || lower.includes('table')) {
-        setViewMode('table');
-        detectedChanges.push('รูปแบบตาราง (Table)');
-      } else if (lower.includes('ประเภทงาน') || lower.includes('category') || lower.includes('หมวด')) {
-        setViewMode('category');
-        detectedChanges.push('รูปแบบแยกตามหมวดงาน');
-      } else if (lower.includes('ปฏิทินรายเดือน') || lower.includes('calendar') || lower.includes('grid')) {
-        setViewMode('calendar');
-        detectedChanges.push('รูปแบบปฏิทินรายเดือน');
-      }
-
-      // 6. Specific date detection: "วันที่ 4", "4 ก.พ.", "12 ส.ค. 2569", or "4/2/2569"
-      const numericDate = lower.match(/(?:วันที่\s*)?(\d{1,2})\s*[\/-]\s*(\d{1,2})(?:\s*[\/-]\s*(25\d{2}|20\d{2}))?/);
-      const namedDate = lower.match(/(?:วันที่\s*)?(\d{1,2})\s*(มกราคม|กุมภาพันธ์|มีนาคม|เมษายน|พฤษภาคม|มิถุนายน|กรกฎาคม|สิงหาคม|กันยายน|ตุลาคม|พฤศจิกายน|ธันวาคม|ม\.?ค\.?|ก\.?พ\.?|มี\.?ค\.?|เม\.?ย\.?|พ\.?ค\.?|มิ\.?ย\.?|ก\.?ค\.?|ส\.?ค\.?|ก\.?ย\.?|ต\.?ค\.?|พ\.?ย\.?|ธ\.?ค\.?)(?:\s*(25\d{2}|20\d{2}))?/);
-      const dayOnly = lower.match(/^(?:(?:วันที่|วันที)\s*)?(\d{1,2})$/);
-      let requestedDay: number | null = null;
-      let dateNotFoundMessage: string | null = null;
-      if (numericDate && (Number(numericDate[2]) < 1 || Number(numericDate[2]) > 12)) {
-        dateNotFoundMessage = `เดือน ${numericDate[2]} ไม่ถูกต้อง กรุณาระบุเดือน 1–12`;
-      } else if (numericDate) {
-        requestedDay = Number(numericDate[1]);
-        monthTarget = Number(numericDate[2]);
-        if (numericDate[3]) {
-          yearTarget = Number(numericDate[3]);
-          if (yearTarget < 2400) yearTarget += 543;
-        }
-      } else if (namedDate) {
-        requestedDay = Number(namedDate[1]);
-        const dateMonth = normalizeThai(namedDate[2]);
-        const dateMonthIndex = monthAliases.findIndex((aliases) => aliases.some((alias) => normalizeThai(alias) === dateMonth));
-        if (dateMonthIndex >= 0) {
-          monthTarget = dateMonthIndex + 1;
-        }
-        if (namedDate[3]) {
-          yearTarget = Number(namedDate[3]);
-          if (yearTarget < 2400) yearTarget += 543;
-        }
-      } else if (dayOnly) {
-        requestedDay = Number(dayOnly[1]);
-      }
-
-      if (requestedDay !== null) {
-        if (requestedDay >= 1 && requestedDay <= 31) {
-          const targetDays = generateMonthAuspiciousDays(yearTarget, monthTarget);
-          const targetDay = targetDays.find((d) => d.dayOfMonth === requestedDay);
-          setSelectedMonth(monthTarget);
-          setSelectedYearBE(yearTarget);
-          if (targetDay) {
-            setInspectedDay(targetDay);
-            detectedChanges.push(`วันที่ ${requestedDay} ${THAI_MONTHS[monthTarget - 1]}`);
-          } else {
-            setInspectedDay(null);
-            dateNotFoundMessage = `ไม่พบวันที่ ${requestedDay} ในเดือน ${THAI_MONTHS[monthTarget - 1]} พ.ศ. ${yearTarget}`;
-          }
-        } else {
-          dateNotFoundMessage = `วันที่ ${requestedDay} ไม่ถูกต้อง กรุณาระบุวันที่ 1–31`;
-        }
-      }
-
-      // 7. General search intent vs specific astrological keyword
-      const isGenericIntent =
-        !q ||
-        lower.includes('จงทำหน้าที่') ||
-        lower.includes('ผู้เชี่ยวชาญ') ||
-        lower.includes('ช่วยสร้าง') ||
-        lower.includes('คำนวณ') ||
-        lower.includes('ฤกษ์มงคล') ||
-        lower.includes('ปฏิทิน') ||
-        lower.includes('วันมงคล') ||
-        lower.includes('ฤกษ์ดี') ||
-        lower.includes('วันดี') ||
-        lower.includes('ฤกษ์งามยามดี') ||
-        lower.includes('หาฤกษ์') ||
-        lower.includes('ขอฤกษ์') ||
-        lower.includes('ตรวจฤกษ์') ||
-        lower.includes('เช็คฤกษ์') ||
-        dateNotFoundMessage !== null ||
-        detectedChanges.length > 0;
-
-      if (isGenericIntent) {
-        // Clear text-based pruning so all matching days are mapped and displayed in the table/cards
-        setSearchQuery('');
-        if (dateNotFoundMessage) {
-          onToast(dateNotFoundMessage);
-        } else if (detectedChanges.length > 0) {
-          onToast(`✨ คำนวณตามเงื่อนไข: ${detectedChanges.join(' · ')}`);
-        } else {
-          onToast(`✨ คำนวณวันมงคลเดือน ${THAI_MONTHS[monthTarget - 1]} พ.ศ. ${yearTarget}`);
-        }
-      } else {
-        // Specific astrological filter keyword (e.g. "ธงชัย", "อธิบดี", "มหัทธโน", "ทิศเหนือ")
-        setSearchQuery(q);
-        onToast(`🔍 ค้นหา: "${q}"`);
-      }
-
-      // Smoothly scroll to the results table/list section
-      setTimeout(() => {
-        document.getElementById('auspicious-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 80);
-    },
-    [onToast, selectedMonth, selectedYearBE, THAI_MONTHS]
-  );
 
   // Filter days based on user preferences and search query
   const filteredDays = useMemo(() => {
@@ -501,41 +306,34 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
   const handlePresetChange = (val: string) => {
     if (val === 'wedding') {
       setSelectedCategory('wedding');
-      setSearchInputValue('ฤกษ์แต่งงาน / จดทะเบียนสมรส');
       setSearchQuery('');
       onToast('💍 แสดงฤกษ์แต่งงาน / จดทะเบียนสมรส');
     } else if (val === 'house') {
       setSelectedCategory('house');
-      setSearchInputValue('ฤกษ์ขึ้นบ้านใหม่ / ย้ายเข้าที่อยู่อาศัยใหม่');
       setSearchQuery('');
       onToast('🏡 แสดงฤกษ์ขึ้นบ้านใหม่ / ย้ายเข้าที่อยู่อาศัยใหม่');
     } else if (val === 'vehicle_business') {
       setSelectedCategory('vehicle_business');
-      setSearchInputValue('ฤกษ์ออกรถใหม่ / ขึ้นบ้านใหม่ / เปิดกิจการร้านค้า');
       setSearchQuery('');
       onToast('🚗 แสดงฤกษ์ออกรถใหม่ / เปิดกิจการร้านค้า');
     } else if (val === 'merit') {
       setSelectedCategory('merit');
-      setSearchInputValue('ฤกษ์ทำบุญประจำปี / ทำบุญบริษัท / ทำบุญบ้าน');
       setSearchQuery('');
       onToast('🙏 แสดงฤกษ์ทำบุญประจำปี / ทำบุญบริษัท / ทำบุญบ้าน');
     } else if (val === 'others') {
       setSelectedCategory('others');
-      setSearchInputValue('ฤกษ์มงคลอื่นๆ (เจรจาค้าขาย, ทำศัลยกรรม)');
       setSearchQuery('');
       onToast('✨ แสดงฤกษ์มงคลอื่นๆ (เจรจาค้าขาย/ศัลยกรรม)');
     } else if (val === 'thongchai_athipadi') {
       setSelectedCategory('all');
       setSelectedBirthDay('none');
       setAvoidKalakini(false);
-      setSearchInputValue('วันธงชัย & วันอธิบดี');
       setSearchQuery('thongchai_athipadi');
       onToast('⭐ แสดงเฉพาะวันธงชัยและวันอธิบดี');
     } else if (val === 'reset' || val === 'all') {
       setSelectedCategory('all');
       setSelectedBirthDay('none');
       setAvoidKalakini(false);
-      setSearchInputValue('');
       setSearchQuery('');
       onToast('รีเซ็ตแสดงวันมงคลทุกประเภท');
     }
@@ -626,7 +424,7 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
           </div>
 
           {/* 4. วันกาลกิณี */}
-          <div className="dropdown-compact-item" title="เลือกวันเกิดเทียบทักษาตัดวันกาลกิณี">
+          <div className="dropdown-compact-item">
             <select
               id="birthday-select"
               className="dropdown-compact-select birthday-select-compact"
@@ -634,18 +432,39 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
               onChange={(e) => {
                 const val = e.target.value as BirthDayId | 'none';
                 setSelectedBirthDay(val);
-                if (val !== 'none') setAvoidKalakini(true);
+                if (val !== 'none') {
+                  setAvoidKalakini(true);
+                  const bInfo = BIRTH_DAYS.find((b) => b.id === val);
+                  if (bInfo) {
+                    onToast(`👤 เลือกคนเกิด${bInfo.labelTh}: หลีกเลี่ยงวัน${bInfo.kalakiniDayNameTh} (กาลกิณี)`);
+                  }
+                } else {
+                  onToast('👤 แสดงทุกวันเกิด (ไม่ตัดวันกาลกิณี)');
+                }
               }}
-              title="เลือกวันเกิดเทียบทักษาตัดวันกาลกิณี"
               aria-label="เลือกวันเกิดเทียบทักษาตัดวันกาลกิณี"
             >
-              <option value="none">👤 กาลกิณี: ทุกวันเกิด</option>
+              <option value="none">👤 เลี่ยงกาลกิณี: ทุกวันเกิด</option>
               {BIRTH_DAYS.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.icon} เกิด{b.labelTh} (เลี่ยง{b.kalakiniDayNameTh})
                 </option>
               ))}
             </select>
+            {selectedBirthDay !== 'none' && (
+              <button
+                type="button"
+                className="btn-clear-compact-select"
+                onClick={() => {
+                  setSelectedBirthDay('none');
+                  onToast('🔄 แสดงทุกวันเกิด (ไม่ตัดวันกาลกิณี)');
+                }}
+                title="รีเซ็ตเป็นแสดงทุกวันเกิด"
+                aria-label="รีเซ็ตเป็นแสดงทุกวันเกิด"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
           {/* Mini Kala Yoga Status Pills */}
@@ -664,97 +483,16 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
             </span>
           </div>
         </div>
-
-        {/* Input box & Calculate Button */}
-        <form
-          className="search-form-row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            executeAstrologicalSearch(searchInputValue);
-          }}
-        >
-          <div className="search-filter-wrap">
-            <span className="search-icon" aria-hidden="true">
-              🔮
-            </span>
-            <input
-              type="text"
-              className="search-input"
-              placeholder="พิมพ์คำขอหรือระบุฤกษ์ เช่น: ฤกษ์แต่งงาน พฤศจิกายน 2569 คนเกิดวันจันทร์..."
-              value={searchInputValue}
-              onChange={(e) => setSearchInputValue(e.target.value)}
-              aria-label="ช่องค้นหาและคำนวณฤกษ์มงคล"
-            />
-            {searchInputValue && (
-              <button
-                type="button"
-                className="btn-clear-search"
-                onClick={() => {
-                  setSearchInputValue('');
-                  setSearchQuery('');
-                  onToast('ล้างคำค้นหาแล้ว แสดงวันมงคลทั้งหมด');
-                }}
-                title="ล้างข้อความค้นหา"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            className="btn gold btn-search-execute"
-            title="กดเพื่อคำนวณฤกษ์มงคลตามคำขอทันที"
-          >
-            <span>✨ คำนวณฤกษ์มงคล</span>
-          </button>
-        </form>
-
-        {/* View Mode Tabs: Table vs Catalog view vs Calendar Grid - Directly Adjacent to Input Box */}
-        <div className="view-mode-tabs-bar attached-to-search">
-          <div className="view-mode-group" role="tablist">
-            <button
-              type="button"
-              className={`btn-view-mode ${viewMode === 'table' ? 'active' : ''}`}
-              onClick={() => setViewMode('table')}
-              title="แสดงผลในรูปแบบ Table (ตาราง)"
-            >
-              <span>📊 Table (ตาราง)</span>
-            </button>
-            <button
-              type="button"
-              className={`btn-view-mode ${viewMode === 'category' ? 'active' : ''}`}
-              onClick={() => setViewMode('category')}
-              title="แสดงผลในรูปแบบ Catalog view (แยกตามหมวดหมู่)"
-            >
-              <span>🗂️ Catalog view (แยกหมวด)</span>
-            </button>
-            <button
-              type="button"
-              className={`btn-view-mode ${viewMode === 'calendar' ? 'active' : ''}`}
-              onClick={() => setViewMode('calendar')}
-              title="แสดงผลในรูปแบบ Calendar Grid (ปฏิทินรายเดือน)"
-            >
-              <span>🗓️ Calendar Grid (ปฏิทิน)</span>
-            </button>
-          </div>
-
-          <div className="view-results-actions-row">
-            <div className="view-results-count">
-              พบวันมงคล <strong>{filteredDays.length}</strong> วัน (จากทั้งหมด {allMonthDays.length} วัน)
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Calculation Results Section Anchor & Banner */}
       <div id="auspicious-results-section" className="auspicious-results-anchor">
         <div className="calculation-results-summary-card">
           <div className="summary-card-left">
-            <span className="summary-card-icon">✨</span>
+            <span className="summary-card-icon">🗓️</span>
             <div className="summary-card-text">
               <h3 className="summary-card-title">
-                ผลการคำนวณฤกษ์มงคล:{' '}
+                ปฏิทินฤกษ์มงคล:{' '}
                 <span className="text-gold">
                   {selectedCategory === 'all'
                     ? 'ทุกประเภทงาน (วิเคราะห์ครบ 5 หมวด)'
@@ -782,503 +520,97 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
         </div>
       </div>
 
-      {/* Quick Date Selection Strip: keep as a secondary picker outside the full-month grid. */}
-      {viewMode !== 'calendar' && (
-      <div className="quick-date-strip-container" aria-label="แถบเลือกวันที่ในเดือน">
-        <div className="quick-date-strip-header">
-          <span className="strip-header-title">
-            📅 เลือกวันที่ในเดือน {THAI_MONTHS[selectedMonth - 1]} ({allMonthDays.length} วัน):
-          </span>
-          <span className="strip-help-text">คลิกวันที่เพื่อดูคำพยากรณ์และยามมงคลทันที</span>
-        </div>
-        <div className="quick-date-strip-scroll">
-          {allMonthDays.map((day) => {
-            const isSelected = inspectedDay?.date === day.date;
-            const isMatchFilter = filteredDays.some((d) => d.date === day.date);
-            const isWarning = day.kalaYoga === 'ubatha' || day.kalaYoga === 'lokawinas';
-
-            return (
-              <button
-                key={day.date}
-                type="button"
-                className={`date-strip-chip ${isSelected ? 'chip-selected' : ''} ${
-                  day.isMasterAuspicious ? 'chip-master' : ''
-                } ${isWarning ? 'chip-warning' : ''} ${!isMatchFilter ? 'chip-dimmed' : ''}`}
-                onClick={() => {
-                  setInspectedDay(day);
-                  onToast(`✨ เลือกวันที่ ${day.dayOfMonth} ${THAI_MONTHS[selectedMonth - 1]} (${day.thaiRukNameTh})`);
-                }}
-                title={`${day.dayNameTh}ที่ ${day.dayOfMonth} - ${day.thaiRukNameTh} (${day.thaiRukHighlight})`}
-              >
-                <span className="chip-day-name">{day.dayNameTh.replace('วัน', '')}</span>
-                <span className="chip-day-num">{day.dayOfMonth}</span>
-                <span className="chip-tag-dot">
-                  {day.kalaYoga === 'thongchai'
-                    ? '⭐'
-                    : isWarning
-                    ? '⚠️'
-                    : day.isMasterAuspicious
-                    ? '✨'
-                    : '•'}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      )}
-
-      {/* Main Content Area based on View Mode */}
+      {/* Main Content Area: Pure Calendar Grid */}
       <div className="auspicious-views-viewport">
-        {filteredDays.length === 0 && viewMode !== 'calendar' ? (
-          <div className="auspicious-empty-state">
-            <span className="empty-emblem">⛩️</span>
-            <h3>ไม่พบวันมงคลที่ตรงกับเงื่อนไขที่เลือก</h3>
-            <p>
-              {selectedBirthDay !== 'none' && avoidKalakini
-                ? `วันมงคลในเดือนนี้อาจตรงกับวันกาลกิณีของคนเกิด${BIRTH_DAYS.find((b) => b.id === selectedBirthDay)?.labelTh || ''} หรือหมวดหมู่งานที่จำกัด`
-                : 'ลองเลือกหมวดหมู่งานเป็น "ทุกประเภทงาน" หรือเลือกดูเดือนอื่น'}
-            </p>
-            <div className="empty-state-actions" style={{ display: 'flex', gap: '0.6rem', justifyContent: 'center', marginTop: '1rem', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                className="btn gold"
-                onClick={() => {
-                  setSelectedCategory('all');
-                  setAvoidKalakini(false);
-                  setSearchQuery('');
-                  setSearchInputValue('');
-                  onToast('🌟 แสดงวันมงคลทั้งหมดของเดือนเรียบร้อยแล้ว');
-                }}
-              >
-                🌟 แสดงทุกวันของเดือนนี้
-              </button>
-              {selectedBirthDay !== 'none' && (
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => {
-                    setAvoidKalakini(false);
-                    setSearchQuery('');
-                    onToast('🔄 ปลดตัวกรองวันกาลกิณีแล้ว');
+        <div className="auspicious-calendar-grid-view auspicious-calendar-view calendar-view-container">
+          {/* Weekday Header */}
+          <div className="calendar-weekdays-row">
+            {['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'].map(
+              (w, idx) => (
+                <div key={w} className={`weekday-col-header ${idx === 0 ? 'sun' : ''}`}>
+                  {w}
+                </div>
+              )
+            )}
+          </div>
+
+          {/* Calendar Days Grid */}
+          <div className="calendar-cells-grid">
+            {/* Empty offset days for start of month */}
+            {Array.from({ length: allMonthDays[0]?.dayOfWeek || 0 }).map((_, i) => (
+              <div key={`empty-${i}`} className="calendar-cell cell-empty" />
+            ))}
+
+            {/* Month days */}
+            {allMonthDays.map((day) => {
+              const isFilteredOut = !filteredDays.some((d) => d.date === day.date);
+              const thaksa =
+                selectedBirthDay !== 'none'
+                  ? thaksaByDate.get(day.date)
+                  : null;
+
+              const isBadDay =
+                day.kalaYoga === 'ubatha' ||
+                day.kalaYoga === 'lokawinas' ||
+                thaksa?.isKalakini;
+
+              return (
+                <div
+                  key={day.date}
+                  className={`calendar-cell ${
+                    day.isMasterAuspicious ? 'cell-master' : ''
+                  } ${isBadDay ? 'cell-warning' : ''} ${
+                    isFilteredOut ? 'cell-dimmed' : ''
+                  } ${inspectedDay?.date === day.date ? 'cell-selected' : ''}`}
+                  onClick={() => setInspectedDay(day)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setInspectedDay(day);
+                    }
                   }}
                 >
-                  🔄 ดูโดยไม่ตัดวันกาลกิณี
-                </button>
-              )}
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* VIEW 1: TABLE VIEW (ตารางตามโจทย์) */}
-            {viewMode === 'table' && (
-              <div className="auspicious-table-wrapper auspicious-table-container auspicious-table-view">
-                <table className="auspicious-table">
-                  <thead>
-                    <tr>
-                      <th scope="col" className="col-date">วันที่ & จันทรคติ</th>
-                      <th scope="col" className="col-ruk">ชื่อฤกษ์โหราศาสตร์</th>
-                      <th scope="col" className="col-highlight">จุดเด่น & ความหมาย</th>
-                      <th scope="col" className="col-time">ยามมงคลที่ดีที่สุด</th>
-                      <th scope="col" className="col-cats">งานที่เหมาะสม</th>
-                      {selectedBirthDay !== 'none' && (
-                        <th scope="col" className="col-thaksa">ความเข้ากันได้กับวันเกิด</th>
-                      )}
-                      <th scope="col" className="col-actions">การกระทำ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredDays.map((day) => {
-                      const thaksa =
-                        selectedBirthDay !== 'none'
-                          ? thaksaByDate.get(day.date)
-                          : null;
+                  <div className="cell-top">
+                    <span className="cell-day-num">{day.dayOfMonth}</span>
+                    {day.kalaYoga === 'thongchai' && (
+                      <span className="cell-tag tag-thongchai">ธงชัย</span>
+                    )}
+                    {day.kalaYoga === 'athipadi' && (
+                      <span className="cell-tag tag-athipadi">อธิบดี</span>
+                    )}
+                    {day.kalaYoga === 'ubatha' && (
+                      <span className="cell-tag tag-ubatha">อุบาทว์</span>
+                    )}
+                    {day.kalaYoga === 'lokawinas' && (
+                      <span className="cell-tag tag-lokawinas">โลกาวินาศ</span>
+                    )}
+                  </div>
 
-                      const isBadDay =
-                        day.kalaYoga === 'ubatha' ||
-                        day.kalaYoga === 'lokawinas' ||
-                        thaksa?.isKalakini;
+                  <div className="cell-middle">
+                    <span className="cell-ruk-name">{day.thaiRukNameTh}</span>
+                    <span className="cell-lunar">{day.lunarDateTh.split(' ')[0]}</span>
+                  </div>
 
-                      return (
-                        <tr
-                          key={day.date}
-                          className={`table-row ${day.isMasterAuspicious ? 'row-master' : ''} ${
-                            isBadDay ? 'row-warning' : ''
-                          } ${inspectedDay?.date === day.date ? 'row-selected' : ''}`}
-                          onClick={() => setInspectedDay(day)}
-                          style={{ cursor: 'pointer' }}
-                          title={`คลิกเพื่อดูรายละเอียดฤกษ์วันที่ ${day.dayOfMonth} ${THAI_MONTHS[selectedMonth - 1]}`}
-                        >
-                          {/* Date Column */}
-                          <td className="col-date">
-                            <div className="date-cell">
-                              <span className="date-number">{day.dayOfMonth}</span>
-                              <div className="date-meta">
-                                <span className="date-dayname">{day.dayNameTh}</span>
-                                <span className="date-lunar">{day.lunarDateTh}</span>
-                                {day.kalaYoga === 'thongchai' && (
-                                  <span className="badge-tag thongchai">⭐ วันธงชัย</span>
-                                )}
-                                {day.kalaYoga === 'athipadi' && (
-                                  <span className="badge-tag athipadi">วันอธิบดี</span>
-                                )}
-                                {day.kalaYoga === 'ubatha' && (
-                                  <span className="badge-tag ubatha">⚠️ วันอุบาทว์</span>
-                                )}
-                                {day.kalaYoga === 'lokawinas' && (
-                                  <span className="badge-tag lokawinas">⛔ วันโลกาวินาศ</span>
-                                )}
-                              </div>
-                            </div>
-                          </td>
+                  <div className="cell-bottom-icons">
+                    {day.suitableCategories.map((c) => (
+                      <span key={c} className="cell-cat-icon" title={WORK_CATEGORIES_INFO[c].titleTh}>
+                        {WORK_CATEGORIES_INFO[c].icon}
+                      </span>
+                    ))}
+                  </div>
 
-                          {/* Thai Ruk Column */}
-                          <td className="col-ruk">
-                            <div className="ruk-cell">
-                              <span className="ruk-name">{day.thaiRukNameTh}</span>
-                              <span className="ruk-alias">
-                                ({THAI_RUK_DESCRIPTIONS[day.thaiRuk].alias})
-                              </span>
-                              <span className="dithi-badge">{day.dithiName}</span>
-                            </div>
-                          </td>
-
-                          {/* Highlight Column */}
-                          <td className="col-highlight">
-                            <p className="highlight-text">{day.thaiRukHighlight}</p>
-                            <span className="direction-info">🧭 ทิศมงคล: {day.auspiciousDirection}</span>
-                          </td>
-
-                          {/* Time / Yama Column */}
-                          <td className="col-time">
-                            <div className="time-cell">
-                              <span className="time-primary">{day.bestHours.primaryTime}</span>
-                              {day.bestHours.secondaryTime && (
-                                <span className="time-secondary">
-                                  และ {day.bestHours.secondaryTime}
-                                </span>
-                              )}
-                              <span className="ubakong-text">
-                                ⌛ {day.bestHours.ubakongYama}
-                              </span>
-                            </div>
-                          </td>
-
-                          {/* Suitable Categories */}
-                          <td className="col-cats">
-                            <div className="cats-cell">
-                              {day.suitableCategories.length > 0 ? (
-                                day.suitableCategories.map((c) => (
-                                  <span key={c} className="cat-chip">
-                                    {WORK_CATEGORIES_INFO[c].icon}{' '}
-                                    {WORK_CATEGORIES_INFO[c].titleTh.split('/')[0]}
-                                  </span>
-                                ))
-                              ) : (
-                                <span className="text-muted-italics">ควรงดเว้นพิธีมงคล</span>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* Birthday Thaksa Column */}
-                          {selectedBirthDay !== 'none' && thaksa && (
-                            <td className="col-thaksa">
-                              <div className="thaksa-cell">
-                                <span className={`thaksa-badge style-${thaksa.badgeStyle}`}>
-                                  {thaksa.badgeText}
-                                </span>
-                                <span className="thaksa-advice-text">{thaksa.advice}</span>
-                              </div>
-                            </td>
-                          )}
-
-                          {/* Actions Column */}
-                          <td className="col-actions">
-                            <div className="table-actions-inline">
-                              <button
-                                type="button"
-                                className="btn-table-action"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setInspectedDay(day);
-                                }}
-                                title="ดูรายละเอียดแบบเต็ม"
-                              >
-                                🔍 รายละเอียด
-                              </button>
-                              <button
-                                type="button"
-                                className="btn-table-action-icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleCopyDayDetails(day);
-                                }}
-                                title="คัดลอกรายละเอียดฤกษ์"
-                              >
-                                📋
-                              </button>
-                              <button
-                                type="button"
-                                className="btn-table-action-icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSaveToJournal(day);
-                                }}
-                                title="บันทึกลงสมุดบันทึกดวง"
-                              >
-                                📖
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* VIEW 2: CATEGORY VIEW (รายการแยกตาม 5 หมวดหมู่งาน) */}
-            {viewMode === 'category' && (
-              <div className="auspicious-category-view auspicious-catalog-view catalog-view-container">
-                {(Object.keys(WORK_CATEGORIES_INFO) as AuspiciousWorkCategory[])
-                  .filter((catKey) => selectedCategory === 'all' || selectedCategory === catKey)
-                  .map((catKey) => {
-                    const catInfo = WORK_CATEGORIES_INFO[catKey];
-                    const catDays = filteredDays.filter((d) =>
-                      d.suitableCategories.includes(catKey)
-                    );
-
-                    return (
-                      <div key={catKey} className="category-section-block">
-                        <div className="category-section-header">
-                          <div className="cat-header-title-row">
-                            <span className="cat-header-icon">{catInfo.icon}</span>
-                            <div>
-                              <h3 className="cat-header-title">{catInfo.titleTh}</h3>
-                              <p className="cat-header-desc">{catInfo.shortDesc}</p>
-                            </div>
-                          </div>
-                          <div className="cat-header-taboos">
-                            <strong>🚫 ข้อพึงระวัง:</strong> {catInfo.taboosTh}
-                          </div>
-                        </div>
-
-                        {catDays.length === 0 ? (
-                          <div className="category-empty-callout">
-                            ไม่พบวันมงคลสำหรับหมวดนี้ที่ตรงกับเงื่อนไขหรือวันเกิดที่เลือก
-                          </div>
-                        ) : (
-                          <div className="category-cards-grid">
-                            {catDays.map((day) => {
-                              const thaksa =
-                                selectedBirthDay !== 'none'
-                                  ? thaksaByDate.get(day.date)
-                                  : null;
-
-                              return (
-                                <div
-                                  key={day.date}
-                                  className={`category-item-card ${
-                                    day.isMasterAuspicious ? 'card-master' : ''
-                                  } ${inspectedDay?.date === day.date ? 'card-selected' : ''}`}
-                                  onClick={() => setInspectedDay(day)}
-                                  role="button"
-                                  tabIndex={0}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                      e.preventDefault();
-                                      setInspectedDay(day);
-                                    }
-                                  }}
-                                >
-                                  <div className="card-top-bar">
-                                    <div className="card-date-badge">
-                                      <span className="card-date-day">
-                                        {day.dayNameTh}ที่ {day.dayOfMonth}
-                                      </span>
-                                      <span className="card-date-month">
-                                        {THAI_MONTHS[selectedMonth - 1]}
-                                      </span>
-                                    </div>
-
-                                    <div className="card-top-tags">
-                                      {day.kalaYoga === 'thongchai' && (
-                                        <span className="badge-tag thongchai">⭐ วันธงชัย</span>
-                                      )}
-                                      {day.kalaYoga === 'athipadi' && (
-                                        <span className="badge-tag athipadi">วันอธิบดี</span>
-                                      )}
-                                      {thaksa && (
-                                        <span
-                                          className={`thaksa-badge style-${thaksa.badgeStyle}`}
-                                        >
-                                          {thaksa.badgeText}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  <div className="card-ruk-heading">
-                                    <h4 className="card-ruk-name">
-                                      {day.thaiRukNameTh} · {day.dithiName.split(' ')[0]}
-                                    </h4>
-                                    <p className="card-ruk-highlight">{day.thaiRukHighlight}</p>
-                                  </div>
-
-                                  <div className="card-details-box">
-                                    <div className="detail-row">
-                                      <span className="detail-label">⏰ ยามมงคล:</span>
-                                      <span className="detail-value text-gold">
-                                        {day.bestHours.primaryTime}
-                                      </span>
-                                    </div>
-                                    <div className="detail-row">
-                                      <span className="detail-label">⌛ ยามอุบากอง:</span>
-                                      <span className="detail-value">{day.bestHours.ubakongYama}</span>
-                                    </div>
-                                    <div className="detail-row">
-                                      <span className="detail-label">🧭 ทิศมงคล:</span>
-                                      <span className="detail-value">{day.auspiciousDirection}</span>
-                                    </div>
-                                    <div className="detail-row">
-                                      <span className="detail-label">🎨 สีมงคล:</span>
-                                      <span className="detail-value">{day.luckyColors.join(', ')}</span>
-                                    </div>
-                                    {day.ceremonyTips[catKey] && (
-                                      <div className="detail-tip-box">
-                                        <strong>เคล็ดพิธี:</strong> {day.ceremonyTips[catKey]}
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div className="card-actions-row">
-                                    <button
-                                      type="button"
-                                      className="btn-card-action"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setInspectedDay(day);
-                                      }}
-                                    >
-                                      รายละเอียด
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="btn-card-action gold"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleOpenLuckyCard(day);
-                                      }}
-                                    >
-                                      🎴 การ์ดมงคล
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-
-            {/* VIEW 3: CALENDAR GRID (แสดงทุกวันของเดือนจาก Engine แม้มีตัวกรอง) */}
-            {viewMode === 'calendar' && (
-              <div className="auspicious-calendar-grid-view auspicious-calendar-view calendar-view-container">
-                {/* Weekday Header */}
-                <div className="calendar-weekdays-row">
-                  {['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'].map(
-                    (w, idx) => (
-                      <div key={w} className={`weekday-col-header ${idx === 0 ? 'sun' : ''}`}>
-                        {w}
-                      </div>
-                    )
+                  {thaksa && (
+                    <div className={`cell-thaksa-dot dot-${thaksa.badgeStyle}`} title={thaksa.badgeText}>
+                      {thaksa.nameTh}
+                    </div>
                   )}
                 </div>
-
-                {/* Calendar Days Grid */}
-                <div className="calendar-cells-grid">
-                  {/* Empty offset days for start of month */}
-                  {Array.from({ length: allMonthDays[0]?.dayOfWeek || 0 }).map((_, i) => (
-                    <div key={`empty-${i}`} className="calendar-cell cell-empty" />
-                  ))}
-
-                  {/* Month days */}
-                  {allMonthDays.map((day) => {
-                    const isFilteredOut = !filteredDays.some((d) => d.date === day.date);
-                    const thaksa =
-                      selectedBirthDay !== 'none'
-                        ? thaksaByDate.get(day.date)
-                        : null;
-
-                    const isBadDay =
-                      day.kalaYoga === 'ubatha' ||
-                      day.kalaYoga === 'lokawinas' ||
-                      thaksa?.isKalakini;
-
-                    return (
-                      <div
-                        key={day.date}
-                        className={`calendar-cell ${
-                          day.isMasterAuspicious ? 'cell-master' : ''
-                        } ${isBadDay ? 'cell-warning' : ''} ${
-                          isFilteredOut ? 'cell-dimmed' : ''
-                        } ${inspectedDay?.date === day.date ? 'cell-selected' : ''}`}
-                        onClick={() => setInspectedDay(day)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            setInspectedDay(day);
-                          }
-                        }}
-                      >
-                        <div className="cell-top">
-                          <span className="cell-day-num">{day.dayOfMonth}</span>
-                          {day.kalaYoga === 'thongchai' && (
-                            <span className="cell-tag tag-thongchai">ธงชัย</span>
-                          )}
-                          {day.kalaYoga === 'athipadi' && (
-                            <span className="cell-tag tag-athipadi">อธิบดี</span>
-                          )}
-                          {day.kalaYoga === 'ubatha' && (
-                            <span className="cell-tag tag-ubatha">อุบาทว์</span>
-                          )}
-                          {day.kalaYoga === 'lokawinas' && (
-                            <span className="cell-tag tag-lokawinas">โลกาวินาศ</span>
-                          )}
-                        </div>
-
-                        <div className="cell-middle">
-                          <span className="cell-ruk-name">{day.thaiRukNameTh}</span>
-                          <span className="cell-lunar">{day.lunarDateTh.split(' ')[0]}</span>
-                        </div>
-
-                        <div className="cell-bottom-icons">
-                          {day.suitableCategories.map((c) => (
-                            <span key={c} className="cell-cat-icon" title={WORK_CATEGORIES_INFO[c].titleTh}>
-                              {WORK_CATEGORIES_INFO[c].icon}
-                            </span>
-                          ))}
-                        </div>
-
-                        {thaksa && (
-                          <div className={`cell-thaksa-dot dot-${thaksa.badgeStyle}`} title={thaksa.badgeText}>
-                            {thaksa.nameTh}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </>
-        )}
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Day Inspection Modal (ป๊อปอัปเจาะลึกรายละเอียดวันมงคล) */}
