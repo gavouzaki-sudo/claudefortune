@@ -3,7 +3,6 @@ import { Bridge } from '../bridge';
 import type { TarotCard } from '../types';
 import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
 import { saveJournalEntry } from '../utils/fortuneJournal';
-import { useLanguage } from '../context/LanguageContext';
 import type { CardData } from '../utils/luckyCardCanvas';
 
 interface TarotProps {
@@ -23,7 +22,6 @@ const SPREAD_POSITIONS: Record<number, string[]> = {
 };
 
 export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => {
-  const { t } = useLanguage();
   const [spread, setSpread] = useState<number>(3);
   const [cards, setCards] = useState<TarotCard[]>([]);
   const [flipped, setFlipped] = useState<Record<number, boolean>>({});

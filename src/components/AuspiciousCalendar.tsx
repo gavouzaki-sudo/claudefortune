@@ -5,7 +5,6 @@ import {
   getThaksaRelation,
   BIRTH_DAYS,
   WORK_CATEGORIES_INFO,
-  THAI_RUK_DESCRIPTIONS,
   type AuspiciousDay,
   type AuspiciousWorkCategory,
   type BirthDayId,
@@ -204,22 +203,7 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     });
   }, [allMonthDays, thaksaByDate, selectedBirthDay, avoidKalakini, selectedCategory, searchQuery, THAI_MONTHS]);
 
-  // Summary statistics for the month
-  const monthStats = useMemo(() => {
-    const totalDays = allMonthDays.length;
-    const masterDays = allMonthDays.filter((d) => d.isMasterAuspicious).length;
-    const thongchaiDays = allMonthDays.filter((d) => d.kalaYoga === 'thongchai').length;
-    const ubathaDays = allMonthDays.filter((d) => d.kalaYoga === 'ubatha');
-    const lokawinasDays = allMonthDays.filter((d) => d.kalaYoga === 'lokawinas');
 
-    return {
-      totalDays,
-      masterDays,
-      thongchaiDays,
-      ubathaDates: ubathaDays.map((d) => d.dayOfMonth),
-      lokawinasDates: lokawinasDays.map((d) => d.dayOfMonth),
-    };
-  }, [allMonthDays]);
 
   // Handle Save to Journal
   const handleSaveToJournal = (day: AuspiciousDay) => {

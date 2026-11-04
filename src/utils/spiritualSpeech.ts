@@ -2,6 +2,9 @@
 // Utilizes Web Speech API (SpeechSynthesis) paired with Web Audio resonant temple bell chime
 // Features persona presets: ซินแสอาวุโส, ธรรมบรรยายสำรวม, กังวานสมาธิมงคล
 
+import { stopChant } from './chantAudio';
+import { ambientSoundEngine } from './ambientSoundscapes';
+
 export type SpiritualVoicePresetId = 'sinsei' | 'dharma' | 'meditation';
 
 export interface SpiritualVoicePreset {
@@ -61,7 +64,6 @@ export interface SpiritualSpeechState {
 
 class SpiritualSpeechEngine {
   private synth: SpeechSynthesis | null = null;
-  private currentUtterance: SpeechSynthesisUtterance | null = null;
   private audioCtx: AudioContext | null = null;
 
   private state: SpiritualSpeechState = {
@@ -208,15 +210,9 @@ class SpiritualSpeechEngine {
 
     this.stop();
 
-    // Prevent audio clash: dynamically stop background music & soundscapes when speech begins
-    try {
-      const { stopChant } = await import('./chantAudio');
-      stopChant();
-    } catch {}
-    try {
-      const { ambientSoundEngine } = await import('./ambientSoundscapes');
-      ambientSoundEngine.setSoundscape('none');
-    } catch {}
+    // Prevent audio clash: stop background music & soundscapes when speech begins
+    stopChant();
+    ambientSoundEngine.setSoundscape('none');
 
     // Randomize spiritual preset automatically without needing manual selection
     const presetKeys: SpiritualVoicePresetId[] = ['sinsei', 'dharma', 'meditation'];
@@ -261,7 +257,6 @@ class SpiritualSpeechEngine {
 
     // Build utterance
     const utter = new SpeechSynthesisUtterance(lineText);
-    this.currentUtterance = utter;
 
     // Apply voice settings
     const calcRate = Math.max(0.5, Math.min(1.2, preset.rate * this.state.rateMultiplier));
@@ -353,7 +348,6 @@ class SpiritualSpeechEngine {
         this.synth.cancel();
       } catch {}
     }
-    this.currentUtterance = null;
     this.state.isSpeaking = false;
     this.state.isPaused = false;
     this.state.currentLineIndex = -1;

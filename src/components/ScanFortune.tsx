@@ -71,8 +71,6 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
     }
   };
 
-  const [hasDrawn, setHasDrawn] = useState(false);
-
   // Draw parchment canvas background with guidance line and placeholder
   const renderParchment = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number, drawn: boolean) => {
     // Parchment paper fill
@@ -136,7 +134,6 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
     const ctx = cv.getContext('2d');
     if (ctx) {
       if (ptsRef.current.length === 0) {
-        setHasDrawn(true);
         renderParchment(ctx, cv.width, cv.height, true);
       }
       ctx.beginPath();
@@ -184,7 +181,6 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
     }
     ptsRef.current = [];
     strokeRef.current = -1;
-    setHasDrawn(false);
     setSigResult(null);
   };
 

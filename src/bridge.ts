@@ -321,7 +321,6 @@ const ANGPAO_VALS = [8, 18, 28, 66, 88, 168, 888];
 
 class JsCoreEngine implements ICoreEngine {
   private curY = 2026;
-  private curM = 10;
   private curD = 31;
   private by = 2000;
   private z = 4;
@@ -335,9 +334,8 @@ class JsCoreEngine implements ICoreEngine {
     // Pure JS engine relies on Math.random and crypto
   }
 
-  setDate(y: number, m: number, d: number): void {
+  setDate(y: number, _m: number, d: number): void {
     if (y >= 1900 && y <= 2200) this.curY = y;
-    if (m >= 1 && m <= 12) this.curM = m;
     if (d >= 1 && d <= 31) this.curD = d;
   }
 
@@ -550,7 +548,7 @@ class JsCoreEngine implements ICoreEngine {
     return res;
   }
 
-  processDigitalOffering(type: number, text: string): OfferingResult {
+  processDigitalOffering(_type: number, text: string): OfferingResult {
     const CARE_WORDS = ["ฆ่าตัวตาย", "อยากตาย", "ทำร้ายตัวเอง", "ไม่อยากมีชีวิต", "จบชีวิต"];
     const t = text || "";
     for (const w of CARE_WORDS) {

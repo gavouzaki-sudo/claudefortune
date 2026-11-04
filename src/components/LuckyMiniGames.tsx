@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export type MiniGameType = 'rps' | 'mole' | 'ox' | 'connect' | 'demon';
 
 interface LuckyMiniGamesProps {
   onWin: () => void;
   onLose: () => void;
-  onToast: (msg: string) => void;
   burnLevel: number;
 }
 
@@ -657,7 +656,6 @@ const DemonCardGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
 export const LuckyMiniGames: React.FC<LuckyMiniGamesProps> = ({
   onWin,
   onLose,
-  onToast,
   burnLevel,
 }) => {
   const [activeTab, setActiveTab] = useState<MiniGameType>('rps');

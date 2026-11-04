@@ -242,7 +242,6 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
         <LuckyMiniGames
           onWin={handleWin}
           onLose={handleLose}
-          onToast={onToast}
           burnLevel={burnLevel}
         />
       )}

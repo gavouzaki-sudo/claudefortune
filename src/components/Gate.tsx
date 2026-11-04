@@ -5,10 +5,6 @@ import { ZODIAC_SYSTEMS, type ZodiacSystem, type ZodiacItem } from '../data/zodi
 import {
   playChant,
   stopChant,
-  toggleMuteChant,
-  isChantMuted,
-  subscribeChantState,
-  CHANT_INFO,
 } from '../utils/chantAudio';
 
 interface GateProps {
@@ -46,10 +42,6 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
   const [activeSymbolIndex, setActiveSymbolIndex] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
 
-  // Audio / Chant state
-  const [playingChantId, setPlayingChantId] = useState<string | null>(null);
-  const [muted, setMuted] = useState<boolean>(isChantMuted());
-
   // Drag-to-dismiss gesture state
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -67,13 +59,9 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Listen to audio chant playback state
+  // Stop chant playback on unmount
   useEffect(() => {
-    const unsub = subscribeChantState((id) => {
-      setPlayingChantId(id);
-    });
     return () => {
-      unsub();
       stopChant();
     };
   }, []);
@@ -81,8 +69,6 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
   const activeSystem: ZodiacSystem | null = expandedSystemId
     ? ZODIAC_SYSTEMS.find((s) => s.id === expandedSystemId) || null
     : null;
-
-  const currentChant = activeSystem ? CHANT_INFO[activeSystem.id] : null;
 
   // Reset active symbol index when expanding a new system and play chant SFX
   const handleOpenSystem = (sysId: string) => {

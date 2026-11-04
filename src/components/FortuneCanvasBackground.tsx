@@ -48,26 +48,6 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       };
     }
 
-    const perm = (() => {
-      const r = mulberry(7);
-      const p = new Uint8Array(256);
-      for (let i = 0; i < 256; i++) p[i] = r() * 256;
-      return p;
-    })();
-
-    const HS = (a: number, b: number, P: number) =>
-      perm[(perm[(((a % P) + P) % P)] + (((b % P) + P) % P)) & 255] / 255;
-
-    function tn(x: number, y: number, P: number) {
-      const xi = M.floor(x);
-      const yi = M.floor(y);
-      const xf = x - xi;
-      const yf = y - yi;
-      const u = xf * xf * (3 - 2 * xf);
-      const v = yf * yf * (3 - 2 * yf);
-      return lerp(lerp(HS(xi, yi, P), HS(xi + 1, yi, P), u), lerp(HS(xi, yi + 1, P), HS(xi + 1, yi + 1, P), u), v);
-    }
-
     const mk = (w: number, h: number): HTMLCanvasElement => {
       const c = document.createElement('canvas');
       c.width = M.ceil(w);
@@ -118,56 +98,7 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       g.drawImage(spr(k), x - r, y - r, r * 2, r * 2);
     }
 
-    const FT: Record<string, HTMLCanvasElement> = {};
-    function fog(rgb: string, seed: number): HTMLCanvasElement {
-      const key = rgb + '|' + seed;
-      if (FT[key]) return FT[key];
-      const S = 160;
-      const c = mk(S, S);
-      const g = c.getContext('2d');
-      if (g) {
-        const id = g.createImageData(S, S);
-        const d = id.data;
-        const p = rgb.split(',');
-        for (let y = 0; y < S; y++) {
-          const vf = M.pow(M.sin((M.PI * y) / S), 0.8);
-          for (let x = 0; x < S; x++) {
-            let a = 0;
-            let amp = 0.55;
-            let f = 4;
-            for (let o = 0; o < 4; o++) {
-              a += amp * tn((x / S) * f + seed * f, (y / S) * f + seed * f, f);
-              amp *= 0.5;
-              f *= 2;
-            }
-            const i = (y * S + x) * 4;
-            d[i] = +p[0];
-            d[i + 1] = +p[1];
-            d[i + 2] = +p[2];
-            d[i + 3] = clamp((a - 0.28) * 2.4, 0, 1) * vf * 255;
-          }
-        }
-        g.putImageData(id, 0, 0);
-      }
-      return (FT[key] = c);
-    }
 
-    function drawFog(
-      g: CanvasRenderingContext2D,
-      tile: HTMLCanvasElement,
-      w: number,
-      yc: number,
-      hh: number,
-      off: number,
-      a: number
-    ) {
-      const tw = hh * 2.4;
-      const st = -(((off % tw) + tw) % tw);
-      g.globalAlpha = a < 0 ? 0 : a > 1 ? 1 : a;
-      for (let x = st; x < w; x += tw) {
-        g.drawImage(tile, x, yc - hh / 2, tw + 1, hh);
-      }
-    }
 
     function star(g: CanvasRenderingContext2D, r1: number, r2: number, n: number) {
       for (let i = 0; i < n * 2; i++) {
@@ -1361,7 +1292,7 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       }
 
       draw(g: CanvasRenderingContext2D) {
-        const { w, h, s, t, mx, my, bal } = this;
+        const { w, h, t, mx, my, bal } = this;
         const bw = lerp(0.5, 1.3, bal);
 
         g.globalAlpha = 1;
@@ -1599,7 +1530,7 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       }
 
       draw(g: CanvasRenderingContext2D) {
-        const { w, h, s, t, mx, my, wy, mo } = this;
+        const { s, t, mx, my, mo } = this;
         g.globalAlpha = 1;
         g.globalCompositeOperation = 'source-over';
         putL(g, this.bg, mx * 5, my * 3);
@@ -1687,7 +1618,7 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       }
 
       draw(g: CanvasRenderingContext2D) {
-        const { w, h, s, t, mx, my } = this;
+        const { w, h, t, mx, my } = this;
         const cx = w / 2 + mx * 8;
         const cy = h * 0.46 + my * 5;
         const Rh = M.min(w * 0.46, h * 0.38);
@@ -1827,8 +1758,6 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
 
     let curSceneKey = activeTopic === 'tarot' ? (tarotVariant === 1 ? 'tarot1' : 'tarot0') : activeTopic;
     let curScene: BaseScene = scenes[curSceneKey] || scenes.stick;
-    let prevScene: BaseScene | null = null;
-    let crossfade = 1;
     let lastTime = 0;
 
     const P: PointerState = {
@@ -1845,9 +1774,6 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       act: false,
     };
 
-    const tmpCanvas = document.createElement('canvas');
-    const tmpCtx = tmpCanvas.getContext('2d');
-
     const handleResize = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -1855,8 +1781,6 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       LD = M.min(DPR, 1.5);
       cv.width = M.round(w * DPR);
       cv.height = M.round(h * DPR);
-      tmpCanvas.width = cv.width;
-      tmpCanvas.height = cv.height;
 
       if (!P.act) {
         P.x = P.sx = w / 2;
@@ -1864,7 +1788,6 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       }
 
       curScene.resize(w, h);
-      if (prevScene) prevScene.resize(w, h);
     };
 
     handleResize();
@@ -1913,55 +1836,15 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
 
       const sp = dt * (reduce ? 0.6 : 1);
 
-      // Check scene switch
-      const targetKey = activeTopic === 'tarot' ? (tarotVariant === 1 ? 'tarot1' : 'tarot0') : activeTopic;
-      if (targetKey !== curSceneKey) {
-        const nextScene = scenes[targetKey] || scenes.stick;
-        if (nextScene !== curScene) {
-          prevScene = curScene;
-          curScene = nextScene;
-          curSceneKey = targetKey;
-          curScene.init(window.innerWidth, window.innerHeight);
-          crossfade = 0;
-        }
-      }
-
-      if (prevScene) {
-        prevScene.update(sp, P);
-        crossfade += dt / 0.8;
-        if (crossfade >= 1) {
-          prevScene.dispose();
-          prevScene = null;
-          crossfade = 1;
-        }
-      }
-
       curScene.update(sp, P);
       P.cl = false;
 
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
-
-      if (prevScene && tmpCtx) {
-        ctx.save();
-        prevScene.draw(ctx);
-        ctx.restore();
-
-        tmpCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
-        tmpCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-        curScene.draw(tmpCtx);
-
-        const e = crossfade * crossfade * (3 - 2 * crossfade);
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.globalAlpha = e;
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.drawImage(tmpCanvas, 0, 0);
-      } else {
-        ctx.save();
-        curScene.draw(ctx);
-        ctx.restore();
-      }
+      ctx.save();
+      curScene.draw(ctx);
+      ctx.restore();
 
       // Gentle dark vignette so foreground text remains ultra-legible
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);

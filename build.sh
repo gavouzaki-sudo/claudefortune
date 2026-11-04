@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-mkdir -p web/wasm public/wasm
+mkdir -p public/wasm
 clang --target=wasm32 -O2 -nostdlib -ffreestanding -fno-builtin \
   -Wall -Wextra -Wno-unused-parameter \
   -Wl,--no-entry \
@@ -15,7 +15,5 @@ clang --target=wasm32 -O2 -nostdlib -ffreestanding -fno-builtin \
   -Wl,--strip-all \
   -o public/wasm/core.wasm wasm/core.c
 
-cp public/wasm/core.wasm web/wasm/core.wasm
-
-ls -l public/wasm/core.wasm web/wasm/core.wasm
+ls -lh public/wasm/core.wasm
 

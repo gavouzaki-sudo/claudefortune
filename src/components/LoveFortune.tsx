@@ -93,14 +93,10 @@ export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) =>
   const [selectedStatus, setSelectedStatus] = useState<'single' | 'crush' | 'couple'>('single');
   const [reading, setReading] = useState<LoveReading | null>(null);
   const [isReading, setIsReading] = useState(false);
-  const [lotusPetals, setLotusPetals] = useState<number>(0);
 
   const handleDivinate = () => {
     setIsReading(true);
     setReading(null);
-
-    // Dynamic lotus blossom vibration
-    setLotusPetals((prev) => prev + 1);
 
     setTimeout(() => {
       const pool = LOVE_PREDICTIONS[selectedStatus] || LOVE_PREDICTIONS.single;

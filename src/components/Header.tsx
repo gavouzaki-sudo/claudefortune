@@ -5,13 +5,11 @@ import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
   onGoHome?: () => void;
-  onOpenAuspicious?: () => void;
   hasActiveSession?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onGoHome,
-  onOpenAuspicious,
   hasActiveSession,
 }) => {
   const { lang, setLang, t } = useLanguage();

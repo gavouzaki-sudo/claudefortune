@@ -1,10 +1,10 @@
-// Smoke tests for the Wasm core. Run: node tests/core.test.mjs  (after ./build.sh)
+// Smoke tests for the Wasm core. Run: npm test
 import { readFile } from "node:fs/promises";
 import assert from "node:assert/strict";
-import { Bridge } from "../web/js/bridge.js";
+import { Bridge } from "../src/bridge.ts";
 
-const bytes = await readFile(new URL("../web/wasm/core.wasm", import.meta.url));
-const w = await Bridge.fromBytes(bytes);
+const bytes = await readFile(new URL("../public/wasm/core.wasm", import.meta.url));
+const w = await Bridge.fromBytes(new Uint8Array(bytes));
 let passed = 0;
 const t = (name, fn) => { fn(); passed++; console.log("ok  -", name); };
 
