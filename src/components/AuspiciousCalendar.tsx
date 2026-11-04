@@ -780,6 +780,45 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
             พบวันมงคล <span className="highlight-count">{filteredDays.length}</span> วัน
           </div>
         </div>
+
+        {/* Dedicated Prominent View Mode Bar at top of Results */}
+        <div className="view-mode-tabs-bar results-view-mode-bar">
+          <div className="view-mode-tabs-lead">
+            <span className="results-view-label">🔄 เลือกรูปแบบการแสดงผล:</span>
+            <div className="view-mode-group" role="tablist">
+              <button
+                type="button"
+                className={`btn-view-mode ${viewMode === 'table' ? 'active' : ''}`}
+                onClick={() => setViewMode('table')}
+                title="แสดงผลในรูปแบบ Table (ตาราง)"
+              >
+                <span>📊 Table (ตาราง)</span>
+              </button>
+              <button
+                type="button"
+                className={`btn-view-mode ${viewMode === 'category' ? 'active' : ''}`}
+                onClick={() => setViewMode('category')}
+                title="แสดงผลในรูปแบบ Catalog view (แยกตามหมวดหมู่)"
+              >
+                <span>🗂️ Catalog view (แยกหมวด)</span>
+              </button>
+              <button
+                type="button"
+                className={`btn-view-mode ${viewMode === 'calendar' ? 'active' : ''}`}
+                onClick={() => setViewMode('calendar')}
+                title="แสดงผลในรูปแบบ Calendar Grid (ปฏิทินรายเดือน)"
+              >
+                <span>🗓️ Calendar Grid (ปฏิทิน)</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="view-results-actions-row">
+            <div className="view-results-count">
+              มุมมองปัจจุบัน: <strong>{viewMode === 'table' ? 'Table (ตาราง)' : viewMode === 'category' ? 'Catalog view (แยกหมวด)' : 'Calendar Grid (ปฏิทิน)'}</strong>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Quick Date Selection Strip: keep as a secondary picker outside the full-month grid. */}
