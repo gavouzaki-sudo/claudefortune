@@ -4813,6 +4813,104 @@ body[data-theme="native_american"] {
   color: rgba(235, 220, 208, 0.55);
 }
 
+/* Prophecy Mode Switcher (Read vs Listen) */
+.prophecy-mode-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin: 0.9rem 0 1.1rem;
+  flex-wrap: wrap;
+}
+
+.btn-prophecy-mode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.25rem;
+  min-height: 44px;
+  border-radius: 9999px;
+  background: rgba(22, 12, 28, 0.78);
+  border: 1.5px solid rgba(232, 185, 74, 0.45);
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  user-select: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.btn-prophecy-mode:hover {
+  background: rgba(45, 22, 45, 0.95);
+  border-color: var(--gold);
+  color: var(--gold2);
+  transform: translateY(-1px);
+}
+
+.btn-prophecy-mode.is-active {
+  background: linear-gradient(135deg, var(--red), var(--red2));
+  border-color: var(--gold);
+  color: #fff9e6;
+  font-weight: 700;
+  box-shadow: 0 0 18px rgba(232, 185, 74, 0.45), 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+/* Mobile Audio Guidance Accordion */
+.spiritual-mobile-hint-box {
+  margin-top: 0.85rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(232, 185, 74, 0.2);
+}
+
+.btn-toggle-mobile-hint {
+  width: 100%;
+  text-align: center;
+  background: transparent;
+  border: none;
+  color: var(--gold2);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+  touch-action: manipulation;
+}
+
+.btn-toggle-mobile-hint:hover {
+  background: rgba(232, 185, 74, 0.1);
+}
+
+.mobile-hint-content {
+  margin-top: 0.45rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(232, 185, 74, 0.25);
+  font-size: 0.78rem;
+  color: #ebdcd0;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.mobile-hint-content p {
+  margin: 0 0 0.35rem;
+  color: var(--gold);
+}
+
+.mobile-hint-content ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.mobile-hint-content li {
+  margin-bottom: 0.25rem;
+}
+
 /* ==========================================================================
    NEW CATEGORY: มณฑลสมาธิ & คลื่นเสียงบำบัดจิต (MEDITATION CHAMBER)
    ========================================================================== */

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   spiritualSpeechEngine,
   SPIRITUAL_PRESETS,
+  isMobileDevice,
   type SpiritualSpeechState,
 } from '../utils/spiritualSpeech';
 
@@ -24,6 +25,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
   const [speechState, setSpeechState] = useState<SpiritualSpeechState>(
     spiritualSpeechEngine.getState()
   );
+  const [showMobileTip, setShowMobileTip] = useState(false);
 
   useEffect(() => {
     const unsub = spiritualSpeechEngine.subscribe((state) => {
@@ -32,23 +34,28 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
     return () => unsub();
   }, []);
 
+  const isMobile = isMobileDevice();
+
   // Is this specific text currently being recited?
   const isCurrentTextActive = speechState.currentText === textToRead && speechState.isSpeaking;
 
-  const handlePlay = () => {
+  const handlePlay = (e?: React.MouseEvent) => {
+    e?.preventDefault();
     if (speechState.isPaused && speechState.currentText === textToRead) {
       spiritualSpeechEngine.resume();
     } else {
-      // Automatically picks one of the 3 presets at random, stops clashing sounds, and starts recitation
+      // Direct synchronous execution ensures mobile user gesture authorization is retained!
       spiritualSpeechEngine.speak(textToRead, { withChime: true });
     }
   };
 
-  const handlePause = () => {
+  const handlePause = (e?: React.MouseEvent) => {
+    e?.preventDefault();
     spiritualSpeechEngine.pause();
   };
 
-  const handleStop = () => {
+  const handleStop = (e?: React.MouseEvent) => {
+    e?.preventDefault();
     spiritualSpeechEngine.stop();
   };
 
@@ -66,7 +73,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
       <div className="spiritual-tts-header">
         <div className="spiritual-tts-title-wrap">
           <span className="spiritual-tts-icon" aria-hidden="true">
-            {isCurrentTextActive ? '📿' : '🎙️'}
+            {isCurrentTextActive ? (speechState.isFallbackMelody ? '🎵' : '📿') : '🎙️'}
           </span>
           <div>
             <h4 className="spiritual-tts-title">{title}</h4>
@@ -119,13 +126,24 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
 
       {/* Recitation Content & Active Aura Lines */}
       <div className="spiritual-tts-body">
-        {/* Active randomized persona pill */}
+        {/* Active randomized persona pill or Fallback Melodic Chant Pill */}
         {isCurrentTextActive && (
           <div className="spiritual-active-persona-pill">
-            <span className="persona-badge">
-              {activePreset.icon} ท่วงทำนอง: {activePreset.title}
-            </span>
-            <span className="persona-note">สุ่มอัตโนมัติ · เว้นวรรคสงบใจ</span>
+            {speechState.isFallbackMelody ? (
+              <>
+                <span className="persona-badge">
+                  🎵 ดนตรีสวดมงคล: ระนาดเอก 7TET & ขิมสยาม
+                </span>
+                <span className="persona-note">สวดทำนองเสนาะคลอคำทำนาย</span>
+              </>
+            ) : (
+              <>
+                <span className="persona-badge">
+                  {activePreset.icon} ท่วงทำนอง: {activePreset.title}
+                </span>
+                <span className="persona-note">สุ่มอัตโนมัติ · เว้นวรรคสงบใจ</span>
+              </>
+            )}
           </div>
         )}
 
@@ -147,6 +165,8 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               {isCurrentTextActive
                 ? speechState.isPaused
                   ? '⏸ พักการอ่านชั่วคราว — กดปุ่มเพื่ออ่านต่อ'
+                  : speechState.isFallbackMelody
+                  ? '🎵 กำลังบรรเลงดนตรีสวดระนาดและขิมมงคลคลอบทอ่าน...'
                   : `📿 กำลังสวดบรรยายด้วยเสียง${activePreset.title}...`
                 : 'กดปุ่มด้านบนเพื่อสดับรับฟังเสียง'}
             </span>
@@ -175,6 +195,37 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
             })}
           </div>
         </div>
+
+        {/* Mobile Audio Helper / Silent Mode Reminder */}
+        {isMobile && (
+          <div className="spiritual-mobile-hint-box">
+            <button
+              type="button"
+              className="btn-toggle-mobile-hint"
+              onClick={() => setShowMobileTip((prev) => !prev)}
+            >
+              <span>📱 ข้อแนะนำเสียงบนมือถือ {showMobileTip ? '▲' : '▼'}</span>
+            </button>
+            {showMobileTip && (
+              <div className="mobile-hint-content">
+                <p>
+                  🔊 <b>หากกดอ่านแล้วเสียงไม่ออกในมือถือ:</b>
+                </p>
+                <ul>
+                  <li>
+                    <b>iPhone / iPad:</b> โปรดตรวจดูสวิตช์ปิดเสียง (Silent Mode Switch) ด้านข้างตัวเครื่องว่าไม่ได้เปิดแถบสีส้มอยู่
+                  </li>
+                  <li>
+                    <b>Android:</b> โปรดเพิ่มระดับเสียงของ <u>มีเดีย (Media Volume)</u> ไม่ใช่แค่เสียงเรียกเข้า
+                  </li>
+                  <li>
+                    หากระบบเครื่องยังไม่มีชุดเสียงภาษาไทย ระบบจะเปิดเสียงระนาดและระฆังมงคลคลอแทนให้อัตโนมัติ
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -49,8 +49,8 @@ export interface ICoreEngine {
   seedEntropy(a: number, b: number, c: number, d: number): void;
   setDate(y: number, m: number, d: number): void;
   version(): number;
-  initSession(name: string, birthYear: number, zodiac: number): number;
-  getZodiacInfo(z: number): ZodiacInfo;
+  initSession(name: string, birthYear: number, zodiac?: number): number;
+  getZodiacInfo(z?: number): ZodiacInfo;
   drawSiameseSticks(power: number): StickResult;
   drawTarotCards(count: number): TarotResult;
   generateLuckyNumbers(category: number): LuckyNumbersResult;
@@ -106,13 +106,13 @@ class WasmCoreEngine implements ICoreEngine {
     return this.x.wasm_version();
   }
 
-  initSession(name: string, birthYear: number, zodiac: number): number {
+  initSession(name: string, birthYear: number, zodiac: number = -1): number {
     const u8 = enc.encode((name || "").slice(0, 100));
     const p = this._bytes(u8);
     return this.x.init_session(p, u8.length, birthYear | 0, zodiac | 0);
   }
 
-  getZodiacInfo(z: number): ZodiacInfo {
+  getZodiacInfo(z: number = -1): ZodiacInfo {
     return this._json<ZodiacInfo>(this.x.get_zodiac_info(z));
   }
 
@@ -345,7 +345,7 @@ class JsCoreEngine implements ICoreEngine {
     return 1;
   }
 
-  initSession(_name: string, birthYear: number, zodiac: number): number {
+  initSession(_name: string, birthYear: number, zodiac: number = -1): number {
     let by = birthYear;
     if (by > 2400) by -= 543;
     if (by < 1900 || by > 2200) return -2;
@@ -356,7 +356,7 @@ class JsCoreEngine implements ICoreEngine {
     return this.z;
   }
 
-  getZodiacInfo(z: number): ZodiacInfo {
+  getZodiacInfo(z: number = -1): ZodiacInfo {
     const idx = z >= 0 ? z : this.valid ? this.z : 0;
     const item = ZOD_LIST[idx % 12];
     const curYearIdx = this.yearBranch(this.curY);
@@ -691,6 +691,22 @@ export class Bridge {
     }
   }
 
+  static async fromBytes(bytes: Uint8Array): Promise<Bridge> {
+    try {
+      const result: unknown = await WebAssembly.instantiate(bytes.buffer, {});
+      const instance = (result && typeof result === 'object' && 'instance' in result)
+        ? (result as { instance: WebAssembly.Instance }).instance
+        : (result as WebAssembly.Instance);
+      return new Bridge(new WasmCoreEngine(instance));
+    } catch {
+      return new Bridge(new JsCoreEngine());
+    }
+  }
+
+  version(): number {
+    return this.engine.version();
+  }
+
   setDate(date: Date = new Date()): void {
     try {
       this.engine.setDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
@@ -699,11 +715,11 @@ export class Bridge {
     }
   }
 
-  initSession(name: string, birthYear: number, zodiac: number): number {
+  initSession(name: string, birthYear: number, zodiac: number = -1): number {
     return this.engine.initSession(name, birthYear, zodiac);
   }
 
-  zodiacInfo(zodiac: number): ZodiacInfo {
+  zodiacInfo(zodiac: number = -1): ZodiacInfo {
     return this.engine.getZodiacInfo(zodiac);
   }
 
@@ -754,6 +770,10 @@ export class Bridge {
   // Alias methods for component compatibility
   blessing(id: number): BlessingResult {
     return this.drawBlessing(id);
+  }
+
+  festival(month: number, day: number): number {
+    return this.getFestival(month, day);
   }
 
   seed(a = Math.random() * 1000000, b = Date.now(), c = Math.random() * 1000000, d = Math.random() * 1000000): void {

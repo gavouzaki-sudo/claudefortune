@@ -29,6 +29,7 @@ import { FortuneJournalModal } from './components/FortuneJournalModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { ambientSoundEngine } from './utils/ambientSoundscapes';
 import { getJournalEntries, subscribeJournal } from './utils/fortuneJournal';
+import { spiritualSpeechEngine } from './utils/spiritualSpeech';
 import type { CardData } from './utils/luckyCardCanvas';
 import type { DivinationTopic } from './types';
 
@@ -74,8 +75,16 @@ export const App: React.FC = () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = window.setTimeout(() => {
       setToastMsg(null);
-    }, 3200);
+    }, 3800);
   }, []);
+
+  // Subscribe to spiritual speech engine notices (e.g. mobile audio guidance or fallback alerts)
+  useEffect(() => {
+    const unsub = spiritualSpeechEngine.onNotice((msg) => {
+      showToast(msg);
+    });
+    return () => unsub();
+  }, [showToast]);
 
   const handleOpenCard = (data: CardData) => {
     if (session) {

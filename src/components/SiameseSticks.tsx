@@ -312,7 +312,8 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
             <button
               type="button"
               className={`btn-prophecy-mode ${prophecyMode === 'listen' ? 'is-active' : ''}`}
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 setProphecyMode('listen');
                 const fullText = [
                   `เซียมซีใบที่ ${result.stick} ${result.title}`,
@@ -320,7 +321,12 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
                   result.verse,
                   ...result.aspects.map((a) => `${a.name} ${a.text}`),
                 ].join('\n');
-                spiritualSpeechEngine.speak(fullText, { withChime: true });
+                const state = spiritualSpeechEngine.getState();
+                if (state.isSpeaking && state.isPaused && state.currentText === fullText) {
+                  spiritualSpeechEngine.resume();
+                } else {
+                  spiritualSpeechEngine.speak(fullText, { withChime: true });
+                }
               }}
               title="สุ่มเสียงและเริ่มอ่านออกเสียงทันที"
             >
