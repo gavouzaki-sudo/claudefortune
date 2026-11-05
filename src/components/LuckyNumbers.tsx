@@ -141,37 +141,35 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
   };
 
   return (
-    <section id="tab-number" className="ritual-frameless-stage tab" role="tabpanel">
-      <h2 className="title">เพลิงเผายันต์เบิกเลขมงคล</h2>
-      <p className="lead">
-        เลือกเลขท้าย 2 หรือ 3 ตัว — เล่นมินิเกมให้ชนะ 3 ตา เพื่อจุดไฟเผาแผ่นยันต์จนมอดไหม้เผยตัวเลขมงคล!
-      </p>
-
-      {/* Category selector chips */}
-      <div className="chips lucky-category-chips" role="radiogroup" aria-label="เลือกประเภทเลข">
-        <label className="chip">
-          <input
-            type="radio"
-            name="lucky-cat"
-            value="0"
-            checked={category === 0}
-            onChange={() => handleCategoryChange(0)}
-          />
-          <span>🏮 เลขท้าย 2 ตัว</span>
-        </label>
-        <label className="chip">
-          <input
-            type="radio"
-            name="lucky-cat"
-            value="1"
-            checked={category === 1}
-            onChange={() => handleCategoryChange(1)}
-          />
-          <span>✨ เลขท้าย 3 ตัว</span>
-        </label>
+    <section id="tab-number" className="ritual-frameless-stage tab lucky-numbers-section-stage" role="tabpanel">
+      {/* Sleek Ultra-Compact Top Bar: Title + Category selector in a single line to move content up */}
+      <div className="lucky-top-row">
+        <h2 className="lucky-title-compact">🔥 เพลิงเผายันต์เบิกเลขมงคล</h2>
+        <div className="chips lucky-category-chips compact-category-chips" role="radiogroup" aria-label="เลือกประเภทเลข">
+          <label className="chip">
+            <input
+              type="radio"
+              name="lucky-cat"
+              value="0"
+              checked={category === 0}
+              onChange={() => handleCategoryChange(0)}
+            />
+            <span>🏮 เลข 2 ตัว</span>
+          </label>
+          <label className="chip">
+            <input
+              type="radio"
+              name="lucky-cat"
+              value="1"
+              checked={category === 1}
+              onChange={() => handleCategoryChange(1)}
+            />
+            <span>✨ เลข 3 ตัว</span>
+          </label>
+        </div>
       </div>
 
-      {/* Talisman Burning Stage */}
+      {/* Talisman Burning Stage (Compact) */}
       <BurnTalisman
         burnLevel={burnLevel}
         luckyNumber={luckyNumber}
