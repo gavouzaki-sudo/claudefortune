@@ -100,17 +100,20 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
     activeCards.forEach((_, i) => {
       setTimeout(() => {
         setFlipped((prev) => ({ ...prev, [i]: true }));
-      }, i * 200);
+      }, i * 180);
     });
   };
 
   const positions = SPREAD_POSITIONS[spread] || [];
+  const activeCards = cards.slice(0, spread);
+  const flippedCount = activeCards.filter((_, idx) => !!flipped[idx]).length;
 
   return (
     <section id="tab-tarot" className="ritual-frameless-stage tab" role="tabpanel">
       <h2 className="title">ไพ่ยิปซี</h2>
       <p className="lead">เลือกรูปแบบการเปิดไพ่ ตั้งคำถามในใจ แล้วแตะไพ่แต่ละใบเพื่อพลิกดู</p>
 
+      {/* Spread Type Selector */}
       <div className="chips" role="radiogroup" aria-label="รูปแบบการเปิดไพ่">
         <label className="chip">
           <input
@@ -144,7 +147,8 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
         </label>
       </div>
 
-      <div className="row center" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
+      {/* Control Actions */}
+      <div className="row center" style={{ flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
         <button id="btn-tarot" className="btn primary" type="button" onClick={handleDraw}>
           สับไพ่และจั่ว
         </button>
@@ -166,30 +170,9 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
         )}
       </div>
 
-      {cards.length > 0 && Object.keys(flipped).length > 0 && (
-        <SpiritualTTSPlayer
-          textToRead={cards
-            .slice(0, spread)
-            .map((card, idx) => {
-              const isFlipped = !!flipped[idx];
-              if (!isFlipped) return null;
-              const pos = positions[idx] || `ตำแหน่งที่ ${idx + 1}`;
-              return [
-                `ตำแหน่ง ${pos}: ไพ่ ${card.name} (${card.en})`,
-                card.reversed ? 'สถานะ: ไพ่กลับหัว' : 'สถานะ: ไพ่หัวตั้ง',
-                `ความหมายและคำทำนาย: ${card.meaning}`,
-              ].join('\n');
-            })
-            .filter(Boolean)
-            .join('\n\n')}
-          title="เสียงซินแสอ่านคำทำนายไพ่ยิปซี"
-          subtitle="สดับรับฟังเสียงอ่านความหมายไพ่และคำแนะนำชะตาชีวิต"
-          initialExpanded={false}
-        />
-      )}
-
+      {/* ชุดไพ่ยิปซี (Tarot Cards Table) */}
       <div id="tarot-table" className="tarot-table" aria-live="polite">
-        {cards.slice(0, spread).map((card, idx) => {
+        {activeCards.map((card, idx) => {
           const isFlipped = !!flipped[idx];
           const label = positions[idx] || `ใบที่ ${idx + 1}`;
           return (
@@ -199,7 +182,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
                 className={`tcard ${isFlipped ? 'flipped' : ''}`}
                 role="button"
                 tabIndex={0}
-                aria-label={`ไพ่ใบที่ ${idx + 1} แตะเพื่อพลิก`}
+                aria-label={`ไพ่ใบที่ ${idx + 1} (${label}) ${isFlipped ? 'เปิดแล้ว' : 'แตะเพื่อพลิก'}`}
                 style={{ '--i': idx } as React.CSSProperties}
                 onClick={() => handleFlip(idx)}
                 onKeyDown={(e) => {
@@ -229,6 +212,30 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
           );
         })}
       </div>
+
+      {/* กล่องเสียงซินแสอ่านคำทำนายไพ่ยิปซี อยู่ด้านล่างชุดไพ่และคำทำนาย */}
+      {cards.length > 0 && flippedCount > 0 && (
+        <div style={{ marginTop: '1.5rem' }}>
+          <SpiritualTTSPlayer
+            textToRead={activeCards
+              .map((card, idx) => {
+                const isFlipped = !!flipped[idx];
+                if (!isFlipped) return null;
+                const pos = positions[idx] || `ตำแหน่งที่ ${idx + 1}`;
+                return [
+                  `ตำแหน่ง ${pos}: ไพ่ ${card.name} (${card.en})`,
+                  card.reversed ? 'สถานะ: ไพ่กลับหัว' : 'สถานะ: ไพ่หัวตั้ง',
+                  `ความหมายและคำทำนาย: ${card.meaning}`,
+                ].join('\n');
+              })
+              .filter(Boolean)
+              .join('\n\n')}
+            title={`เสียงซินแสอ่านคำทำนายไพ่ยิปซี (${flippedCount} ใบ)`}
+            subtitle="สดับรับฟังเสียงสวดและธรรมบรรยายอ่านความหมายไพ่ชะตาชีวิต"
+            initialExpanded={false}
+          />
+        </div>
+      )}
     </section>
   );
 };

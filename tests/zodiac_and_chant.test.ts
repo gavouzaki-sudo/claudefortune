@@ -205,6 +205,66 @@ test('Thai Astrological Calendar: November 2569 days and dynamic month generatio
   for (const d of lokawinasDays) {
     assert.ok(!d.suitableCategories.includes('wedding'), `Day ${d.dayOfMonth} is Lokawinas and must not recommend wedding`);
   }
+
+  // 1. Natural lunar sequence verification (ขึ้น 1..15, แรม 1..15/14)
+  // Days 10 to 24 in Nov 2569 must strictly advance from ขึ้น 1 ค่ำ to ขึ้น 15 ค่ำ
+  for (let day = 10; day <= 24; day++) {
+    const d = nov2569[day - 1];
+    assert.equal(d.lunarPhase, 'waxing');
+    assert.equal(d.lunarDay, day - 9, `Day ${day} should be waxing day ${day - 9}`);
+  }
+  // Nov 24 must be Loy Krathong full moon (ขึ้น 15 ค่ำ เดือน 12)
+  assert.equal(nov2569[23].lunarDay, 15);
+  assert.equal(nov2569[23].lunarPhase, 'waxing');
+  assert.ok(nov2569[23].lunarDateTh.includes('ขึ้น ๑๕ ค่ำ'));
+
+  // Month 11 is an odd month (เดือนคี่/เดือนขาด) ending at แรม 14 ค่ำ (Nov 9)
+  assert.equal(nov2569[7].lunarDay, 13); // Nov 8: แรม 13 ค่ำ
+  assert.equal(nov2569[7].buddhistHolyDay, false, 'Nov 8 is แรม 13 ค่ำ and must NOT be a holy day');
+  assert.equal(nov2569[8].lunarDay, 14); // Nov 9: แรม 14 ค่ำ (end of Month 11)
+  assert.equal(nov2569[8].lunarMonth, 11);
+  assert.equal(nov2569[8].buddhistHolyDay, true, 'Nov 9 is แรม 14 ค่ำ (end of Month 11) and IS a holy day');
+
+  // Verify holy days in Nov 2569: strictly 4 days (Nov 3, 9, 17, 24)
+  const holyDays = nov2569.filter((d) => d.buddhistHolyDay);
+  assert.equal(holyDays.length, 4, 'Nov 2569 must have exactly 4 Buddhist Holy Days');
+  const holyDayNums = holyDays.map((d) => d.dayOfMonth);
+  assert.deepEqual(holyDayNums, [3, 9, 17, 24]);
+
+  // Nov 17 is ขึ้น 8 ค่ำ (วันพระ)
+  assert.equal(nov2569[16].lunarDay, 8);
+  assert.equal(nov2569[16].lunarPhase, 'waxing');
+  assert.equal(nov2569[16].buddhistHolyDay, true);
+
+  // 2. Ruk (นพดลฤกษ์) spellings and rotations
+  // Days 8 and 17 must be เพชฌฆาตฤกษ์ (strictly spelled with ฌ เฌอ)
+  assert.equal(nov2569[7].thaiRuk, 'phetchakat');
+  assert.equal(nov2569[7].thaiRukNameTh, 'เพชฌฆาตฤกษ์');
+  assert.ok(!nov2569[7].thaiRukNameTh.includes('เพชร'), 'Must not spell with ร');
+  assert.equal(nov2569[16].thaiRuk, 'phetchakat');
+  assert.equal(nov2569[16].thaiRukNameTh, 'เพชฌฆาตฤกษ์');
+
+  // Days 4 and 13 must be โจโรฤกษ์ (strictly spelled with โ)
+  assert.equal(nov2569[3].thaiRuk, 'joro');
+  assert.equal(nov2569[3].thaiRukNameTh, 'โจโรฤกษ์');
+  assert.equal(nov2569[12].thaiRuk, 'joro');
+  assert.equal(nov2569[12].thaiRukNameTh, 'โจโรฤกษ์');
+
+  // Ruk (นพดลฤกษ์) must change consecutively and NOT be identical every 7 days
+  const saturdays = [nov2569[6], nov2569[13], nov2569[20], nov2569[27]]; // Nov 7, 14, 21, 28
+  const satRukNames = saturdays.map((s) => s.thaiRuk);
+  const uniqueSatRuks = new Set(satRukNames);
+  assert.ok(uniqueSatRuks.size > 1, 'Ruks on Saturdays must not be locked to a single repeating ruk');
+
+  const wednesdays = [nov2569[3], nov2569[10], nov2569[17], nov2569[24]]; // Nov 4, 11, 18, 25
+  const wedRukNames = wednesdays.map((w) => w.thaiRuk);
+  const uniqueWedRuks = new Set(wedRukNames);
+  assert.ok(uniqueWedRuks.size > 1, 'Ruks on Wednesdays must not be locked to a single repeating ruk');
+
+  // Consecutive days must advance through ruks
+  assert.notEqual(nov2569[0].thaiRuk, nov2569[1].thaiRuk);
+  assert.notEqual(nov2569[1].thaiRuk, nov2569[2].thaiRuk);
+  assert.notEqual(nov2569[2].thaiRuk, nov2569[3].thaiRuk);
 });
 
 

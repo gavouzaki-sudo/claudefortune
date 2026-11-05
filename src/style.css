@@ -6516,41 +6516,76 @@ body[data-theme="native_american"] {
 .auspicious-container {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0.1rem 0.6rem 2.5rem;
+  padding: 0 0.5rem 2rem;
   color: var(--ink);
 }
 
-/* Compact Toolbar Header Row inside search card */
+/* Compact Toolbar Header Row directly atop Calendar Grid */
 .auspicious-compact-toolbar-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
+  justify-content: flex-start;
+  gap: 0.45rem 0.65rem;
   padding-bottom: 0.65rem;
-  border-bottom: 1px solid rgba(232, 185, 74, 0.25);
+  margin-bottom: 0.65rem;
+  border-bottom: 1.5px solid rgba(239, 68, 68, 0.4);
+}
+
+.toolbar-result-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toolbar-result-badge .found-count-text {
+  font-size: 0.85rem;
+  color: #bae6fd;
+  background: rgba(22, 11, 8, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  padding: 0.28rem 0.65rem;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.toolbar-result-badge .highlight-count {
+  color: #38bdf8;
+  font-weight: 800;
+}
+
+.mobile-cut-notice {
+  font-size: 0.72rem;
+  background: rgba(239, 68, 68, 0.22);
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  color: #fca5a5;
+  border-radius: 6px;
+  padding: 0.22rem 0.45rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* Month & Year Steppers & Dropdown */
 .month-stepper-group {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
 }
 
 .btn-month-nav {
-  background: linear-gradient(135deg, #ffd700, #f39c12) !important;
-  border: 1.5px solid #ffffff !important;
+  background: linear-gradient(135deg, #e8b94a, #d49a30) !important;
+  border: 1px solid rgba(255, 255, 255, 0.45) !important;
   color: #120a08 !important;
-  width: 36px;
-  height: 38px;
-  border-radius: 8px;
+  width: 32px;
+  height: 34px;
+  border-radius: 6px;
   display: grid;
   place-items: center;
-  font-size: 0.95rem;
-  font-weight: 900;
+  font-size: 0.88rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .btn-month-nav:hover {
@@ -6558,11 +6593,10 @@ body[data-theme="native_american"] {
   color: #000000 !important;
   border-color: #ffd700 !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(255, 215, 0, 0.6);
+  box-shadow: 0 3px 10px rgba(232, 185, 74, 0.4);
 }
 
-/* High-Contrast Select Dropdown Styling (Visible both closed and open) */
-/* High-Contrast Select Dropdown Styling (Clearly visible matching inputbox) */
+/* High-Contrast Select Dropdown Styling with Sleek 1px Border (Clearly visible without excessive thickness) */
 .dropdown-compact-item {
   display: inline-flex;
   align-items: center;
@@ -6580,22 +6614,22 @@ select.input-select,
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-color: #31150f !important;
-  border: 2px solid #ffd700 !important;
-  border-radius: 8px;
+  background-color: #24120e !important;
+  border: 1px solid rgba(232, 185, 74, 0.65) !important; /* Slim, refined 1px border */
+  border-radius: 6px;
   color: #ffffff !important;
-  font-weight: 800 !important;
-  font-size: 0.9rem !important;
-  font-family: inherit;
-  padding: 0.55rem 1.95rem 0.55rem 0.85rem !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ffd700' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  font-family: var(--font-body);
+  padding: 0.42rem 1.8rem 0.42rem 0.75rem !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23e8b94a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
-  background-position: right 0.6rem center !important;
-  background-size: 13px 13px !important;
+  background-position: right 0.55rem center !important;
+  background-size: 11px 11px !important;
   cursor: pointer;
   white-space: nowrap;
   text-overflow: ellipsis;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6), 0 0 10px rgba(255, 215, 0, 0.25) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
   transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
   outline: none;
   pointer-events: auto !important;
@@ -6607,9 +6641,9 @@ select.dropdown-compact-select:hover,
 .dropdown-compact-select:hover,
 select.input-select:hover,
 .input-select:hover {
-  border-color: #ffffff !important;
-  box-shadow: 0 0 16px rgba(255, 215, 0, 0.7) !important;
-  background-color: #4a2118 !important;
+  border-color: #ffd700 !important;
+  box-shadow: 0 0 8px rgba(232, 185, 74, 0.35) !important;
+  background-color: #351a14 !important;
 }
 
 select.dropdown-compact-select:focus,
@@ -6617,7 +6651,7 @@ select.dropdown-compact-select:focus,
 select.input-select:focus,
 .input-select:focus {
   border-color: #ffffff !important;
-  box-shadow: 0 0 18px rgba(255, 215, 0, 0.85) !important;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.45) !important;
   outline: none;
 }
 
@@ -6751,17 +6785,17 @@ select.input-select:focus,
   cursor: pointer;
 }
 
-/* Astrological Smart Search & Calculation Bar (No excessive gaps) */
 .astrological-search-card {
   background: linear-gradient(135deg, rgba(32, 16, 12, 0.95), rgba(18, 9, 8, 0.98));
-  border: 1.5px solid rgba(232, 185, 74, 0.55);
-  border-radius: 14px;
-  padding: 0.75rem 1rem;
-  margin-top: 0.15rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(232, 185, 74, 0.25);
+  border: 1px solid rgba(232, 185, 74, 0.4);
+  border-radius: 12px;
+  padding: 0.55rem 0.85rem;
+  margin-top: 0;
+  margin-bottom: 0.35rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.45rem;
 }
 
 .search-form-row {
@@ -7058,14 +7092,14 @@ select.input-select:focus,
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.5rem;
   background: rgba(22, 11, 8, 0.95);
-  border: 1.5px solid rgba(232, 185, 74, 0.45);
-  border-radius: 12px;
-  padding: 0.75rem 1.15rem;
-  margin-top: 0.65rem;
-  margin-bottom: 0.85rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 10px;
+  padding: 0.4rem 0.85rem;
+  margin-top: 0;
+  margin-bottom: 0.35rem;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
 }
 
 .summary-card-left {
@@ -7079,34 +7113,72 @@ select.input-select:focus,
 }
 
 .summary-card-title {
-  font-size: 0.98rem;
-  color: #ffd700;
+  font-size: 0.95rem;
+  color: #38bdf8; /* Blue Tone Header */
   margin: 0;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.summary-month-badge {
+  font-size: 0.76rem;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #7dd3fc;
+  border-radius: 4px;
+  padding: 0.08rem 0.4rem;
+  font-weight: 600;
 }
 
 .summary-card-sub {
-  font-size: 0.85rem;
-  color: #ffffff;
-  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  color: #bae6fd;
+  margin: 0.1rem 0 0;
 }
 
 .summary-card-sub strong {
-  color: #ffd700;
+  color: #38bdf8;
 }
 
 .summary-card-badge {
-  background: rgba(36, 18, 14, 0.95);
-  border: 1.5px solid rgba(232, 185, 74, 0.45);
+  background: rgba(26, 10, 14, 0.95);
+  border: 1px solid rgba(239, 68, 68, 0.45);
   color: #ffffff;
-  padding: 0.35rem 0.8rem;
-  border-radius: 8px;
-  font-size: 0.88rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.mobile-mode-tag {
+  font-size: 0.7rem;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+  border-radius: 4px;
+  padding: 0.06rem 0.35rem;
+  font-weight: 600;
+}
+
+.desktop-taboo-notice {
+  font-size: 0.7rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  border-radius: 4px;
+  padding: 0.06rem 0.35rem;
   font-weight: 600;
 }
 
 .summary-card-badge .highlight-count {
-  color: #ffd700;
+  color: #38bdf8;
   font-weight: 800;
 }
 
@@ -7700,41 +7772,168 @@ select.input-select:focus,
 }
 
 
-/* Calendar Grid View */
+/* Calendar Grid View: Moved up, Red Borders, Celestial Blue Typography */
 .auspicious-calendar-grid-view {
   background: var(--panel);
-  border: 1px solid var(--panel-line);
+  border: 1.5px solid #ef4444;
   border-radius: var(--radius);
-  padding: 1.25rem;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  padding: 0.85rem 1rem 1.15rem;
+  margin-top: 0;
+  box-shadow: 0 10px 32px rgba(239, 68, 68, 0.15), 0 0 16px rgba(220, 38, 38, 0.18);
+}
+
+/* Calendar Kala Yoga Banner (Compact) */
+.calendar-kalayoga-banner {
+  background: linear-gradient(135deg, rgba(30, 16, 18, 0.95), rgba(45, 18, 20, 0.9));
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 10px;
+  padding: 0.45rem 0.85rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.kalayoga-banner-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.84rem;
+  color: #bae6fd;
+}
+
+.kalayoga-banner-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.kala-banner-pill {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.kala-banner-pill.thongchai {
+  background: rgba(46, 204, 113, 0.18);
+  border: 1px solid rgba(46, 204, 113, 0.5);
+  color: #4ade80;
+}
+
+.kala-banner-pill.athipadi {
+  background: rgba(245, 197, 66, 0.18);
+  border: 1px solid rgba(245, 197, 66, 0.5);
+  color: #fde047;
+}
+
+.kala-banner-pill.ubatha {
+  background: rgba(249, 115, 22, 0.18);
+  border: 1px solid rgba(249, 115, 22, 0.5);
+  color: #fb923c;
+}
+
+.kala-banner-pill.lokawinas {
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #f87171;
 }
 
 .calendar-weekdays-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
   text-align: center;
-  font-weight: 700;
-  color: var(--gold2);
-  padding-bottom: 0.75rem;
-  margin-bottom: 0.75rem;
-  border-bottom: 1px solid var(--panel-line);
-  font-size: 0.9rem;
+  padding-bottom: 0.45rem;
+  margin-bottom: 0.45rem;
+  border-bottom: 1px solid rgba(239, 68, 68, 0.45);
 }
 
-.weekday-col-header.sun { color: var(--bad); }
+.weekday-col-header {
+  background: rgba(26, 10, 14, 0.85);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-top: 3px solid #ef4444;
+  border-radius: 7px;
+  padding: 0.35rem 0.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  transition: all 0.2s ease;
+}
+
+.weekday-col-header .weekday-name-full {
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: #38bdf8; /* Blue Tone */
+  display: block;
+}
+
+.weekday-col-header .weekday-name-short {
+  display: none;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #7dd3fc; /* Blue Tone */
+}
+
+.weekday-kalayoga-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.08rem 0.3rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.weekday-kalayoga-tag.tag-col-thongchai {
+  background: rgba(46, 204, 113, 0.25);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.5);
+}
+
+.weekday-kalayoga-tag.tag-col-athipadi {
+  background: rgba(234, 179, 8, 0.25);
+  color: #facc15;
+  border: 1px solid rgba(250, 204, 21, 0.5);
+}
+
+.weekday-kalayoga-tag.tag-col-ubatha {
+  background: rgba(249, 115, 22, 0.22);
+  color: #fb923c;
+  border: 1px solid rgba(251, 146, 60, 0.5);
+}
+
+.weekday-kalayoga-tag.tag-col-lokawinas {
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.5);
+}
+
+.weekday-kalayoga-tag.tag-col-normal {
+  background: rgba(56, 189, 248, 0.08);
+  color: #bae6fd; /* Light Blue Tone */
+  font-weight: 500;
+}
 
 .calendar-cells-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
+/* Calendar Cells: Red Border, Dark Blue/Lacquer Background */
 .calendar-cell {
-  background: rgba(18, 10, 8, 0.65);
-  border: 1px solid rgba(232, 185, 74, 0.18);
+  background: rgba(14, 10, 18, 0.78);
+  border: 1px solid rgba(239, 68, 68, 0.45); /* Red border */
   border-radius: 8px;
-  min-height: 100px;
-  padding: 0.5rem;
+  min-height: 98px;
+  padding: 0.45rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -7744,18 +7943,16 @@ select.input-select:focus,
 }
 
 .calendar-cell:hover {
-  border-color: var(--gold);
-  background: rgba(232, 185, 74, 0.1);
+  border-color: #ef4444;
+  background: rgba(56, 189, 248, 0.08);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);
   transform: scale(1.02);
 }
 
 .calendar-cell.cell-master {
-  background: rgba(232, 185, 74, 0.12);
-  border-color: var(--gold);
-}
-
-.calendar-cell.cell-warning {
-  background: rgba(255, 125, 110, 0.1);
+  background: rgba(12, 28, 48, 0.75);
+  border-color: rgba(239, 68, 68, 0.85);
+  box-shadow: inset 0 0 8px rgba(56, 189, 248, 0.15);
 }
 
 .calendar-cell.cell-dimmed {
@@ -7763,56 +7960,173 @@ select.input-select:focus,
 }
 
 .calendar-cell.cell-selected {
-  border-color: var(--gold) !important;
-  background: rgba(232, 185, 74, 0.28) !important;
-  box-shadow: 0 0 14px rgba(232, 185, 74, 0.5) !important;
+  border-color: #f87171 !important;
+  background: rgba(16, 42, 68, 0.88) !important;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.5), inset 0 0 10px rgba(239, 68, 68, 0.4) !important;
   transform: scale(1.04);
   z-index: 2;
+}
+
+/* วันอุบาทว์ และ วันโลกาวินาศ: เพิ่มเส้นทะแยง (Diagonal Stripes Texture & Pattern) */
+.calendar-cell.cell-ubatha,
+.calendar-cell.cell-lokawinas {
+  position: relative;
+  border-color: #ef4444 !important;
+  background-color: rgba(26, 8, 10, 0.9) !important;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(239, 68, 68, 0.22),
+    rgba(239, 68, 68, 0.22) 8px,
+    rgba(14, 6, 8, 0.88) 8px,
+    rgba(14, 6, 8, 0.88) 16px
+  ) !important;
+  overflow: hidden;
+}
+
+.calendar-cell.cell-ubatha::before,
+.calendar-cell.cell-lokawinas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 12px,
+    rgba(239, 68, 68, 0.16) 12px,
+    rgba(239, 68, 68, 0.16) 14px
+  );
+  z-index: 1;
+}
+
+.calendar-cell.cell-ubatha:hover,
+.calendar-cell.cell-lokawinas:hover {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(239, 68, 68, 0.35),
+    rgba(239, 68, 68, 0.35) 8px,
+    rgba(22, 8, 10, 0.92) 8px,
+    rgba(22, 8, 10, 0.92) 16px
+  ) !important;
+  border-color: #f87171 !important;
 }
 
 .cell-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  z-index: 2;
 }
 
+.cell-date-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+/* Blue tone for day numbers (ตัวหนังสือโทนฟ้า) */
 .cell-day-num {
   font-size: 1.15rem;
   font-family: var(--font-display);
-  color: var(--gold);
+  color: #38bdf8; /* Sky Blue */
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.35);
   font-weight: 700;
 }
 
+.cell-weekday-label {
+  font-size: 0.68rem;
+  color: #7dd3fc; /* Soft Blue */
+  font-weight: 600;
+}
+
 .cell-tag {
-  font-size: 0.65rem;
-  padding: 0.1rem 0.3rem;
+  font-size: 0.62rem;
+  padding: 0.08rem 0.28rem;
   border-radius: 3px;
   font-weight: 700;
 }
 
 .cell-tag.tag-thongchai { background: var(--ok); color: #000; }
 .cell-tag.tag-athipadi { background: var(--gold); color: #000; }
-.cell-tag.tag-ubatha { background: var(--warn); color: #000; }
-.cell-tag.tag-lokawinas { background: var(--bad); color: #fff; }
+.cell-tag.tag-ubatha { background: #ea580c; color: #fff; }
+.cell-tag.tag-lokawinas { background: #dc2626; color: #fff; }
 
 .cell-middle {
   display: flex;
   flex-direction: column;
-  margin: 0.2rem 0;
+  margin: 0.15rem 0;
+  position: relative;
+  z-index: 2;
 }
 
+/* Blue tone for Ruk names (ตัวหนังสือโทนฟ้า) */
 .cell-ruk-name {
-  font-size: 0.78rem;
-  color: var(--gold2);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: #67e8f9; /* Cyan / Bright Blue */
   font-weight: 600;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  text-shadow: 0 0 6px rgba(103, 232, 249, 0.2);
 }
 
+/* Blue tone for Lunar days (ตัวหนังสือโทนฟ้า) */
 .cell-lunar {
-  font-size: 0.68rem;
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  color: #bae6fd; /* Moonlight Ice Blue */
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.cell-holy-badge {
+  font-size: 0.62rem;
+  background: rgba(56, 189, 248, 0.18);
+  color: #e0f2fe; /* Celestial Blue */
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  border-radius: 4px;
+  padding: 0.05rem 0.25rem;
+  margin-top: 0.2rem;
+  align-self: flex-start;
+  font-weight: 600;
+}
+
+.empty-cell-dash {
+  color: rgba(239, 68, 68, 0.3); /* Subtle Red accent */
+  font-size: 1.2rem;
+  display: block;
+  text-align: center;
+  margin: auto;
+}
+
+.nakshatra-detail-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.nakshatra-box {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(232, 185, 74, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.nak-label {
+  font-size: 0.72rem;
   color: var(--muted);
+}
+
+.nak-val {
+  font-size: 0.88rem;
 }
 
 .cell-bottom-icons {
@@ -7849,14 +8163,14 @@ select.input-select:focus,
 
 .auspicious-modal-sheet {
   background: linear-gradient(180deg, #24120d, #140806);
-  border: 1px solid var(--gold);
+  border: 1.5px solid #ef4444;
   border-radius: 20px;
   max-width: 680px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
   padding: 1.75rem;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(232, 185, 74, 0.2);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(239, 68, 68, 0.25);
   position: relative;
   color: var(--ink);
 }
@@ -8051,7 +8365,8 @@ select.input-select:focus,
   .auspicious-main-title { font-size: 1.65rem; }
   .calendar-cells-grid { gap: 0.25rem; }
   .calendar-cell { min-height: 75px; padding: 0.35rem; }
-  .cell-ruk-name { font-size: 0.68rem; }
+  .cell-ruk-name { font-size: 0.7rem; overflow: visible; line-height: 1.35; font-family: var(--font-body); }
+  .cell-lunar { font-size: 0.66rem; line-height: 1.35; font-family: var(--font-body); }
 }
 
 /* =========================================================================
@@ -8234,14 +8549,100 @@ select.input-select:focus,
 }
 
 @media (max-width: 640px) {
+  /* On mobile: Cut out วันอุบาทว์ and วันโลกาวินาศ completely (5-column auspicious grid) */
+  .calendar-weekdays-row.mobile-cut-taboos {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  .calendar-cells-grid.mobile-cut-taboos {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  .weekday-col-header.col-ubatha,
+  .weekday-col-header.col-lokawinas,
+  .calendar-cell.cell-ubatha,
+  .calendar-cell.cell-lokawinas {
+    display: none !important;
+  }
+
   .auspicious-calendar-grid-view {
-    padding: 0.65rem;
+    padding: 0.5rem;
+    margin-top: 0;
+  }
+
+  .auspicious-compact-toolbar-row {
+    gap: 0.35rem 0.45rem;
+    padding-bottom: 0.45rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .dropdown-compact-select.month-select,
+  .month-select {
+    min-width: 105px;
+    font-size: 0.8rem !important;
+  }
+
+  .dropdown-compact-select.year-select,
+  .year-select {
+    min-width: 85px;
+    font-size: 0.8rem !important;
+  }
+
+  .dropdown-compact-select.preset-select,
+  .preset-select {
+    min-width: 135px;
+    font-size: 0.8rem !important;
+  }
+
+  .dropdown-compact-select.birthday-select-compact,
+  .birthday-select-compact {
+    min-width: 170px;
+    font-size: 0.8rem !important;
+  }
+
+  .toolbar-result-badge {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .calendar-kalayoga-banner {
+    padding: 0.4rem 0.5rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .kalayoga-banner-title {
+    font-size: 0.76rem;
+  }
+
+  .kala-banner-pill {
+    font-size: 0.62rem;
+    padding: 0.1rem 0.3rem;
   }
 
   .calendar-weekdays-row {
     font-size: 0.72rem;
-    padding-bottom: 0.5rem;
-    margin-bottom: 0.5rem;
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.35rem;
+    gap: 0.2rem;
+  }
+
+  .weekday-col-header {
+    padding: 0.25rem 0.1rem;
+    border-radius: 5px;
+  }
+
+  .weekday-col-header .weekday-name-full {
+    display: none;
+  }
+
+  .weekday-col-header .weekday-name-short {
+    display: block;
+  }
+
+  .weekday-kalayoga-tag {
+    font-size: 0.48rem;
+    padding: 0.04rem 0.12rem;
   }
 
   .calendar-cells-grid {
@@ -8264,11 +8665,16 @@ select.input-select:focus,
   }
 
   .cell-ruk-name {
-    font-size: 0.58rem;
+    font-size: 0.62rem;
+    overflow: visible;
+    line-height: 1.35;
+    font-family: var(--font-body);
   }
 
   .cell-lunar {
-    font-size: 0.55rem;
+    font-size: 0.58rem;
+    line-height: 1.35;
+    font-family: var(--font-body);
   }
 
   .cell-bottom-icons {

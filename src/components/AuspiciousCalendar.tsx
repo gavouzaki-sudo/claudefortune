@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   generateMonthAuspiciousDays,
   getKalaYogaForYear,
@@ -36,6 +36,22 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
   const [inspectedDay, setInspectedDay] = useState<AuspiciousDay | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // Mobile environment detection
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 640;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 640);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Month names in Thai
   const THAI_MONTHS = [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -50,6 +66,51 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     () => generateMonthAuspiciousDays(selectedYearBE, selectedMonth),
     [selectedYearBE, selectedMonth]
   );
+
+  // All 7 weekdays
+  const ALL_WEEKDAYS = useMemo(
+    () => [
+      { full: 'วันอาทิตย์', short: 'อา.', col: 'sun', dayOfWeek: 0, color: '#ef4444' },
+      { full: 'วันจันทร์', short: 'จ.', col: 'mon', dayOfWeek: 1, color: '#eab308' },
+      { full: 'วันอังคาร', short: 'อ.', col: 'tue', dayOfWeek: 2, color: '#ec4899' },
+      { full: 'วันพุธ', short: 'พ.', col: 'wed', dayOfWeek: 3, color: '#10b981' },
+      { full: 'วันพฤหัสบดี', short: 'พฤ.', col: 'thu', dayOfWeek: 4, color: '#f97316' },
+      { full: 'วันศุกร์', short: 'ศ.', col: 'fri', dayOfWeek: 5, color: '#06b6d4' },
+      { full: 'วันเสาร์', short: 'ส.', col: 'sat', dayOfWeek: 6, color: '#a855f7' },
+    ],
+    []
+  );
+
+  // If env is mobile: cut out วันอุบาทว์ and วันโลกาวินาศ columns completely
+  const displayedWeekdays = useMemo(() => {
+    if (isMobile) {
+      return ALL_WEEKDAYS.filter(
+        (w) => w.dayOfWeek !== kalaYoga.ubatha && w.dayOfWeek !== kalaYoga.lokawinas
+      );
+    }
+    return ALL_WEEKDAYS;
+  }, [isMobile, ALL_WEEKDAYS, kalaYoga]);
+
+  // If env is mobile: cut out วันอุบาทว์ and วันโลกาวินาศ days completely
+  const displayedMonthDays = useMemo(() => {
+    if (isMobile) {
+      return allMonthDays.filter(
+        (day) => day.kalaYoga !== 'ubatha' && day.kalaYoga !== 'lokawinas'
+      );
+    }
+    return allMonthDays;
+  }, [isMobile, allMonthDays]);
+
+  // Start padding days for first week alignment
+  const startPaddingDays = useMemo(() => {
+    if (!allMonthDays[0]) return 0;
+    if (!isMobile) {
+      return allMonthDays[0].dayOfWeek;
+    }
+    const firstDow = allMonthDays[0].dayOfWeek;
+    const colIdx = displayedWeekdays.findIndex((w) => w.dayOfWeek === firstDow);
+    return colIdx >= 0 ? colIdx : 0;
+  }, [allMonthDays, isMobile, displayedWeekdays]);
 
   // The engine is the single source of truth for birthday/Thaksa relations.
   // Calculate once per day and reuse in filters, reports, cards and the detail modal.
@@ -165,6 +226,27 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
       }
       if (rawQ === 'samano' || rawQ.includes('สมโณ')) {
         return day.thaiRuk === 'samano';
+      }
+      if (rawQ === 'thesatri' || rawQ.includes('เทศาตรี')) {
+        return day.thaiRuk === 'thesatri';
+      }
+      if (rawQ === 'daliddo' || rawQ.includes('ทลิทโท')) {
+        return day.thaiRuk === 'daliddo';
+      }
+      if (rawQ === 'joro' || rawQ.includes('โจโร')) {
+        return day.thaiRuk === 'joro';
+      }
+      if (rawQ === 'phetchakat' || rawQ.includes('เพชฌฆาต')) {
+        return day.thaiRuk === 'phetchakat';
+      }
+      if (rawQ.includes('วันพระ') || rawQ === 'holy') {
+        return day.buddhistHolyDay;
+      }
+      if (rawQ === 'ขึ้น' || rawQ === 'waxing') {
+        return day.lunarPhase === 'waxing';
+      }
+      if (rawQ === 'แรม' || rawQ === 'waning') {
+        return day.lunarPhase === 'waning';
       }
 
       // Specific date number matching: e.g. "วันที่ 4", "4"
@@ -328,9 +410,9 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
 
   return (
     <div className="auspicious-container">
-      {/* Unified Compact Astrological Search Card with Integrated Controls */}
-      <div className="astrological-search-card">
-        {/* Compact Dropdown Toolbar Row: เดือน -> ปี -> ฤกษ์ -> วันกาลกิณี */}
+      {/* Calendar Grid View: Dropping toolbar directly at top, flush against the grid with NO intervening cards or boxes */}
+      <div id="auspicious-results-section" className="auspicious-calendar-grid-view auspicious-calendar-view calendar-view-container">
+        {/* Compact Dropdown Toolbar Row: เดือน -> ปี -> ฤกษ์ -> วันกาลกิณี + จำนวนวัน */}
         <div className="auspicious-compact-toolbar-row">
           {/* 1. เดือน */}
           <div className="dropdown-compact-item month-compact-stepper" title="เลือกเดือน">
@@ -451,92 +533,90 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
             )}
           </div>
 
-          {/* Mini Kala Yoga Status Pills */}
-          <div className="kala-status-compact-pills">
-            <span className="kala-mini-pill thongchai" title={`วันธงชัย: ${kalaYoga.thongchaiNameTh}`}>
-              ⭐ ธงชัย: <strong>{kalaYoga.thongchaiNameTh}</strong>
-            </span>
-            <span className="kala-mini-pill athipadi" title={`วันอธิบดี: ${kalaYoga.athipadiNameTh}`}>
-              👑 อธิบดี: <strong>{kalaYoga.athipadiNameTh}</strong>
-            </span>
-            <span className="kala-mini-pill ubatha" title={`วันอุบาทว์: ${kalaYoga.ubathaNameTh}`}>
-              ⚠️ อุบาทว์: <strong>{kalaYoga.ubathaNameTh}</strong>
-            </span>
-            <span className="kala-mini-pill lokawinas" title={`วันโลกาวินาศ: ${kalaYoga.lokawinasNameTh}`}>
-              ⛔ โลกาวินาศ: <strong>{kalaYoga.lokawinasNameTh}</strong>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Calculation Results Section Anchor & Banner */}
-      <div id="auspicious-results-section" className="auspicious-results-anchor">
-        <div className="calculation-results-summary-card">
-          <div className="summary-card-left">
-            <span className="summary-card-icon">🗓️</span>
-            <div className="summary-card-text">
-              <h3 className="summary-card-title">
-                ปฏิทินฤกษ์มงคล:{' '}
-                <span className="text-gold">
-                  {selectedCategory === 'all'
-                    ? 'ทุกประเภทงาน (วิเคราะห์ครบ 5 หมวด)'
-                    : WORK_CATEGORIES_INFO[selectedCategory]?.titleTh || 'ฤกษ์มงคล'}
-                </span>
-              </h3>
-              <p className="summary-card-sub">
-                ประจำเดือน <strong>{THAI_MONTHS[selectedMonth - 1]} พ.ศ. {selectedYearBE}</strong>
-                {selectedBirthDay !== 'none' && (
-                  <>
-                    {' '}· สำหรับคนเกิด{' '}
-                    <strong className="text-gold">
-                      {BIRTH_DAYS.find((b) => b.id === selectedBirthDay)?.labelTh}
-                    </strong>
-                    {avoidKalakini && ' (หลีกเลี่ยงวันกาลกิณี)'}
-                  </>
-                )}
-                {searchQuery && ` · กรองเจาะจง: "${searchQuery}"`}
-              </p>
-            </div>
-          </div>
-          <div className="summary-card-badge">
-            พบวันมงคล <span className="highlight-count">{filteredDays.length}</span> วัน
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area: Pure Calendar Grid */}
-      <div className="auspicious-views-viewport">
-        <div className="auspicious-calendar-grid-view auspicious-calendar-view calendar-view-container">
-          {/* Weekday Header */}
-          <div className="calendar-weekdays-row">
-            {['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'].map(
-              (w, idx) => (
-                <div key={w} className={`weekday-col-header ${idx === 0 ? 'sun' : ''}`}>
-                  {w}
-                </div>
-              )
+          {/* Compact Right-Aligned Status & Found Count */}
+          <div className="toolbar-result-badge">
+            {isMobile && (
+              <span className="mobile-cut-notice" title="บนมือถือระบบตัดวันอุบาทว์และวันโลกาวินาศออก">
+                📱 ซ่อนวันอุบาทว์/โลกาวินาศ
+              </span>
             )}
+            <span className="found-count-text">
+              พบ <strong className="highlight-count">{filteredDays.length}</strong> วัน
+            </span>
+          </div>
+        </div>
+
+        {/* Weekday Header with Prominent Labels and Kala Yoga Status */}
+        <div className={`calendar-weekdays-row ${isMobile ? 'mobile-cut-taboos' : ''}`} role="row">
+            {displayedWeekdays.map((w) => {
+              let tag = '';
+              let tagClass = '';
+              const isUbathaCol = w.dayOfWeek === kalaYoga.ubatha;
+              const isLokawinasCol = w.dayOfWeek === kalaYoga.lokawinas;
+
+              if (w.dayOfWeek === kalaYoga.thongchai) {
+                tag = '⭐ ธงชัย';
+                tagClass = 'tag-col-thongchai';
+              } else if (w.dayOfWeek === kalaYoga.athipadi) {
+                tag = '👑 อธิบดี';
+                tagClass = 'tag-col-athipadi';
+              } else if (isUbathaCol) {
+                tag = '⚠️ อุบาทว์';
+                tagClass = 'tag-col-ubatha';
+              } else if (isLokawinasCol) {
+                tag = '⛔ โลกาวินาศ';
+                tagClass = 'tag-col-lokawinas';
+              }
+
+              return (
+                <div
+                  key={w.full}
+                  className={`weekday-col-header col-${w.col} ${isUbathaCol ? 'col-ubatha' : ''} ${
+                    isLokawinasCol ? 'col-lokawinas' : ''
+                  }`}
+                  style={{ borderTopColor: w.color }}
+                  role="columnheader"
+                >
+                  <span className="weekday-name-full">{w.full}</span>
+                  <span className="weekday-name-short">{w.short}</span>
+                  {tag ? (
+                    <span className={`weekday-kalayoga-tag ${tagClass}`} title={`กาลโยคประจำปี ${selectedYearBE}: ${w.full}เป็น${tag}`}>
+                      {tag}
+                    </span>
+                  ) : (
+                    <span className="weekday-kalayoga-tag tag-col-normal">วันปกติ</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Calendar Days Grid */}
-          <div className="calendar-cells-grid">
+          <div className={`calendar-cells-grid ${isMobile ? 'mobile-cut-taboos' : ''}`}>
             {/* Empty offset days for start of month */}
-            {Array.from({ length: allMonthDays[0]?.dayOfWeek || 0 }).map((_, i) => (
-              <div key={`empty-${i}`} className="calendar-cell cell-empty" />
+            {Array.from({ length: startPaddingDays }).map((_, i) => (
+              <div key={`empty-${i}`} className="calendar-cell cell-empty" aria-hidden="true">
+                <span className="empty-cell-dash">—</span>
+              </div>
             ))}
 
             {/* Month days */}
-            {allMonthDays.map((day) => {
+            {displayedMonthDays.map((day) => {
               const isFilteredOut = !filteredDays.some((d) => d.date === day.date);
               const thaksa =
                 selectedBirthDay !== 'none'
                   ? thaksaByDate.get(day.date)
                   : null;
 
+              const isUbatha = day.kalaYoga === 'ubatha';
+              const isLokawinas = day.kalaYoga === 'lokawinas';
+
               const isBadDay =
-                day.kalaYoga === 'ubatha' ||
-                day.kalaYoga === 'lokawinas' ||
+                isUbatha ||
+                isLokawinas ||
                 thaksa?.isKalakini;
+
+              const shortDayName = day.dayNameTh.replace('วัน', '');
 
               return (
                 <div
@@ -544,6 +624,10 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
                   className={`calendar-cell ${
                     day.isMasterAuspicious ? 'cell-master' : ''
                   } ${isBadDay ? 'cell-warning' : ''} ${
+                    isUbatha ? 'cell-ubatha' : ''
+                  } ${
+                    isLokawinas ? 'cell-lokawinas' : ''
+                  } ${
                     isFilteredOut ? 'cell-dimmed' : ''
                   } ${inspectedDay?.date === day.date ? 'cell-selected' : ''}`}
                   onClick={() => setInspectedDay(day)}
@@ -557,7 +641,10 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
                   }}
                 >
                   <div className="cell-top">
-                    <span className="cell-day-num">{day.dayOfMonth}</span>
+                    <div className="cell-date-group">
+                      <span className="cell-day-num">{day.dayOfMonth}</span>
+                      <span className="cell-weekday-label">{shortDayName}</span>
+                    </div>
                     {day.kalaYoga === 'thongchai' && (
                       <span className="cell-tag tag-thongchai">ธงชัย</span>
                     )}
@@ -573,8 +660,17 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
                   </div>
 
                   <div className="cell-middle">
-                    <span className="cell-ruk-name">{day.thaiRukNameTh}</span>
-                    <span className="cell-lunar">{day.lunarDateTh.split(' ')[0]}</span>
+                    <span className="cell-ruk-name" title={`${day.thaiRukNameTh}: ${day.thaiRukHighlight}`}>
+                      {day.thaiRukNameTh}
+                    </span>
+                    <span className="cell-lunar" title={day.lunarDateTh}>
+                      {day.lunarPhaseThShort}
+                    </span>
+                    {day.buddhistHolyDay && (
+                      <span className="cell-holy-badge" title={`วันพระ: ${day.lunarDateTh}`}>
+                        🪷 วันพระ
+                      </span>
+                    )}
                   </div>
 
                   <div className="cell-bottom-icons">
@@ -595,7 +691,6 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
             })}
           </div>
         </div>
-      </div>
 
       {/* Day Inspection Modal (ป๊อปอัปเจาะลึกรายละเอียดวันมงคล) */}
       {inspectedDay && (
@@ -658,6 +753,24 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
 
             {/* Body Information */}
             <div className="modal-body-content">
+              {/* Nakshatra & Astronomical Dithi Details */}
+              <div className="modal-info-card">
+                <h4 className="info-card-title">✨ ข้อมูลดวงดาวและดิถีจันทรคติ</h4>
+                <div className="nakshatra-detail-row">
+                  <div className="nakshatra-box">
+                    <span className="nak-label">กลุ่มดาวนักษัตรที่เสวย:</span>
+                    <strong className="nak-val text-gold">นักษัตรที่ {inspectedDay.nakshatraNumber} ({inspectedDay.nakshatraNameTh})</strong>
+                  </div>
+                  <div className="nakshatra-box">
+                    <span className="nak-label">ดิถีจันทรคติ:</span>
+                    <strong className="nak-val">{inspectedDay.lunarDateTh}</strong>
+                  </div>
+                </div>
+                <div className="info-card-highlight">
+                  พระจันทร์โคจรผ่าน ๒๗ กลุ่มดาวนักษัตรตามลำดับธรรมชาติ ส่งผลให้เกิด <strong>{inspectedDay.thaiRukNameTh}</strong> ในวันนี้
+                </div>
+              </div>
+
               {/* Meaning & Highlight */}
               <div className="modal-info-card">
                 <h4 className="info-card-title">📖 ความหมายและจุดเด่นของฤกษ์</h4>
