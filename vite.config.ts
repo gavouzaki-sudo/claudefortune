@@ -69,5 +69,19 @@ export default defineConfig(({ command }) => ({
       },
     },
   },
+  preview: {
+    host: '0.0.0.0',
+    port: 3000,
+    cors: true,
+    allowedHosts: true,
+    proxy: {
+      '/api/glo': {
+        target: 'https://www.glo.or.th',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api\/glo/, '/api'),
+      },
+    },
+  },
 }));
 

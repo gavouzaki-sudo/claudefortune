@@ -131,13 +131,15 @@ function normalizeApiResponse(rawResponse: any): LotteryDisplayData {
 
 /**
  * Fetch latest lottery result from GLO API
- * POST https://www.glo.or.th/api/lottery/getLatestLottery
+ * POST /api/glo/lottery/getLatestLottery
  */
 export async function getLatestLotteryResult(): Promise<LotteryDisplayData> {
-  const endpoints = [
-    '/api/glo/lottery/getLatestLottery',
-    'https://www.glo.or.th/api/lottery/getLatestLottery',
-  ];
+  const isBrowser = typeof window !== 'undefined';
+  // Never attempt direct cross-origin requests to www.glo.or.th from the browser
+  // because www.glo.or.th does not allow CORS and returns 503 on OPTIONS preflight.
+  const endpoints = isBrowser
+    ? ['/api/glo/lottery/getLatestLottery']
+    : ['/api/glo/lottery/getLatestLottery', 'https://www.glo.or.th/api/lottery/getLatestLottery'];
 
   for (const url of endpoints) {
     try {
@@ -145,18 +147,24 @@ export async function getLatestLotteryResult(): Promise<LotteryDisplayData> {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({}),
       });
 
       if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        // Guard against static hosting / SPA fallback returning index.html
+        if (!contentType.includes('json')) {
+          continue;
+        }
         const json = await res.json();
         if (json.status && json.response) {
           return normalizeApiResponse(json);
         }
       }
     } catch (err) {
-      logger.warn(`Failed to fetch from ${url}:`, err);
+      logger.debug(`Could not fetch lottery from ${url}:`, err);
     }
   }
 
@@ -166,7 +174,7 @@ export async function getLatestLotteryResult(): Promise<LotteryDisplayData> {
 
 /**
  * Check lottery result by date from GLO API
- * POST https://www.glo.or.th/api/checking/getLotteryResult
+ * POST /api/glo/checking/getLotteryResult
  * Payload: {"date":"01","month":"03","year":"2024"}
  */
 export async function getLotteryResultByDate(
@@ -185,10 +193,15 @@ export async function getLotteryResultByDate(
     year: String(yearCe),
   };
 
-  const endpoints = [
-    '/api/glo/checking/getLotteryResult',
-    'https://www.glo.or.th/api/checking/getLotteryResult',
-  ];
+  const isBackupDrawDate =
+    payload.date === '01' &&
+    payload.month === '11' &&
+    (yearCe === 2026 || yearBe === 2569);
+
+  const isBrowser = typeof window !== 'undefined';
+  const endpoints = isBrowser
+    ? ['/api/glo/checking/getLotteryResult']
+    : ['/api/glo/checking/getLotteryResult', 'https://www.glo.or.th/api/checking/getLotteryResult'];
 
   for (const url of endpoints) {
     try {
@@ -196,19 +209,28 @@ export async function getLotteryResultByDate(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify(payload),
       });
 
       if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('json')) {
+          continue;
+        }
         const json = await res.json();
         if (json.status && json.response?.result) {
           return normalizeApiResponse(json);
         }
       }
     } catch (err) {
-      logger.warn(`Failed to fetch draw by date from ${url}:`, err);
+      logger.debug(`Could not fetch draw by date from ${url}:`, err);
     }
+  }
+
+  if (isBackupDrawDate) {
+    return { ...BACKUP_LATEST_DRAW };
   }
 
   throw new Error(`ไม่พบข้อมูลผลการออกรางวัลของงวดวันที่ ${payload.date}/${payload.month}/${yearBe}`);
