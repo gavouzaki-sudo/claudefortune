@@ -404,26 +404,6 @@ export const App: React.FC = () => {
                 </span>
               </div>
 
-              <div className="bottom-home-return-row">
-                <button
-                  type="button"
-                  className="btn ghost btn-return-home"
-                  onClick={handleSessionChange}
-                  title="กลับสู่หน้าหลัก"
-                >
-                  <span>กลับหน้าหลัก</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="btn gold btn-bottom-journal"
-                  onClick={() => setIsJournalOpen(true)}
-                  title="สมุดดวงชะตา"
-                >
-                  <span>สมุดดวง</span>
-                  {journalCount > 0 && <span className="header-journal-badge">{journalCount}</span>}
-                </button>
-              </div>
             </div>
           )}
         </main>

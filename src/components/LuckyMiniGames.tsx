@@ -185,19 +185,15 @@ const WhackMoleGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
 
   return (
     <div className="mini-game-container mole-container">
-      <h4 className="mini-game-heading">🦔 ตีภูตนำโชคศาลเจ้า</h4>
-      <p className="mini-game-sub">
-        แตะตีภูตทองที่โผล่จากกระถางให้ครบ <b>{TARGET_HITS} ครั้ง</b> ภายใน 8 วินาที
-      </p>
-
-      <div className="mole-status-row">
-        <span className="status-badge">
-          คะแนน: <b>{score}</b> / {TARGET_HITS}
-        </span>
+      <div className="mini-game-header-row">
+        <h4 className="mini-game-heading">🦔 ตีภูตนำโชคศาลเจ้า</h4>
         <span className="status-badge timer-badge">
-          เวลา: <b>{timeLeft}s</b>
+          ⏱️ เวลา: <b>{timeLeft}s</b>
         </span>
       </div>
+      <p className="mini-game-sub">
+        แตะตีภูตทองที่โผล่จากกระถางให้ครบ <b>{TARGET_HITS} ครั้ง</b> ก่อนหมดเวลา
+      </p>
 
       <div className="mole-grid">
         {Array.from({ length: 9 }).map((_, i) => (
@@ -225,7 +221,7 @@ const WhackMoleGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
         </div>
       )}
 
-      <div className="row center" style={{ marginTop: '0.6rem' }}>
+      <div className="row center" style={{ marginTop: '0.35rem' }}>
         <button
           type="button"
           className="btn primary btn-mole-start"
@@ -333,9 +329,14 @@ const TicTacToeGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
 
   return (
     <div className="mini-game-container ox-container">
-      <h4 className="mini-game-heading">❌ เกม OX ประลองปัญญา (คุณคือ ⭕)</h4>
+      <div className="mini-game-header-row">
+        <h4 className="mini-game-heading">❌ เกม OX (คุณคือ ⭕)</h4>
+        <span className="status-badge ox-turn-badge">
+          {isAiTurn ? '🏮 ศาลเจ้าคิด...' : '✨ ตาคุณวาง'}
+        </span>
+      </div>
       <p className="mini-game-sub">
-        วางเรียง ⭕ ให้ครบ 3 ช่อง (แนวนอน แนวตั้ง หรือแนวทแยง) เพื่อจุดไฟเผายันต์!
+        วางเรียง ⭕ ให้ครบ 3 ช่องเพื่อจุดไฟเผายันต์!
       </p>
 
       <div className="ox-grid">
@@ -365,7 +366,7 @@ const TicTacToeGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
         </div>
       )}
 
-      <div className="row center" style={{ marginTop: '0.6rem' }}>
+      <div className="row center" style={{ marginTop: '0.35rem' }}>
         <button type="button" className="btn ghost btn-ox-reset" onClick={resetBoard}>
           <span>🔄 รีเซ็ตกระดาน OX</span>
         </button>

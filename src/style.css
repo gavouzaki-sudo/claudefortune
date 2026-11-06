@@ -3714,6 +3714,24 @@ body[data-theme="native_american"] {
   box-shadow: 0 0 18px rgba(255, 215, 0, 0.9);
 }
 
+/* Sacred Altar Canvas Frame (Top Canvas: ยันต์ไฟเบิกโชค + ธูปไหม้ควันลอย) */
+.talisman-canvas-frame {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0d0608;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.talisman-canvas-frame canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: manipulation;
+}
+
 /* Talisman Frame & Layers (Compact height: ~105px instead of 175px) */
 .talisman-frame {
   position: relative;
@@ -4171,40 +4189,53 @@ body[data-theme="native_american"] {
   line-height: 1;
 }
 
-/* 2. Whack-a-Mole Styles */
-.mole-status-row {
+/* Mini Game Header Row (Title left, Countdown timer right) */
+.mini-game-header-row {
   display: flex;
-  justify-content: center;
-  gap: 0.9rem;
-  margin-bottom: 0.6rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
-.mole-status-row .status-badge {
-  font-size: 0.8rem;
+.mini-game-header-row .mini-game-heading {
+  margin: 0;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.mini-game-header-row .status-badge {
+  font-size: 0.76rem;
   color: var(--gold2);
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(212, 175, 55, 0.35);
-  padding: 0.2rem 0.65rem;
+  padding: 0.12rem 0.55rem;
   border-radius: 9999px;
+  white-space: nowrap;
 }
 
-.mole-status-row .status-badge b {
+.mini-game-header-row .status-badge b {
   color: #fff;
+}
+
+/* 2. Whack-a-Mole Styles (50% reduced height & size) */
+.mole-container {
+  padding: 0.5rem 0.75rem;
 }
 
 .mole-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.6rem;
-  max-width: 270px;
-  margin: 0 auto;
+  gap: 0.3rem;
+  max-width: 140px;
+  margin: 0.25rem auto;
 }
 
 .mole-pot {
   aspect-ratio: 1;
   background: radial-gradient(circle, rgba(50, 25, 15, 0.85), rgba(20, 10, 6, 0.95));
-  border: 1.5px solid rgba(212, 175, 55, 0.4);
-  border-radius: 14px;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 8px;
   position: relative;
   display: grid;
   place-items: center;
@@ -4220,16 +4251,16 @@ body[data-theme="native_american"] {
 }
 
 .mole-pot .pot-rim {
-  font-size: 1.5rem;
+  font-size: 0.95rem;
   line-height: 1;
   opacity: 0.7;
 }
 
 .mole-pot .mole-avatar {
   position: absolute;
-  font-size: 2.2rem;
+  font-size: 1.25rem;
   line-height: 1;
-  filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.8));
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
 }
 
 .popup-anim {
@@ -4237,24 +4268,28 @@ body[data-theme="native_american"] {
 }
 
 .btn-mole-start {
-  padding: 0.6rem 1.4rem;
-  font-size: 0.92rem;
+  padding: 0.32rem 0.95rem;
+  font-size: 0.82rem;
 }
 
-/* 3. OX (Tic-Tac-Toe) Styles */
+/* 3. OX (Tic-Tac-Toe) Styles (50% reduced height & size) */
+.ox-container {
+  padding: 0.5rem 0.75rem;
+}
+
 .ox-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  max-width: 240px;
-  margin: 0.6rem auto;
+  gap: 0.28rem;
+  max-width: 125px;
+  margin: 0.25rem auto;
 }
 
 .ox-cell {
   aspect-ratio: 1;
   background: rgba(14, 10, 18, 0.85);
-  border: 1.5px solid rgba(212, 175, 55, 0.45);
-  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  border-radius: 8px;
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -4269,14 +4304,14 @@ body[data-theme="native_american"] {
 }
 
 .ox-sym {
-  font-size: 2rem;
+  font-size: 1.15rem;
   line-height: 1;
   animation: pop 0.25s ease;
 }
 
 .btn-ox-reset {
-  font-size: 0.82rem;
-  padding: 0.4rem 0.9rem;
+  font-size: 0.76rem;
+  padding: 0.28rem 0.75rem;
 }
 
 /* 4. Number Connect Styles */
@@ -4565,25 +4600,25 @@ body[data-theme="native_american"] {
   }
 
   .mole-grid {
-    max-width: 230px;
-    gap: 0.45rem;
+    max-width: 135px;
+    gap: 0.28rem;
   }
 
   .mole-pot .pot-rim {
-    font-size: 1.3rem;
+    font-size: 0.9rem;
   }
 
   .mole-pot .mole-avatar {
-    font-size: 1.8rem;
+    font-size: 1.2rem;
   }
 
   .ox-grid {
-    max-width: 210px;
-    gap: 0.4rem;
+    max-width: 120px;
+    gap: 0.25rem;
   }
 
   .ox-sym {
-    font-size: 1.6rem;
+    font-size: 1.1rem;
   }
 
   .connect-grid-5x5 {
@@ -6815,6 +6850,57 @@ body[data-theme="native_american"] {
     right: 0.75rem;
     justify-content: center;
     font-size: 0.78rem;
+  }
+
+  /* Lucky Numbers Altar Canvas & Mini-Game Stage (Mobile 640px) */
+  .talisman-burn-stage {
+    max-width: 100%;
+    margin: 0 auto 0.25rem;
+  }
+  .burn-status-bar {
+    padding: 0.25rem 0.55rem;
+    margin-bottom: 0.25rem;
+  }
+  .burn-status-text {
+    font-size: 0.74rem;
+  }
+  .burn-status-hint {
+    font-size: 0.68rem;
+  }
+  .lucky-minigames-section {
+    max-width: 100%;
+    margin: 0.35rem auto 0;
+  }
+  .minigame-tab-bar {
+    gap: 0.25rem;
+    padding: 0.1rem 0;
+  }
+  .minigame-tab-btn {
+    padding: 0.3rem 0.52rem;
+    font-size: 0.72rem;
+    min-height: 34px;
+  }
+  .mini-game-container {
+    padding: 0.6rem 0.65rem;
+    border-radius: 12px;
+  }
+  .rps-arena {
+    gap: 0.9rem;
+    margin: 0.4rem 0;
+  }
+  .rps-hand-display {
+    font-size: 2.3rem;
+  }
+  .rps-choice-btn {
+    padding: 0.45rem 0.3rem;
+    min-height: 44px;
+  }
+  .mole-grid {
+    gap: 0.28rem;
+    max-width: 135px;
+  }
+  .mole-pot {
+    min-height: unset;
   }
 }
 

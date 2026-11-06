@@ -67,7 +67,14 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     },
     {
       id: 'festival',
-      title: lang === 'th' && festivalName ? `${t.topicFestival} (${festivalName})` : t.topicFestival,
+      title:
+        lang === 'th' && festivalName
+          ? festivalName.includes('ลอยกระทง')
+            ? `ขอขมา (${festivalName})`
+            : `${t.topicFestival} (${festivalName})`
+          : festivalName?.includes('ลอยกระทง') && lang === 'th'
+          ? 'ขอขมา (ลอยกระทง)'
+          : t.topicFestival,
     },
   ];
 
