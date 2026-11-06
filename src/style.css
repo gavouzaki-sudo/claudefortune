@@ -115,7 +115,7 @@ body::before {
     repeating-linear-gradient(-45deg, var(--gold) 0 1px, transparent 1px 26px);
 }
 
-main, .top, .foot { position: relative; z-index: 2; }
+main, .foot { position: relative; z-index: 2; }
 h1, h2, h3 { font-family: var(--font-display); font-weight: 400; margin: 0; letter-spacing: .01em; }
 a { color: var(--gold); }
 .center { text-align: center; }
@@ -123,16 +123,31 @@ a { color: var(--gold); }
 .note { color: var(--muted); font-size: .85rem; text-align: center; margin: .8rem auto 0; max-width: 46ch; }
 .error { color: var(--bad); text-align: center; }
 
-/* ---------- header ---------- */
+/* ---------- sticky header wrapper & header ---------- */
+.mystical-header-sticky-wrapper {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 100;
+  background: color-mix(in srgb, var(--bg, #120a08) 88%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(232, 185, 74, 0.22);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 16px rgba(232, 185, 74, 0.08);
+  transition: all 0.25s ease;
+}
+
 .top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.65rem;
   flex-wrap: nowrap;
   max-width: 980px;
   margin: 0 auto;
-  padding: 0.55rem 1rem 0.15rem;
+  padding: 0.5rem 1rem;
   width: 100%;
   box-sizing: border-box;
 }
@@ -887,7 +902,7 @@ body[data-theme="native_american"] {
    HEADER CONTROLS & RANDOM THEME BUTTON
    ========================================================================== */
 .mystical-header {
-  gap: 1rem;
+  gap: 0.65rem;
 }
 .header-audio-control {
   display: flex;
@@ -2532,26 +2547,44 @@ body[data-theme="native_american"] {
 .header-actions-right {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   flex-shrink: 0;
   flex: 0 0 auto;
+  flex-wrap: nowrap !important;
+}
+.header-actions-right > * {
+  flex-shrink: 0;
 }
 .btn-header-home-action {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: rgba(20, 10, 30, 0.78);
-  border: 1.5px solid var(--gold);
-  color: var(--gold2);
-  font-size: 0.82rem;
+  background: linear-gradient(135deg, rgba(35, 15, 12, 0.92), rgba(20, 10, 30, 0.88));
+  border: 1.5px solid var(--gold, #e8b94a);
+  color: var(--gold2, #fff3c4);
+  font-size: 0.8rem;
   font-weight: 700;
-  padding: 0.35rem 0.75rem;
+  padding: 0.32rem 0.75rem;
   border-radius: 9999px;
   cursor: pointer;
   backdrop-filter: blur(8px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 12px color-mix(in srgb, var(--glow) 30%, transparent);
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(232, 185, 74, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
+  flex-shrink: 0;
+  user-select: none;
+}
+.btn-header-home-action:hover {
+  background: var(--red, #b3261e);
+  color: #fff;
+  border-color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px var(--glow, #ffca28);
+}
+.btn-header-home-action .btn-home-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+  display: inline-block;
   flex-shrink: 0;
 }
 .btn-home-label-full {
@@ -2559,13 +2592,6 @@ body[data-theme="native_american"] {
 }
 .btn-home-label-short {
   display: none;
-}
-.btn-header-home-action:hover {
-  background: var(--red);
-  color: #fff;
-  border-color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px var(--glow);
 }
 
 .btn-change-session-prominent {
@@ -2696,22 +2722,18 @@ body[data-theme="native_american"] {
 /* =========================================================================
    FRAMELESS RITUALS (Section Window Removed to reveal full background)
    ========================================================================= */
-.header-session-compact {
-  padding: 0.25rem 1rem 0.1rem !important;
+.header-session-compact .top {
+  padding: 0.45rem 1rem 0.45rem !important;
 }
 .header-session-compact .brand-lantern {
-  width: 26px;
-  height: 36px;
+  width: 32px;
+  height: 44px;
 }
 .header-session-compact .brand h1 {
-  font-size: 1.1rem;
+  font-size: clamp(1.15rem, 3.5vw, 1.85rem);
 }
 .header-session-compact .brand .sub {
-  display: none;
-}
-.header-session-compact .btn-header-home-action {
-  font-size: 0.78rem;
-  padding: 0.25rem 0.65rem;
+  display: block;
 }
 
 .ritual-active-wrapper {
@@ -5398,14 +5420,28 @@ body[data-theme="native_american"] {
     font-size: 0.72rem;
     max-width: 180px;
   }
+  .header-actions-right {
+    gap: 0.35rem;
+    flex-wrap: nowrap !important;
+    flex-shrink: 0;
+  }
   .btn-header-home-action {
-    padding: 0.35rem 0.6rem;
-    font-size: 0.78rem;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.76rem;
     gap: 0.25rem;
   }
+  .btn-header-home-action .btn-home-icon {
+    font-size: 0.88rem;
+  }
+  .btn-home-label-full {
+    display: none !important;
+  }
+  .btn-home-label-short {
+    display: inline !important;
+  }
   .btn-speaker-icon-only {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     font-size: 1.15rem;
     flex-shrink: 0;
   }
@@ -5587,8 +5623,9 @@ body[data-theme="native_american"] {
 .header-actions-right {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 0.45rem;
+  flex-wrap: nowrap !important;
+  flex-shrink: 0;
   justify-content: flex-end;
 }
 
@@ -6669,6 +6706,8 @@ body[data-theme="native_american"] {
 
   .header-actions-right {
     gap: 0.35rem;
+    flex-wrap: nowrap !important;
+    flex-shrink: 0;
   }
 
   .btn-header-journal-action,
@@ -6678,11 +6717,17 @@ body[data-theme="native_american"] {
     padding: 0.28rem 0.52rem;
     font-size: 0.74rem;
     min-height: 30px;
+    flex-shrink: 0;
   }
 
-  .btn-home-label-full,
+  .btn-home-label-full {
+    display: none !important;
+  }
+  .btn-home-label-short {
+    display: inline !important;
+  }
   .btn-install-label {
-    display: none;
+    display: none !important;
   }
 
   /* Front Page Mobile Vertical Spacing Optimization */
