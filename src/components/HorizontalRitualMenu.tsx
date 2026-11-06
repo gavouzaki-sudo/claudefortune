@@ -5,9 +5,6 @@ import { useLanguage } from '../context/LanguageContext';
 export interface RitualMenuItem {
   id: DivinationTopic;
   title: string;
-  icon: string;
-  badge: string;
-  subtitle: string;
 }
 
 interface HorizontalRitualMenuProps {
@@ -21,7 +18,7 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
   onSelectTopic,
   festivalName,
 }) => {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const activeTopicRef = useRef<DivinationTopic>(activeTopic);
   activeTopicRef.current = activeTopic;
@@ -39,65 +36,38 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     {
       id: 'stick',
       title: t.topicStick,
-      icon: '🏮',
-      badge: 'ศักดิ์สิทธิ์โบราณ',
-      subtitle: '28 Fortune Sticks',
     },
     {
       id: 'tarot',
       title: t.topicTarot,
-      icon: '🔮',
-      badge: 'สากลตะวันตก',
-      subtitle: 'Arcana Tarot',
     },
     {
       id: 'number',
       title: t.topicNumber,
-      icon: '🪦',
-      badge: 'ตัวเลขนำโชค',
-      subtitle: 'Lucky Numbers',
     },
     {
       id: 'ritual',
       title: t.topicRitual,
-      icon: '🪷',
-      badge: 'ปัดเป่าเคราะห์',
-      subtitle: 'Remedies & Lanterns',
     },
     {
       id: 'love',
       title: t.topicLove,
-      icon: '💖',
-      badge: 'สระบัวสีชมพู',
-      subtitle: 'Love Affinity',
     },
     {
       id: 'scan',
       title: t.topicScan,
-      icon: '🖐',
-      badge: 'ไฮเทคสแกน',
-      subtitle: 'Aura & Signature',
     },
     {
       id: 'meditation',
       title: t.topicMeditation,
-      icon: '🧘',
-      badge: 'เสียงแวดล้อมมงคล',
-      subtitle: '432Hz Soundscapes',
     },
     {
       id: 'auspicious',
       title: t.topicAuspicious,
-      icon: '🗓️',
-      badge: 'ฤกษ์ยามโหราศาสตร์',
-      subtitle: 'Auspicious Calendar',
     },
     {
       id: 'festival',
-      title: festivalName ? `${t.topicFestival} (${festivalName})` : t.topicFestival,
-      icon: '✨',
-      badge: 'ศิริมงคล',
-      subtitle: 'Prayers & Blessings',
+      title: lang === 'th' && festivalName ? `${t.topicFestival} (${festivalName})` : t.topicFestival,
     },
   ];
 
@@ -308,20 +278,7 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
               className={`ritual-menu-card ${isActive ? 'active' : ''}`}
               onClick={(e) => handleCardClick(item.id, e)}
             >
-              <div className="card-header-badge">
-                <span className="card-badge-pill">{item.badge}</span>
-                {isActive && <span className="card-active-indicator">กำลังประกอบพิธี</span>}
-              </div>
-
-              <div className="card-main-content">
-                <span className="card-icon" aria-hidden="true">
-                  {item.icon}
-                </span>
-                <div className="card-titles">
-                  <span className="card-title">{item.title}</span>
-                  <span className="card-subtitle">{item.subtitle}</span>
-                </div>
-              </div>
+              <span className="card-title">{item.title}</span>
             </button>
           );
         })}
