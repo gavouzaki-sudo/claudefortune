@@ -5697,7 +5697,219 @@ body[data-theme="native_american"] {
   box-shadow: 0 0 6px rgba(255, 60, 48, 0.6);
 }
 
-/* TH / EN / CN Segmented Toggle */
+/* Collapsible Language Picker */
+.header-lang-picker-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+}
+
+.btn-lang-collapsed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  background: rgba(22, 10, 8, 0.88);
+  border: 1px solid rgba(232, 185, 74, 0.45);
+  border-radius: 9999px;
+  padding: 0.32rem 0.65rem;
+  color: var(--gold2, #fff0b8);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  line-height: 1;
+}
+
+.btn-lang-collapsed:hover {
+  background: rgba(45, 18, 14, 0.95);
+  border-color: var(--gold, #e8b94a);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(232, 185, 74, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-lang-collapsed:active {
+  transform: translateY(0);
+}
+
+.btn-lang-collapsed.is-open {
+  background: rgba(50, 18, 14, 0.98);
+  border-color: var(--gold, #e8b94a);
+  box-shadow: 0 0 14px rgba(232, 185, 74, 0.45);
+  color: #fff;
+}
+
+.lang-globe-icon {
+  font-size: 0.88rem;
+  line-height: 1;
+  display: inline-block;
+  filter: drop-shadow(0 0 3px rgba(232, 185, 74, 0.4));
+}
+
+.lang-code-active {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--gold, #e8b94a);
+}
+
+.lang-arrow {
+  font-size: 0.65rem;
+  color: var(--muted, #cdb995);
+  transition: transform 0.2s ease, color 0.2s ease;
+  line-height: 1;
+  margin-left: 0.05rem;
+}
+
+.btn-lang-collapsed:hover .lang-arrow,
+.btn-lang-collapsed.is-open .lang-arrow {
+  color: var(--gold2, #fff0b8);
+}
+
+.lang-arrow.is-expanded {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.lang-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  min-width: 156px;
+  background: linear-gradient(180deg, rgba(32, 12, 10, 0.97) 0%, rgba(18, 6, 5, 0.98) 100%);
+  border: 1px solid rgba(232, 185, 74, 0.45);
+  border-radius: 12px;
+  padding: 0.35rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65), 0 0 16px rgba(232, 185, 74, 0.2);
+  backdrop-filter: blur(12px);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  animation: langDropdownIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top right;
+}
+
+@keyframes langDropdownIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.lang-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.42rem 0.65rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #e5d5be;
+  font-size: 0.84rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.lang-dropdown-item:hover {
+  background: rgba(232, 185, 74, 0.14);
+  border-color: rgba(232, 185, 74, 0.25);
+  color: #fff3c4;
+  transform: translateX(2px);
+}
+
+.lang-dropdown-item.is-active {
+  background: rgba(232, 185, 74, 0.22);
+  border-color: rgba(232, 185, 74, 0.4);
+  color: #ffe685;
+  font-weight: 700;
+}
+
+.lang-item-flag {
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.lang-item-text {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.lang-item-name {
+  font-size: 0.82rem;
+}
+
+.lang-item-code {
+  font-size: 0.68rem;
+  opacity: 0.7;
+}
+
+.lang-item-check {
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gold, #e8b94a);
+  text-shadow: 0 0 6px rgba(232, 185, 74, 0.8);
+}
+
+/* Legacy fallback classes */
+.header-lang-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(20, 10, 8, 0.85);
+  border: 1px solid rgba(232, 185, 74, 0.4);
+  border-radius: 9999px;
+  padding: 2px;
+  gap: 2px;
+  backdrop-filter: blur(8px);
+}
+
+/* Single Cycle Language Switcher (TH -> EN -> CN -> TH) */
+.btn-lang-cycle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 32px;
+  padding: 0 0.55rem;
+  background: radial-gradient(circle at 50% 30%, #2c160a, #140804);
+  border: 1px solid var(--gold, #e8b94a);
+  border-radius: 8px;
+  color: var(--gold, #e8b94a);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(232, 185, 74, 0.25), inset 0 0 6px rgba(232, 185, 74, 0.15);
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  user-select: none;
+  line-height: 1;
+}
+
+.btn-lang-cycle:hover {
+  background: radial-gradient(circle at 50% 30%, #45220f, #1e0d06);
+  color: #fff3c4;
+  border-color: #ffe685;
+  box-shadow: 0 0 14px rgba(232, 185, 74, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-lang-cycle:active {
+  transform: scale(0.95);
+}
+
 .header-lang-toggle-group {
   display: inline-flex;
   align-items: center;
@@ -5737,6 +5949,8 @@ body[data-theme="native_american"] {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
   padding: 1.25rem 1rem 2rem;
   width: 100%;
 }
@@ -6519,15 +6733,50 @@ body[data-theme="native_american"] {
 
   .btn-header-journal-action,
   .btn-header-install-action,
-  .btn-header-lang-action {
-    padding: 0.3rem 0.5rem;
-    font-size: 0.75rem;
-    min-height: 32px;
+  .btn-header-lang-action,
+  .btn-lang-collapsed {
+    padding: 0.28rem 0.52rem;
+    font-size: 0.74rem;
+    min-height: 30px;
   }
 
   .btn-home-label-full,
   .btn-install-label {
     display: none;
+  }
+
+  /* Front Page Mobile Vertical Spacing Optimization */
+  .panel.gate {
+    padding: 0.25rem 0.4rem 0.2rem;
+  }
+
+  .celestial-stage-wrapper {
+    margin: 0 auto 0.35rem;
+    border-radius: 16px;
+  }
+
+  .celestial-stage-canvas {
+    height: 480px !important;
+    min-height: 480px !important;
+  }
+
+  .gate-bottom-journal-row {
+    padding: 0.4rem 0.4rem 0.75rem;
+    gap: 0.45rem;
+  }
+
+  .gate-bottom-journal-row .btn-bottom-journal {
+    padding: 0.42rem 0.85rem;
+    font-size: 0.84rem;
+    min-height: 36px;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-lang-cycle {
+    min-width: 34px;
+    height: 28px;
+    font-size: 0.74rem;
+    padding: 0 0.45rem;
   }
 
   .lucky-card-container {
@@ -8790,3 +9039,506 @@ select.input-select:focus,
     bottom: 0.1rem;
   }
 }
+
+/* ==========================================================================
+   THAI GOVERNMENT LOTTERY MODAL & CHECKER (สลากกินแบ่งรัฐบาล)
+   ========================================================================== */
+.btn-gate-lottery {
+  background: linear-gradient(135deg, rgba(232, 185, 74, 0.25), rgba(179, 38, 30, 0.45));
+  border-color: rgba(232, 185, 74, 0.65);
+}
+
+.btn-gate-lottery:hover {
+  background: linear-gradient(135deg, rgba(232, 185, 74, 0.45), rgba(212, 45, 35, 0.65));
+  box-shadow: 0 0 16px rgba(232, 185, 74, 0.45);
+}
+
+.lottery-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  overflow-y: auto;
+  animation: modalFadeIn 0.2s ease forwards;
+}
+
+.lottery-card-single-view {
+  width: 100%;
+  max-width: 520px;
+  background: #0c4d26;
+  border: 2px solid #ffcc00;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85), 0 0 25px rgba(255, 204, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top Broadcast Header: Maroon Banner */
+.lottery-broadcast-header {
+  background: #731313;
+  border-bottom: 2.5px solid #ffcc00;
+  padding: 0.55rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lottery-header-title-box {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.lottery-broadcast-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85), 0 0 8px rgba(0, 0, 0, 0.6);
+  margin: 0;
+  line-height: 1.1;
+  font-family: var(--font-heading, 'Noto Sans Thai', sans-serif);
+  letter-spacing: 0.02em;
+}
+
+.lottery-header-ctrl-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.lottery-mini-ctrl-btn {
+  padding: 0.22rem 0.5rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 204, 0, 0.5);
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.lottery-mini-ctrl-btn:hover {
+  background: rgba(255, 204, 0, 0.25);
+  border-color: #ffcc00;
+  color: #fff3c4;
+}
+
+.lottery-close-square-btn {
+  width: 28px;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 204, 0, 0.6);
+  border-radius: 6px;
+  color: #ffe600;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.lottery-close-square-btn:hover {
+  background: #a01010;
+  color: #fff;
+  transform: rotate(90deg);
+}
+
+/* Date Sub-Banner: Deep Green */
+.lottery-date-banner {
+  background: #0b4924;
+  padding: 0.35rem 0.75rem;
+  text-align: center;
+  border-bottom: 1.5px solid rgba(255, 204, 0, 0.3);
+}
+
+.lottery-date-text {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffe600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+  margin: 0;
+  font-family: 'Noto Sans Thai', sans-serif;
+  letter-spacing: 0.01em;
+}
+
+/* Compact Date Drawer Popover */
+.lottery-compact-date-popover {
+  background: #082d16;
+  border-bottom: 1.5px solid rgba(255, 204, 0, 0.4);
+  padding: 0.45rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  animation: fadeIn 0.15s ease forwards;
+}
+
+.compact-preset-row {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-quick-date {
+  padding: 0.2rem 0.45rem;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 204, 0, 0.35);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.72rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-quick-date:hover {
+  background: rgba(255, 204, 0, 0.3);
+  color: #ffe600;
+}
+
+.compact-custom-date-row {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.compact-date-select {
+  background: #051a0d;
+  border: 1px solid rgba(255, 204, 0, 0.4);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 0.22rem 0.35rem;
+}
+
+.compact-year-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: #051a0d;
+  border: 1px solid rgba(255, 204, 0, 0.4);
+  border-radius: 4px;
+  padding: 0.15rem 0.35rem;
+}
+
+.compact-year-prefix {
+  font-size: 0.72rem;
+  color: #ffcc00;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.compact-year-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.75rem;
+  width: 54px;
+  padding: 0.1rem 0;
+  font-weight: 600;
+  outline: none;
+}
+
+.btn-compact-submit {
+  padding: 0.22rem 0.6rem;
+  background: #ffcc00;
+  color: #1a0800;
+  font-weight: 800;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+/* Main Board Layout (Exact match to Reference Image) */
+.lottery-board-wrapper {
+  background: #0c4d26;
+  padding: 0.65rem;
+}
+
+.lottery-board-loading,
+.lottery-board-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  gap: 0.75rem;
+  color: #ffe600;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.lottery-board-grid {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.board-col-left {
+  flex: 1.55;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.board-col-right {
+  flex: 1;
+  display: flex;
+}
+
+/* Cards (White/Parchment Paper with Red Label) */
+.board-card {
+  background: #fbf9f7;
+  border: 1px solid #d8d0c8;
+  border-radius: 6px;
+  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.35);
+  padding: 0.3rem 0.4rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.board-card-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #9c1414;
+  line-height: 1.2;
+  font-family: 'Noto Sans Thai', sans-serif;
+  margin-bottom: 0.15rem;
+}
+
+/* Card: รางวัลที่ 1 */
+.card-first-prize {
+  padding: 0.4rem 0.3rem;
+  min-height: 64px;
+}
+
+.board-digits-first {
+  font-size: 2.25rem;
+  font-weight: 950;
+  color: #111111;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  font-family: system-ui, -apple-system, Arial, sans-serif;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+/* Sub-row: เลขหน้า 3 ตัว & เลขท้าย 3 ตัว */
+.board-sub-row {
+  display: flex;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.card-sub-prize {
+  flex: 1;
+  min-height: 56px;
+}
+
+.board-digits-3digit {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #111111;
+  line-height: 1.25;
+  word-spacing: 0.35rem;
+  font-family: system-ui, -apple-system, Arial, sans-serif;
+  white-space: nowrap;
+}
+
+/* Card: เลขท้าย 2 ตัว (Tall Right Column) */
+.card-last2-prize {
+  width: 100%;
+  height: 100%;
+  justify-content: flex-start;
+  padding: 0.45rem 0.35rem;
+}
+
+.board-digits-last2 {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4.8rem;
+  font-weight: 950;
+  color: #111111;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  font-family: system-ui, -apple-system, Arial, sans-serif;
+  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Compact Single-Row Ticket Checker */
+.lottery-compact-checker-section {
+  background: #09391c;
+  border-top: 1.5px solid rgba(255, 204, 0, 0.3);
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.compact-checker-form {
+  width: 100%;
+}
+
+.compact-checker-input-group {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 204, 0, 0.45);
+  border-radius: 8px;
+  overflow: hidden;
+  padding-left: 0.5rem;
+}
+
+.checker-input-icon {
+  font-size: 0.88rem;
+  opacity: 0.8;
+}
+
+.compact-checker-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  padding: 0.4rem 0.5rem;
+  font-family: monospace, sans-serif;
+  outline: none;
+}
+
+.compact-checker-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: normal;
+  font-size: 0.8rem;
+}
+
+.compact-checker-btn {
+  background: #ffcc00;
+  color: #231200;
+  font-weight: 800;
+  font-size: 0.82rem;
+  border: none;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.compact-checker-btn:hover:not(:disabled) {
+  background: #ffe600;
+}
+
+.compact-checker-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Quick Result Feedback Banner */
+.compact-result-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.7rem;
+  border-radius: 6px;
+  animation: fadeIn 0.2s ease forwards;
+}
+
+.banner-won {
+  background: rgba(46, 125, 50, 0.9);
+  border: 1px solid #ffcc00;
+  color: #fff;
+}
+
+.banner-not-won {
+  background: rgba(20, 8, 7, 0.85);
+  border: 1px solid rgba(255, 204, 0, 0.3);
+  color: #e5d5be;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.banner-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.banner-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.banner-title b {
+  color: #ffe600;
+  font-size: 0.95rem;
+}
+
+.banner-sub {
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.banner-dismiss-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.banner-dismiss-btn:hover {
+  opacity: 1;
+}
+
+/* Media Query: Narrow Mobile Optimization */
+@media (max-width: 390px) {
+  .lottery-broadcast-title {
+    font-size: 1.15rem;
+  }
+  .lottery-date-text {
+    font-size: 0.92rem;
+  }
+  .board-digits-first {
+    font-size: 1.85rem;
+  }
+  .board-digits-3digit {
+    font-size: 0.88rem;
+    word-spacing: 0.2rem;
+  }
+  .board-digits-last2 {
+    font-size: 3.8rem;
+  }
+  .board-card-title {
+    font-size: 0.72rem;
+  }
+}
+

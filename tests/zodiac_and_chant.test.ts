@@ -267,6 +267,63 @@ test('Thai Astrological Calendar: November 2569 days and dynamic month generatio
   assert.notEqual(nov2569[2].thaiRuk, nov2569[3].thaiRuk);
 });
 
+test('Thai Lottery: B.E. year parsing, formatThaiDate, and prize checks', async () => {
+  const { formatThaiDate, parseDateString, checkTicketWin } = await import('../src/utils/lotteryApi');
 
+  // Verify formatThaiDate converts C.E. 2026 to B.E. 2569
+  const formatted = formatThaiDate(2026, 11, 1);
+  assert.equal(formatted, '1 พฤศจิกายน 2569');
 
+  const formatted2024 = formatThaiDate(2024, 3, 1);
+  assert.equal(formatted2024, '1 มีนาคม 2567');
 
+  // Verify parseDateString
+  const parsed = parseDateString('2026-11-01');
+  assert.equal(parsed.day, 1);
+  assert.equal(parsed.month, 11);
+  assert.equal(parsed.yearCe, 2026);
+
+  // Mock draw
+  const mockDraw = {
+    first: '174629',
+    firstPrice: '6,000,000',
+    last3f: ['917', '195'],
+    last3fPrice: '4,000',
+    last3b: ['408', '041'],
+    last3bPrice: '4,000',
+    last2: '48',
+    last2Price: '2,000',
+    rawDate: '2026-02-01',
+    formattedThaiDate: '1 กุมภาพันธ์ 2569',
+  };
+
+  // Test 1st prize win
+  const winFirst = checkTicketWin('174629', mockDraw);
+  assert.equal(winFirst.isWon, true);
+  assert.equal(winFirst.totalReward, 6000000);
+  assert.equal(winFirst.wonPrizes[0].prizeName, 'รางวัลที่ 1');
+
+  // Test 2-digit back win
+  const winLast2 = checkTicketWin('000048', mockDraw);
+  assert.equal(winLast2.isWon, true);
+  assert.equal(winLast2.totalReward, 2000);
+  assert.equal(winLast2.wonPrizes[0].prizeName, 'รางวัลเลขท้าย 2 ตัว');
+
+  // Test 3-digit front win
+  const winFront3 = checkTicketWin('917000', mockDraw);
+  assert.equal(winFront3.isWon, true);
+  assert.equal(winFront3.totalReward, 4000);
+  assert.equal(winFront3.wonPrizes[0].prizeName, 'รางวัลเลขหน้า 3 ตัว');
+
+  // Test 3-digit back win
+  const winBack3 = checkTicketWin('000408', mockDraw);
+  assert.equal(winBack3.isWon, true);
+  assert.equal(winBack3.totalReward, 4000);
+  assert.equal(winBack3.wonPrizes[0].prizeName, 'รางวัลเลขท้าย 3 ตัว');
+
+  // Test non-winning ticket
+  const noWin = checkTicketWin('999999', mockDraw);
+  assert.equal(noWin.isWon, false);
+  assert.equal(noWin.totalReward, 0);
+  assert.equal(noWin.wonPrizes.length, 0);
+});

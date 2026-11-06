@@ -26,6 +26,7 @@ import { MeditationChamber } from './components/MeditationChamber';
 import { AuspiciousCalendar } from './components/AuspiciousCalendar';
 import { LuckyCardModal } from './components/LuckyCardModal';
 import { FortuneJournalModal } from './components/FortuneJournalModal';
+import { ThaiLotteryModal } from './components/ThaiLotteryModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { ambientSoundEngine } from './utils/ambientSoundscapes';
 import { getJournalEntries, subscribeJournal } from './utils/fortuneJournal';
@@ -55,10 +56,11 @@ export const App: React.FC = () => {
   const toastTimerRef = useRef<number | null>(null);
   const fireworksRef = useRef<FireworksHandle>(null);
 
-  // Modals for Option A (Lucky Card) & Option B (Fortune Journal)
+  // Modals for Option A (Lucky Card), Option B (Fortune Journal) & Thai Lottery
   const [activeCardData, setActiveCardData] = useState<CardData | null>(null);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isJournalOpen, setIsJournalOpen] = useState(false);
+  const [isLotteryOpen, setIsLotteryOpen] = useState(false);
   const [journalCount, setJournalCount] = useState(0);
 
   // Sync journal entry count safely
@@ -278,20 +280,27 @@ export const App: React.FC = () => {
                   type="button"
                   className="btn gold btn-bottom-journal btn-gate-calendar"
                   onClick={handleOpenAuspicious}
-                  title="ปฏิทินวันมงคลและฤกษ์งามยามดี พ.ศ. 2569"
+                  title="ปฏิทินวันมงคลและฤกษ์งามยามดี"
                 >
-                  <span className="btn-journal-icon">🗓️</span>
-                  <span>ปฏิทินฤกษ์มงคล 2569</span>
+                  <span>ฤกษ์มงคล</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="btn gold btn-bottom-journal btn-gate-lottery"
+                  onClick={() => setIsLotteryOpen(true)}
+                  title="ผลสลากกินแบ่งรัฐบาล & ตรวจสลาก"
+                >
+                  <span>ฉลาก</span>
                 </button>
 
                 <button
                   type="button"
                   className="btn gold btn-bottom-journal"
                   onClick={() => setIsJournalOpen(true)}
-                  title="สมุดบันทึกดวงชะตา"
+                  title="สมุดดวงชะตา"
                 >
-                  <span className="btn-journal-icon">📖</span>
-                  <span>สมุดบันทึกดวง</span>
+                  <span>สมุดดวง</span>
                   {journalCount > 0 && <span className="header-journal-badge">{journalCount}</span>}
                 </button>
               </div>
@@ -402,17 +411,16 @@ export const App: React.FC = () => {
                   onClick={handleSessionChange}
                   title="กลับสู่หน้าหลัก"
                 >
-                  <span>🏠 กลับหน้าหลัก</span>
+                  <span>กลับหน้าหลัก</span>
                 </button>
 
                 <button
                   type="button"
                   className="btn gold btn-bottom-journal"
                   onClick={() => setIsJournalOpen(true)}
-                  title="สมุดบันทึกดวงชะตา"
+                  title="สมุดดวงชะตา"
                 >
-                  <span className="btn-journal-icon">📖</span>
-                  <span>สมุดบันทึกดวง</span>
+                  <span>สมุดดวง</span>
                   {journalCount > 0 && <span className="header-journal-badge">{journalCount}</span>}
                 </button>
               </div>
@@ -435,6 +443,12 @@ export const App: React.FC = () => {
           isOpen={isJournalOpen}
           onClose={() => setIsJournalOpen(false)}
           onOpenCard={handleOpenCard}
+          onToast={showToast}
+        />
+
+        <ThaiLotteryModal
+          isOpen={isLotteryOpen}
+          onClose={() => setIsLotteryOpen(false)}
           onToast={showToast}
         />
 

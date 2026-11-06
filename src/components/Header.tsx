@@ -28,6 +28,16 @@ export const Header: React.FC<HeaderProps> = ({
     setMuted(next);
   };
 
+  const handleCycleLang = () => {
+    if (lang === 'th') {
+      setLang('en');
+    } else if (lang === 'en') {
+      setLang('zh');
+    } else {
+      setLang('th');
+    }
+  };
+
   return (
     <header className={`top mystical-header ${hasActiveSession ? 'header-session-compact' : ''}`}>
       <div
@@ -61,39 +71,27 @@ export const Header: React.FC<HeaderProps> = ({
             title={t.backHome}
             aria-label={t.backHome}
           >
-            <span className="btn-home-icon">🏠</span>
             <span className="btn-home-label-full">{t.backHome}</span>
             <span className="btn-home-label-short">{t.home}</span>
           </button>
         )}
 
-        {/* Language Segmented Toggle (TH / EN / CN) */}
-        <div className="header-lang-toggle-group" role="group" aria-label="Language selector">
-          <button
-            type="button"
-            className={`btn-lang-toggle ${lang === 'th' ? 'is-active' : ''}`}
-            onClick={() => setLang('th')}
-            title="ภาษาไทย (TH)"
-          >
-            TH
-          </button>
-          <button
-            type="button"
-            className={`btn-lang-toggle ${lang === 'en' ? 'is-active' : ''}`}
-            onClick={() => setLang('en')}
-            title="English (EN)"
-          >
-            EN
-          </button>
-          <button
-            type="button"
-            className={`btn-lang-toggle ${lang === 'zh' ? 'is-active' : ''}`}
-            onClick={() => setLang('zh')}
-            title="中文 (CN)"
-          >
-            CN
-          </button>
-        </div>
+        {/* Single Cycle Language Button (TH -> EN -> CN -> TH) */}
+        <button
+          type="button"
+          className="btn-lang-cycle"
+          onClick={handleCycleLang}
+          title={
+            lang === 'th'
+              ? 'ภาษาไทย (คลิกเพื่อเปลี่ยนเป็น EN)'
+              : lang === 'en'
+              ? 'English (Click to change to CN)'
+              : '中文 (点击切换为 TH)'
+          }
+          aria-label="เปลี่ยนภาษา"
+        >
+          {lang === 'th' ? 'TH' : lang === 'en' ? 'EN' : 'CN'}
+        </button>
 
         {/* PWA Install Button */}
         <PWAInstallButton />

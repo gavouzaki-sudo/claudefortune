@@ -3,8 +3,14 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  base: process.env.VITE_BASE_PATH || './',
+export default defineConfig(({ command }) => ({
+  base: command === 'serve' ? '/' : (process.env.VITE_BASE_PATH || './'),
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-dom/client'],
+  },
   plugins: [
     react(),
     VitePWA({
@@ -45,8 +51,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm,woff,woff2}'],
       },
       devOptions: {
-        enabled: true,
-        type: 'module',
+        enabled: false,
       },
     }),
   ],
@@ -54,6 +59,14 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3000,
     allowedHosts: true,
+    proxy: {
+      '/api/glo': {
+        target: 'https://www.glo.or.th',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api\/glo/, '/api'),
+      },
+    },
   },
-});
+}));
 

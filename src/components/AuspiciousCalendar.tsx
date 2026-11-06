@@ -306,7 +306,7 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
         tips: day.ceremonyTips,
       },
     });
-    onToast('บันทึกฤกษ์มงคลลงใน "สมุดบันทึกดวง" เรียบร้อยแล้ว ✨');
+    onToast('บันทึกฤกษ์มงคลลงใน "สมุดดวง" เรียบร้อยแล้ว ✨');
   };
 
   // Handle Copy Day Details

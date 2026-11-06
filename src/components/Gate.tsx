@@ -438,7 +438,6 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                         onClick={() => completeSession(activeSymbol, activeSystem)}
                       >
                         <span>อัญเชิญ</span>
-                        <span className="arrow-icon">➔</span>
                       </button>
                     </div>
                   )}
@@ -457,8 +456,8 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                     // Vertical ellipse arrangement (วงรีแนวตั้ง):
                     // Narrower horizontal radius (radiusX) prevents overflowing off mobile screen
                     // Taller vertical radius (radiusY) forms an elegant vertical oval
-                    const radiusX = isMobile ? 112 : 160;
-                    const radiusY = isMobile ? 180 : 230;
+                    const radiusX = isMobile ? 106 : 160;
+                    const radiusY = isMobile ? 162 : 230;
                     const posX = Math.round(Math.cos(angleRad) * radiusX);
                     const posY = Math.round(Math.sin(angleRad) * radiusY);
                     const isSelected = activeSymbolIndex === idx;
