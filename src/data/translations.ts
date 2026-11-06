@@ -133,7 +133,7 @@ export interface Translations {
 export const TRANSLATIONS: Record<SupportedLang, Translations> = {
   th: {
     appName: 'ศาลเจ้าแห่งโชคลาภ',
-    appSubtitle: 'เซียมซี · ไพ่ยิปซี · สะเดาะเคราะห์และโหราศาสตร์สากล',
+    appSubtitle: 'โหราศาสตร์สากลและสะเดาะเคราะห์',
     home: 'หน้าหลัก',
     backHome: 'กลับหน้าหลัก',
     soundOn: 'เปิดเสียงดนตรี',

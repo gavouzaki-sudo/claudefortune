@@ -289,9 +289,9 @@ export const App: React.FC = () => {
                   type="button"
                   className="btn gold btn-bottom-journal btn-gate-lottery"
                   onClick={() => setIsLotteryOpen(true)}
-                  title="ผลสลากกินแบ่งรัฐบาล & ตรวจสลาก"
+                  title="ผลสลากกินแบ่งรัฐบาล & ตรวจหวย"
                 >
-                  <span>ฉลาก</span>
+                  <span>หวย</span>
                 </button>
 
                 <button
