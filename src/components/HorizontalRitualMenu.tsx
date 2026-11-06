@@ -24,7 +24,9 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
   activeTopicRef.current = activeTopic;
 
   const loopWidthRef = useRef(0);
-  const rafIdRef = useRef<number | null>(null);
+  const isNavigatingRef = useRef(false);
+  const navigateTimeoutRef = useRef<number | null>(null);
+  const scrollDebounceTimerRef = useRef<number | null>(null);
 
   // Mouse drag-to-scroll state
   const isDraggingRef = useRef(false);
@@ -96,17 +98,30 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     const cards = el.querySelectorAll<HTMLElement>('.ritual-menu-card');
     if (cards.length >= baseRituals.length * 2) {
       const card0 = cards[0];
-      const card7 = cards[baseRituals.length];
-      if (card0 && card7) {
-        loopWidthRef.current = card7.offsetLeft - card0.offsetLeft;
+      const cardNext = cards[baseRituals.length];
+      if (card0 && cardNext) {
+        loopWidthRef.current = cardNext.offsetLeft - card0.offsetLeft;
       }
     }
   }, [baseRituals.length]);
 
-  // Detect which card is closest to the horizontal center and switch active page
-  const detectCenterCard = useCallback(() => {
+  // Center a given topic smoothly into the center copy (copy 2)
+  const scrollToTopic = useCallback((topic: DivinationTopic, smooth: boolean = true) => {
     const el = scrollContainerRef.current;
     if (!el) return;
+    const targetCard = el.querySelector<HTMLElement>(
+      `[data-topic="${topic}"][data-copy="2"]`
+    );
+    if (targetCard) {
+      const scrollPos = targetCard.offsetLeft - (el.clientWidth - targetCard.clientWidth) / 2;
+      el.scrollTo({ left: Math.max(0, scrollPos), behavior: smooth ? 'smooth' : 'auto' });
+    }
+  }, []);
+
+  // Detect which card is closest to horizontal center AFTER scrolling has settled
+  const detectCenterCard = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el || isNavigatingRef.current) return;
 
     const trackRect = el.getBoundingClientRect();
     const trackCenter = trackRect.left + trackRect.width / 2;
@@ -135,20 +150,6 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     }
   }, [onSelectTopic]);
 
-  // Center a given topic smoothly
-  const scrollToTopic = useCallback((topic: DivinationTopic, smooth: boolean = true) => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    // Find card with this topic in the middle copy (copy 2)
-    const targetCard = el.querySelector<HTMLElement>(
-      `[data-topic="${topic}"][data-copy="2"]`
-    );
-    if (targetCard) {
-      const scrollPos = targetCard.offsetLeft - (el.clientWidth - targetCard.clientWidth) / 2;
-      el.scrollTo({ left: Math.max(0, scrollPos), behavior: smooth ? 'smooth' : 'auto' });
-    }
-  }, []);
-
   // Initialize carousel position to center copy on mount
   useEffect(() => {
     measureLoopWidth();
@@ -164,38 +165,61 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     };
   }, [measureLoopWidth, scrollToTopic]);
 
-  // Scroll handler with infinite boundary wrap and auto-center detection
+  // Scroll handler with infinite boundary wrap and settled debounced detection
   const handleScroll = () => {
     const el = scrollContainerRef.current;
     if (!el) return;
 
-    // Check infinite loop boundaries
-    const singleLoopWidth = loopWidthRef.current;
-    if (singleLoopWidth > 0) {
-      if (el.scrollLeft < singleLoopWidth * 1.1) {
-        el.scrollLeft += singleLoopWidth;
-      } else if (el.scrollLeft > singleLoopWidth * 3.3) {
-        el.scrollLeft -= singleLoopWidth;
+    // Check infinite loop boundaries when not during an arrow transition
+    if (!isNavigatingRef.current) {
+      const singleLoopWidth = loopWidthRef.current;
+      if (singleLoopWidth > 0) {
+        if (el.scrollLeft < singleLoopWidth * 1.0) {
+          el.scrollLeft += singleLoopWidth;
+        } else if (el.scrollLeft > singleLoopWidth * 3.4) {
+          el.scrollLeft -= singleLoopWidth;
+        }
       }
     }
 
-    // Auto-detect center card on scroll
-    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
-    rafIdRef.current = requestAnimationFrame(() => {
-      detectCenterCard();
-    });
+    // Auto-detect center card ONLY after user has finished scrolling (debounced idle)
+    // Never during active animation or arrow navigation to eliminate oscillation!
+    if (!isNavigatingRef.current) {
+      if (scrollDebounceTimerRef.current) {
+        clearTimeout(scrollDebounceTimerRef.current);
+      }
+      scrollDebounceTimerRef.current = window.setTimeout(() => {
+        if (!isNavigatingRef.current && !isDraggingRef.current) {
+          detectCenterCard();
+        }
+      }, 140);
+    }
   };
 
-  // Arrow buttons: scroll by exactly one card width to center the next/prev ritual
+  // Arrow buttons: Navigate directly to the next/prev topic without intermediate race conditions
   const handleArrowScroll = (direction: 'left' | 'right') => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    const card = el.querySelector<HTMLElement>('.ritual-menu-card');
-    const step = card ? card.offsetWidth + 10 : el.clientWidth * 0.67;
-    el.scrollBy({
-      left: direction === 'left' ? -step : step,
-      behavior: 'smooth',
-    });
+    const currentIndex = baseRituals.findIndex((r) => r.id === activeTopicRef.current);
+    const total = baseRituals.length;
+    const targetIndex =
+      direction === 'right'
+        ? (currentIndex + 1) % total
+        : (currentIndex - 1 + total) % total;
+    const targetTopic = baseRituals[targetIndex].id;
+
+    // Lock out onScroll detection during arrow navigation
+    isNavigatingRef.current = true;
+    if (navigateTimeoutRef.current) {
+      clearTimeout(navigateTimeoutRef.current);
+    }
+
+    activeTopicRef.current = targetTopic;
+    onSelectTopic(targetTopic);
+    scrollToTopic(targetTopic, true);
+
+    // Release lock once smooth scrolling has completed
+    navigateTimeoutRef.current = window.setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 450);
   };
 
   // Mouse Drag-to-Scroll handlers
@@ -228,7 +252,9 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
       const el = scrollContainerRef.current;
       if (el) {
         el.classList.remove('is-dragging');
-        detectCenterCard();
+        setTimeout(() => {
+          detectCenterCard();
+        }, 80);
       }
     }
   };
@@ -240,12 +266,28 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     }
     const el = scrollContainerRef.current;
     if (!el) return;
-    const card = e.currentTarget;
-    const scrollPos = card.offsetLeft - (el.clientWidth - card.clientWidth) / 2;
-    el.scrollTo({ left: scrollPos, behavior: 'smooth' });
+
+    isNavigatingRef.current = true;
+    if (navigateTimeoutRef.current) {
+      clearTimeout(navigateTimeoutRef.current);
+    }
+
     activeTopicRef.current = topic;
     onSelectTopic(topic);
+    scrollToTopic(topic, true);
+
+    navigateTimeoutRef.current = window.setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 450);
   };
+
+  // Clean up timers on unmount
+  useEffect(() => {
+    return () => {
+      if (navigateTimeoutRef.current) clearTimeout(navigateTimeoutRef.current);
+      if (scrollDebounceTimerRef.current) clearTimeout(scrollDebounceTimerRef.current);
+    };
+  }, []);
 
   return (
     <nav className="ritual-carousel-nav" aria-label="แถบเลือกพิธีกรรมแนวนอน">

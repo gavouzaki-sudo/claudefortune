@@ -250,7 +250,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
             <div id="shake-meter" style={{ width: `${shakeMeter}%` }} />
           </div>
 
-          <div className="row center">
+          <div className="row center stick-action-row">
             <button
               id="btn-shake"
               className="btn primary"

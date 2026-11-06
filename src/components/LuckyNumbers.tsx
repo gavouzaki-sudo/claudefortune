@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Bridge } from '../bridge';
 import type { LuckyNumbersResult } from '../types';
 import { BurnTalisman } from './BurnTalisman';
@@ -15,8 +15,13 @@ interface LuckyNumbersProps {
 }
 
 export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onOpenCard }) => {
-  // Category: 0 = เลขท้าย 2 ตัว, 1 = เลขท้าย 3 ตัว
-  const [category, setCategory] = useState<0 | 1>(0);
+  // Category: 0 = เลขท้าย 2 ตัว, 1 = เลขท้าย 3 ตัว, null = ค่าเริ่มต้น ยังไม่เลือก
+  const [category, setCategory] = useState<0 | 1 | null>(null);
+  const categoryRef = useRef<0 | 1 | null>(category);
+  useEffect(() => {
+    categoryRef.current = category;
+  }, [category]);
+
   const [luckyResult, setLuckyResult] = useState<LuckyNumbersResult | null>(null);
   const [luckyNumber, setLuckyNumber] = useState<string>('89');
 
@@ -50,21 +55,32 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
   );
 
   useEffect(() => {
-    generateNumber(category);
+    if (category !== null) {
+      generateNumber(category);
+    }
   }, [category, generateNumber]);
 
   // Handle category switch
   const handleCategoryChange = (newCat: 0 | 1) => {
+    categoryRef.current = newCat;
     setCategory(newCat);
     setBurnLevel(0);
     setIsJournalSaved(false);
+    generateNumber(newCat);
     setTimeout(() => {
-      onToast(`เปลี่ยนประเภทเป็น: ${newCat === 0 ? 'เลขท้าย 2 ตัว' : 'เลขท้าย 3 ตัว'}`);
+      onToast(`เริ่มขอเลขมงคล: ${newCat === 0 ? 'เลข 2 ตัว' : 'เลข 3 ตัว'}`);
     }, 0);
   };
 
   // When player wins a round in any mini-game
   const handleWin = useCallback(() => {
+    if (categoryRef.current === null) {
+      setTimeout(() => {
+        onToast('⚠️ กรุณาเลือกประเภทเลข 2 ตัว หรือ 3 ตัว ด้านบนก่อน');
+      }, 0);
+      return;
+    }
+
     setIsBurning(true);
     playFireCrackle();
 
@@ -130,51 +146,59 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
     }, 0);
   }, [onToast]);
 
-  // Reset to start a new burning talisman
+  // Reset to start a new burning talisman (returns to unselected state)
   const handleReset = () => {
     setBurnLevel(0);
     setIsJournalSaved(false);
-    generateNumber(category);
+    setCategory(null);
     setTimeout(() => {
-      onToast('เริ่มต้นแผ่นยันต์ใหม่เรียบร้อย');
+      onToast('รีเซ็ตพร้อมเลือกประเภทเลขมงคลใหม่');
     }, 0);
   };
 
   return (
-    <section id="tab-number" className="ritual-frameless-stage tab lucky-numbers-section-stage" role="tabpanel">
-      {/* Sleek Ultra-Compact Top Bar: Title + Category selector in a single line to move content up */}
-      <div className="lucky-top-row">
-        <h2 className="lucky-title-compact">🔥 เพลิงเผายันต์เบิกเลขมงคล</h2>
-        <div className="chips lucky-category-chips compact-category-chips" role="radiogroup" aria-label="เลือกประเภทเลข">
-          <label className="chip">
-            <input
-              type="radio"
-              name="lucky-cat"
-              value="0"
-              checked={category === 0}
-              onChange={() => handleCategoryChange(0)}
-            />
+    <section
+      id="tab-number"
+      className={`ritual-frameless-stage tab lucky-numbers-section-stage ${
+        category !== null ? 'has-category-selected' : 'awaiting-category'
+      }`}
+      role="tabpanel"
+    >
+      {/* Category Selector Bar: Only visible when NOT yet selected (ค่าเริ่มต้น ยังไม่เลือก) */}
+      {/* Button 2 digits on far LEFT, Button 3 digits on far RIGHT */}
+      {category === null ? (
+        <div className="lucky-choose-category-bar" role="group" aria-label="เลือกประเภทเลขมงคล">
+          <button
+            type="button"
+            className="btn gold btn-choose-cat btn-cat-left"
+            onClick={() => handleCategoryChange(0)}
+            title="เลือกเลขท้าย 2 ตัว"
+          >
             <span>🏮 เลข 2 ตัว</span>
-          </label>
-          <label className="chip">
-            <input
-              type="radio"
-              name="lucky-cat"
-              value="1"
-              checked={category === 1}
-              onChange={() => handleCategoryChange(1)}
-            />
-            <span>✨ เลข 3 ตัว</span>
-          </label>
-        </div>
-      </div>
+          </button>
 
-      {/* Talisman Burning Stage (Compact) */}
+          <span className="choose-cat-center-hint">
+            แตะเลือกประเภทเลขมงคล
+          </span>
+
+          <button
+            type="button"
+            className="btn gold btn-choose-cat btn-cat-right"
+            onClick={() => handleCategoryChange(1)}
+            title="เลือกเลขท้าย 3 ตัว"
+          >
+            <span>✨ เลข 3 ตัว</span>
+          </button>
+        </div>
+      ) : null}
+
+      {/* Talisman Burning Stage (When chosen, automatically moves up to touch top edge) */}
       <BurnTalisman
         burnLevel={burnLevel}
         luckyNumber={luckyNumber}
         category={category}
         isBurning={isBurning}
+        onResetCategory={() => setCategory(null)}
       />
 
       {/* When fully burned (3/3): Show Complete Prophecy Card */}
@@ -234,8 +258,18 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
             </button>
           </div>
         </article>
+      ) : category === null ? (
+        /* When NOT yet chosen (category === null): Lock mini-games and guide user to select 2 or 3 digits first */
+        <div className="lucky-choose-prompt-card" role="region" aria-label="คำแนะนำเลือกเลขมงคล">
+          <div className="prompt-glow-ring">🏮</div>
+          <h4 className="prompt-title">กรุณาเลือกประเภทเลขมงคลด้านบน</h4>
+          <p className="prompt-text">
+            แตะปุ่ม <b>"🏮 เลข 2 ตัว"</b> (ซ้าย) หรือ <b>"✨ เลข 3 ตัว"</b> (ขวา) ด้านบน<br />
+            เพื่อปลดล็อกมินิเกมจุดไฟเผายันต์ขอเลขมงคล
+          </p>
+        </div>
       ) : (
-        /* While burning (0..2): Show the 5 Mini-Games Section */
+        /* While burning (0..2) and category is chosen: Show the 5 Mini-Games Section */
         <LuckyMiniGames
           onWin={handleWin}
           onLose={handleLose}

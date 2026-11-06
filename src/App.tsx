@@ -394,16 +394,6 @@ export const App: React.FC = () => {
                 </ErrorBoundary>
               </div>
 
-              <div className="whoami mystical-whoami bottom-whoami">
-                <div className="whoami-symbol-badge">
-                  <span className="badge-icon">{session.symbolIcon}</span>
-                  <span className="badge-text">{session.symbolName}</span>
-                </div>
-                <span id="who">
-                  ระบบ: <b>{session.systemName}</b> (ปี {session.year}) · ธาตุ: <span className="highlight-pill">{session.element}</span> · ออร่า: <span className="highlight-pill">{session.aura}</span>
-                </span>
-              </div>
-
             </div>
           )}
         </main>
