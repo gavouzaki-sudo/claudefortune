@@ -61,6 +61,7 @@ export interface SpiritualSpeechState {
   activePresetId: SpiritualVoicePresetId;
   rateMultiplier: number;
   pitchMultiplier: number;
+  googleTtsSpeed: number;
   currentLineIndex: number;
   totalLines: number;
   currentText: string;
@@ -113,6 +114,7 @@ class SpiritualSpeechEngine {
     activePresetId: 'sinsei',
     rateMultiplier: 1.0,
     pitchMultiplier: 1.0,
+    googleTtsSpeed: 1.2, // Default: +20% speed boost for natural, articulate speech
     currentLineIndex: -1,
     totalLines: 0,
     currentText: '',
@@ -264,12 +266,25 @@ class SpiritualSpeechEngine {
     }
   }
 
-  setRateMultiplier(rate: number): void {
-    this.state.rateMultiplier = clamp(rate, 0.7, 1.4);
+  setGoogleTtsSpeed(speed: number): void {
+    const clamped = clamp(speed, 0.75, 2.0);
+    this.state.googleTtsSpeed = Number(clamped.toFixed(2));
     if (this.audioPlayer) {
       try {
-        const preset = SPIRITUAL_PRESETS[this.state.activePresetId] || SPIRITUAL_PRESETS.sinsei;
-        this.audioPlayer.playbackRate = clamp(preset.rate * this.state.rateMultiplier, 0.75, 1.25);
+        this.audioPlayer.playbackRate = this.state.googleTtsSpeed;
+      } catch (err) {
+        logger.warn('Failed to set audioPlayer.playbackRate:', err);
+      }
+    }
+    this.notify();
+  }
+
+  setRateMultiplier(rate: number): void {
+    this.state.rateMultiplier = clamp(rate, 0.7, 1.4);
+    this.state.googleTtsSpeed = Number(clamp(1.2 * this.state.rateMultiplier, 0.75, 2.0).toFixed(2));
+    if (this.audioPlayer) {
+      try {
+        this.audioPlayer.playbackRate = this.state.googleTtsSpeed;
       } catch {}
     }
     this.notify();
@@ -526,13 +541,26 @@ class SpiritualSpeechEngine {
       audio.src = ttsUrl;
 
       const preset = SPIRITUAL_PRESETS[this.state.activePresetId] || SPIRITUAL_PRESETS.sinsei;
+      const targetSpeed = this.state.googleTtsSpeed || 1.2;
       try {
-        audio.playbackRate = clamp(preset.rate * this.state.rateMultiplier, 0.8, 1.2);
+        audio.playbackRate = targetSpeed;
       } catch {}
+
+      // Keep playbackRate sticky across browser media load/metadata events
+      audio.onloadedmetadata = () => {
+        try {
+          audio.playbackRate = targetSpeed;
+        } catch {}
+      };
+      audio.onplay = () => {
+        try {
+          audio.playbackRate = targetSpeed;
+        } catch {}
+      };
 
       audio.onended = () => {
         if (!this.state.isSpeaking) return;
-        const pauseDuration = preset.id === 'meditation' ? 500 : 300;
+        const pauseDuration = preset.id === 'meditation' ? 450 : 250;
         this.speechTimeout = window.setTimeout(() => {
           this.speakWithAudioTTS(index + 1);
         }, pauseDuration);

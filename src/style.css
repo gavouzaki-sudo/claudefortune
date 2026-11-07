@@ -4924,6 +4924,69 @@ body[data-theme="native_american"] {
   box-shadow: 0 0 10px rgba(232, 185, 74, 0.3);
 }
 
+/* Speed Selector Row */
+.spiritual-speed-selector-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+  padding: 0.35rem 0.5rem;
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 8px;
+  border: 1px solid rgba(232, 185, 74, 0.15);
+}
+
+.speed-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.speed-active-badge {
+  font-size: 0.72rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(232, 185, 74, 0.18);
+  color: var(--gold2);
+  font-weight: 600;
+}
+
+.spiritual-speed-selector {
+  display: inline-flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.btn-speed-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-speed-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(232, 185, 74, 0.4);
+}
+
+.btn-speed-toggle.active {
+  background: linear-gradient(135deg, rgba(232, 185, 74, 0.32), rgba(210, 140, 20, 0.38));
+  border-color: var(--gold);
+  color: #fff9e6;
+  font-weight: 700;
+  box-shadow: 0 0 8px rgba(232, 185, 74, 0.35);
+}
+
 /* Active persona indicator */
 .spiritual-active-persona-pill {
   display: flex;

@@ -110,6 +110,13 @@ test('Spiritual Text-to-Speech presets include Elder Sinsei, Dharma Calm, and Me
   assert.equal(typeof spiritualSpeechEngine.speak, 'function');
   assert.equal(typeof spiritualSpeechEngine.stop, 'function');
   assert.doesNotThrow(() => spiritualSpeechEngine.stop());
+
+  // Google TTS speed assertions: default is +20% (1.2x) and supports adjustment
+  assert.equal(spiritualSpeechEngine.getState().googleTtsSpeed, 1.2, 'Default Google TTS speed is +20% (1.2x)');
+  assert.equal(typeof spiritualSpeechEngine.setGoogleTtsSpeed, 'function');
+  spiritualSpeechEngine.setGoogleTtsSpeed(1.35);
+  assert.equal(spiritualSpeechEngine.getState().googleTtsSpeed, 1.35);
+  spiritualSpeechEngine.setGoogleTtsSpeed(1.2);
 });
 
 test('Multi-language translation dictionary covers TH, EN, and ZH with identical keys', async () => {

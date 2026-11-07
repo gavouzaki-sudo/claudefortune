@@ -149,6 +149,34 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
           </div>
         </div>
 
+        {/* Speed Adjustment Selector Row */}
+        <div className="spiritual-speed-selector-row">
+          <div className="speed-label-wrap">
+            <span className="selector-label">ความเร็วเสียง:</span>
+            <span className="speed-active-badge">
+              {speechState.googleTtsSpeed}x {speechState.googleTtsSpeed === 1.2 ? '(+20%)' : ''}
+            </span>
+          </div>
+          <div className="spiritual-speed-selector" role="group" aria-label="ปรับความเร็วเสียงอ่าน">
+            {[
+              { val: 0.9, label: '0.9x ช้า' },
+              { val: 1.0, label: '1.0x ปกติ' },
+              { val: 1.2, label: '⚡ 1.2x (+20%)' },
+              { val: 1.35, label: '1.35x ไว' },
+            ].map((opt) => (
+              <button
+                key={opt.val}
+                type="button"
+                className={`btn-speed-toggle ${speechState.googleTtsSpeed === opt.val ? 'active' : ''}`}
+                onClick={() => spiritualSpeechEngine.setGoogleTtsSpeed(opt.val)}
+                title={`ตั้งความเร็วเสียงเป็น ${opt.val} เท่า`}
+              >
+                <span>{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Active persona or Google TTS pill */}
         {isCurrentTextActive && (
           <div className="spiritual-active-persona-pill">
@@ -162,7 +190,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
             ) : speechState.engineType === 'google' ? (
               <>
                 <span className="persona-badge">
-                  🌐 เสียงอ่าน: Google Thai TTS
+                  🌐 เสียงอ่าน: Google Thai TTS ({speechState.googleTtsSpeed}x {speechState.googleTtsSpeed === 1.2 ? 'เร็วขึ้น 20%' : ''})
                 </span>
                 <span className="persona-note">สตรีมเสียงอ่านภาษาไทยชัดเจนทุกวรรณยุกต์</span>
               </>
