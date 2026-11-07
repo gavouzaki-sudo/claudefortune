@@ -2,10 +2,9 @@
 // Dual-Engine Architecture:
 // 1. Google Translate TTS (High-compatibility Thai online audio stream with tones and natural cadence) - Default for mobile & web
 // 2. Native Web Speech API (SpeechSynthesis) with mobile audio unlocking and voice resolution
-// 3. Sacred Melodic Ranat & Khim + Temple Chimes fallback if device is completely offline with no voice pack
 // Supports authentic Thai personas: ซินแสอาวุโส, ธรรมบรรยายสำรวม, กังวานสมาธิมงคล
 
-import { stopChant, playChant } from './chantAudio';
+import { stopChant } from './chantAudio';
 import { ambientSoundEngine } from './ambientSoundscapes';
 import { logger } from './logger';
 import { clamp } from './formatters';
@@ -69,6 +68,8 @@ export interface SpiritualSpeechState {
   selectedVoiceName: string | null;
   hasThaiVoice: boolean;
   isFallbackMelody: boolean;
+  isUnsupported: boolean;
+  unsupportedMessage?: string;
 }
 
 // Global declaration to prevent Garbage Collection of SpeechSynthesisUtterance on mobile browsers
@@ -109,8 +110,8 @@ class SpiritualSpeechEngine {
   private state: SpiritualSpeechState = {
     isSpeaking: false,
     isPaused: false,
-    // Google Translate TTS is enabled by default to ensure 100% reliable Thai speech on all mobile devices & PCs
-    engineType: 'google',
+    // Native Web Speech API is standard, instant, works offline, and has zero network dependency
+    engineType: 'native',
     activePresetId: 'sinsei',
     rateMultiplier: 1.0,
     pitchMultiplier: 1.0,
@@ -122,6 +123,8 @@ class SpiritualSpeechEngine {
     selectedVoiceName: null,
     hasThaiVoice: false,
     isFallbackMelody: false,
+    isUnsupported: false,
+    unsupportedMessage: undefined,
   };
 
   private textLines: string[] = [];
@@ -242,6 +245,31 @@ class SpiritualSpeechEngine {
   }
 
   /**
+   * Check if the device or browser has any speech output capability (Web Speech API or HTML5 Audio).
+   */
+  isSpeechSupported(): boolean {
+    if (typeof window === 'undefined') return false;
+    const hasSynth = 'speechSynthesis' in window && !!window.speechSynthesis;
+    const hasAudio = typeof Audio !== 'undefined';
+    return hasSynth || hasAudio;
+  }
+
+  /**
+   * Called when the device or browser does not support speech synthesis at all.
+   * Cancels playback, records unsupported state, and emits the user-facing message "ไม่รองรับเสียงพูด".
+   */
+  handleUnsupportedSpeech(msg: string = 'ไม่รองรับเสียงพูด'): void {
+    this.stop();
+    this.state.isSpeaking = false;
+    this.state.isPaused = false;
+    this.state.isFallbackMelody = false;
+    this.state.isUnsupported = true;
+    this.state.unsupportedMessage = msg;
+    this.notify();
+    this.emitNotice(msg);
+  }
+
+  /**
    * Switch speech engine between 'google' (Google Translate TTS) and 'native' (Device Web Speech API)
    */
   setEngineType(engine: SpeechEngineType): void {
@@ -349,6 +377,10 @@ class SpiritualSpeechEngine {
     stopChant();
     ambientSoundEngine.setSoundscape('none');
 
+    // Reset unsupported state for new attempt
+    this.state.isUnsupported = false;
+    this.state.unsupportedMessage = undefined;
+
     // 1. Play temple bell chime synchronously to unlock Web Audio context on mobile
     if (options.withChime !== false) {
       this.playTempleChime();
@@ -370,26 +402,62 @@ class SpiritualSpeechEngine {
     this.notify();
 
     // 3. Engine routing:
-    // If engine is 'google' (default for mobile & web), or if native synth is unavailable:
-    if (this.state.engineType === 'google' || !this.getSynth()) {
-      this.speakWithAudioTTS(startIdx);
+    const synth = this.getSynth();
+
+    // If native device speech is chosen
+    if (this.state.engineType === 'native') {
+      if (synth) {
+        try {
+          if (synth.paused) {
+            synth.resume();
+          }
+        } catch {}
+
+        this.loadVoices();
+        this.speakLine(startIdx);
+        this.startKeepAlive();
+        return;
+      }
+
+      // If native is chosen but device lacks SpeechSynthesis, try online Google TTS
+      if (typeof Audio !== 'undefined') {
+        this.state.engineType = 'google';
+        this.speakWithAudioTTS(startIdx);
+        return;
+      }
+
+      // Neither engine is supported
+      this.handleUnsupportedSpeech('ไม่รองรับเสียงพูด');
       return;
     }
 
-    // Otherwise use native device speech synthesis
-    const synth = this.getSynth();
-    if (synth) {
-      try {
-        if (synth.paused) {
-          synth.resume();
-        }
-      } catch {}
+    // If Google TTS audio stream is chosen
+    if (this.state.engineType === 'google') {
+      if (typeof Audio !== 'undefined') {
+        this.speakWithAudioTTS(startIdx);
+        return;
+      }
 
+      if (synth) {
+        this.state.engineType = 'native';
+        this.loadVoices();
+        this.speakLine(startIdx);
+        this.startKeepAlive();
+        return;
+      }
+
+      this.handleUnsupportedSpeech('ไม่รองรับเสียงพูด');
+      return;
+    }
+
+    // General fallback: if synth is available use it, else report unsupported
+    if (synth) {
+      this.state.engineType = 'native';
       this.loadVoices();
       this.speakLine(startIdx);
       this.startKeepAlive();
     } else {
-      this.speakWithAudioTTS(startIdx);
+      this.handleUnsupportedSpeech('ไม่รองรับเสียงพูด');
     }
   }
 
@@ -486,15 +554,22 @@ class SpiritualSpeechEngine {
 
         logger.warn('SpeechSynthesis utterance error:', errType, 'at line', index);
 
-        // If Web Speech API fails on mobile (e.g. missing Thai voice data on Android),
-        // seamlessly fall back to high-compatibility Google Translate Audio TTS!
-        this.speakWithAudioTTS(index);
+        // If Web Speech API fails on mobile, try falling back to Audio TTS
+        if (typeof Audio !== 'undefined') {
+          this.speakWithAudioTTS(index);
+        } else {
+          this.handleUnsupportedSpeech('ไม่รองรับเสียงพูด');
+        }
       };
 
       synth.speak(utter);
     } catch (err) {
       logger.warn('Failed to speak via SpeechSynthesis, switching to Audio TTS:', err);
-      this.speakWithAudioTTS(index);
+      if (typeof Audio !== 'undefined') {
+        this.speakWithAudioTTS(index);
+      } else {
+        this.handleUnsupportedSpeech('ไม่รองรับเสียงพูด');
+      }
     }
   }
 
@@ -523,22 +598,22 @@ class SpiritualSpeechEngine {
     // Google Translate TTS stream: clear Thai articulation with tones and correct vowel lengths
     const cleanText = lineText.replace(/[#*_~`]/g, '').trim().slice(0, 180);
     const query = encodeURIComponent(cleanText);
-    // Use server proxy (/api/tts) first to eliminate Referer-based 404 block from Google Translate
     const ttsUrl = `/api/tts?ie=UTF-8&client=tw-ob&tl=th&q=${query}`;
-    const directTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q=${query}`;
 
     try {
-      // Reuse existing Audio instance if available to maintain mobile user activation authorization
       if (!this.audioPlayer) {
         this.audioPlayer = new Audio();
       }
 
       const audio = this.audioPlayer;
+      let hasErrored = false;
+
+      // Disarm previous listeners to prevent ghost onended / onerror triggers
+      audio.onended = null;
+      audio.onerror = null;
+      audio.onloadedmetadata = null;
+      audio.onplay = null;
       audio.pause();
-      try {
-        (audio as any).referrerPolicy = 'no-referrer';
-      } catch {}
-      audio.src = ttsUrl;
 
       const preset = SPIRITUAL_PRESETS[this.state.activePresetId] || SPIRITUAL_PRESETS.sinsei;
       const targetSpeed = this.state.googleTtsSpeed || 1.2;
@@ -546,8 +621,7 @@ class SpiritualSpeechEngine {
         try {
           audio.defaultPlaybackRate = rate;
           audio.playbackRate = rate;
-        } catch (err) {
-          logger.debug('playbackRate assignment constrained (e.g. Low Power Mode):', err);
+        } catch {
           try {
             audio.defaultPlaybackRate = 1.0;
             audio.playbackRate = 1.0;
@@ -555,9 +629,40 @@ class SpiritualSpeechEngine {
         }
       };
 
-      applyPlaybackRate(targetSpeed);
+      const handleStreamFailure = (reason?: unknown) => {
+        if (hasErrored) return;
+        hasErrored = true;
+        audio.onended = null;
+        audio.onerror = null;
 
-      // Keep playbackRate sticky across browser media load/metadata events
+        logger.info('External audio TTS stream unavailable:', reason);
+
+        // Fallback to Native SpeechSynthesis if available on device
+        const synth = this.getSynth();
+        if (synth) {
+          this.state.engineType = 'native';
+          this.loadVoices();
+          this.speakLine(index);
+          this.startKeepAlive();
+          return;
+        }
+
+        // Cancelled Ranat & Khim melodic fallback - directly display unsupported message!
+        this.handleUnsupportedSpeech('ไม่รองรับเสียงพูด');
+      };
+
+      audio.onerror = (e) => {
+        handleStreamFailure(e);
+      };
+
+      audio.onended = () => {
+        if (hasErrored || !this.state.isSpeaking) return;
+        const pauseDuration = preset.id === 'meditation' ? 450 : 250;
+        this.speechTimeout = window.setTimeout(() => {
+          this.speakWithAudioTTS(index + 1);
+        }, pauseDuration);
+      };
+
       audio.onloadedmetadata = () => {
         applyPlaybackRate(targetSpeed);
       };
@@ -565,114 +670,24 @@ class SpiritualSpeechEngine {
         applyPlaybackRate(targetSpeed);
       };
 
-      audio.onended = () => {
-        if (!this.state.isSpeaking) return;
-        const pauseDuration = preset.id === 'meditation' ? 450 : 250;
-        this.speechTimeout = window.setTimeout(() => {
-          this.speakWithAudioTTS(index + 1);
-        }, pauseDuration);
-      };
-
-      audio.onerror = (e) => {
-        logger.warn('Audio TTS stream error at line', index, e);
-        // If the local proxy path had an issue, attempt direct endpoint once
-        if (audio.src && audio.src.includes('/api/tts')) {
-          audio.src = directTtsUrl;
-          applyPlaybackRate(targetSpeed);
-          audio.play().catch(() => {
-            this.startMelodicFallback(
-              index,
-              '💡 กำลังเปิดเสียงระนาดเอกและระฆังมงคลบรรเลงคลอคำทำนาย'
-            );
-          });
-          return;
-        }
-
-        // Only if both fail (e.g. completely offline), fall back to melodic chime
-        this.startMelodicFallback(
-          index,
-          '💡 กำลังเปิดเสียงระนาดเอกและระฆังมงคลบรรเลงคลอคำทำนาย'
-        );
-      };
+      audio.src = ttsUrl;
+      applyPlaybackRate(targetSpeed);
 
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
-          logger.warn('Audio TTS play catch:', err);
-          // If play failed, attempt playback at standard 1.0 rate in case rate > 1.0 was restricted by Low Power Mode
-          try {
-            audio.defaultPlaybackRate = 1.0;
-            audio.playbackRate = 1.0;
-            const retryPromise = audio.play();
-            if (retryPromise !== undefined) {
-              retryPromise.catch(() => {
-                this.startMelodicFallback(index);
-              });
-            }
-          } catch {
-            this.startMelodicFallback(index);
-          }
+          handleStreamFailure(err);
         });
       }
     } catch (err) {
-      logger.error('Failed to play Audio TTS:', err);
-      this.startMelodicFallback(index);
-    }
-  }
-
-  /**
-   * Offline Melodic Fallback mode:
-   * Uses Web Audio 7TET Ranat & Khim sacred melody + temple bells
-   */
-  private startMelodicFallback(fromLine = 0, noticeMsg?: string): void {
-    if (this.fallbackTicker) {
-      window.clearInterval(this.fallbackTicker);
-      this.fallbackTicker = null;
-    }
-
-    if (this.audioPlayer) {
-      try {
-        this.audioPlayer.pause();
-      } catch {}
-      this.audioPlayer = null;
-    }
-
-    const synth = this.getSynth();
-    if (synth) {
-      try {
-        synth.cancel();
-      } catch {}
-    }
-
-    this.state.isSpeaking = true;
-    this.state.isPaused = false;
-    this.state.isFallbackMelody = true;
-    this.state.currentLineIndex = fromLine;
-    this.notify();
-
-    if (noticeMsg) {
-      this.emitNotice(noticeMsg);
-    }
-
-    // Play sacred melodic chant (Ranat & Khim 7TET melody) + temple bell
-    try {
-      playChant('thai');
-      this.playTempleChime();
-    } catch (err) {
-      logger.warn('Error starting fallback chant:', err);
-    }
-
-    let cur = fromLine;
-    this.fallbackTicker = window.setInterval(() => {
-      if (!this.state.isSpeaking || this.state.isPaused) return;
-      cur += 1;
-      if (cur >= this.textLines.length) {
-        this.stop();
-      } else {
-        this.state.currentLineIndex = cur;
-        this.notify();
+      const synth = this.getSynth();
+      if (synth) {
+        this.state.engineType = 'native';
+        this.speakLine(index);
+        return;
       }
-    }, 3600);
+      this.handleUnsupportedSpeech('ไม่รองรับเสียงพูด');
+    }
   }
 
   private startKeepAlive(): void {
@@ -716,13 +731,6 @@ class SpiritualSpeechEngine {
       return;
     }
 
-    if (this.state.isFallbackMelody) {
-      stopChant();
-      this.state.isPaused = true;
-      this.notify();
-      return;
-    }
-
     const synth = this.getSynth();
     if (!synth) return;
     try {
@@ -739,13 +747,6 @@ class SpiritualSpeechEngine {
       try {
         this.audioPlayer.play().catch(() => {});
       } catch {}
-      this.state.isPaused = false;
-      this.notify();
-      return;
-    }
-
-    if (this.state.isFallbackMelody) {
-      playChant('thai');
       this.state.isPaused = false;
       this.notify();
       return;
@@ -802,10 +803,6 @@ class SpiritualSpeechEngine {
       } catch (err) {
         logger.debug('Error canceling SpeechSynthesis:', err);
       }
-    }
-
-    if (this.state.isFallbackMelody) {
-      stopChant();
     }
 
     this.activeUtterance = null;

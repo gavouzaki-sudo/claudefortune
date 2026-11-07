@@ -4999,6 +4999,64 @@ body[data-theme="native_american"] {
   border-left: 3px solid var(--gold);
 }
 
+.spiritual-active-persona-pill.spiritual-unsupported-pill {
+  border-left-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.spiritual-unsupported-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.9rem;
+  margin-bottom: 0.75rem;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.unsupported-msg-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.unsupported-icon {
+  font-size: 1.15rem;
+}
+
+.unsupported-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fef3c7;
+}
+
+.unsupported-desc {
+  font-size: 0.72rem;
+  color: #fcd34d;
+  opacity: 0.88;
+}
+
+.btn-unsupported-retry {
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.2);
+  color: #fff9e6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-unsupported-retry:hover {
+  background: rgba(245, 158, 11, 0.35);
+  border-color: #f59e0b;
+}
+
 .persona-badge {
   font-size: 0.82rem;
   font-weight: 700;

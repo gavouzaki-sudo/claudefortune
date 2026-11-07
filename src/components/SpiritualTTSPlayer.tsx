@@ -20,7 +20,7 @@ interface SpiritualTTSPlayerProps {
 export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
   textToRead,
   title = 'สดับฟังคำทำนายด้วยเสียงสวด / ธรรมบรรยาย',
-  subtitle = 'เสียงอ่านภาษาไทยความคมชัดสูง สตรีมมิ่งสดผ่าน Google Translate TTS & เสียงสังเคราะห์',
+  subtitle = 'เสียงอ่านภาษาไทยผ่านระบบเสียงสังเคราะห์ธรรมชาติ (Google TTS & Web Speech API)',
 }) => {
   const [speechState, setSpeechState] = useState<SpiritualSpeechState>(
     spiritualSpeechEngine.getState()
@@ -73,7 +73,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
       <div className="spiritual-tts-header">
         <div className="spiritual-tts-title-wrap">
           <span className="spiritual-tts-icon" aria-hidden="true">
-            {isCurrentTextActive ? (speechState.isFallbackMelody ? '🎵' : '📿') : '🎙️'}
+            {speechState.isUnsupported ? '⚠️' : isCurrentTextActive ? '📿' : '🎙️'}
           </span>
           <div>
             <h4 className="spiritual-tts-title">{title}</h4>
@@ -87,7 +87,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               type="button"
               className="btn-tts-action-primary"
               onClick={handlePlay}
-              title="เริ่มฟังเสียงอ่านคำทำนาย"
+              title={speechState.isUnsupported ? 'ลองฟังเสียงอ่านอีกครั้ง' : 'เริ่มฟังเสียงอ่านคำทำนาย'}
             >
               <span>▶ อ่าน</span>
             </button>
@@ -126,6 +126,29 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
 
       {/* Recitation Content & Active Aura Lines */}
       <div className="spiritual-tts-body">
+        {/* Unsupported notice banner */}
+        {speechState.isUnsupported && (
+          <div className="spiritual-unsupported-banner" role="alert">
+            <div className="unsupported-msg-wrap">
+              <span className="unsupported-icon">⚠️</span>
+              <div>
+                <div className="unsupported-title">ไม่รองรับเสียงพูด</div>
+                <div className="unsupported-desc">อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับระบบเสียงพูดภาษาไทย</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn-unsupported-retry"
+              onClick={() => {
+                spiritualSpeechEngine.setEngineType('google');
+                spiritualSpeechEngine.speak(textToRead, { withChime: false });
+              }}
+            >
+              ลองใหม่
+            </button>
+          </div>
+        )}
+
         {/* Voice Engine Toggle Selector */}
         <div className="spiritual-engine-selector-row">
           <span className="selector-label">ระบบเสียง:</span>
@@ -178,16 +201,14 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
         </div>
 
         {/* Active persona or Google TTS pill */}
-        {isCurrentTextActive && (
+        {speechState.isUnsupported ? (
+          <div className="spiritual-active-persona-pill spiritual-unsupported-pill">
+            <span className="persona-badge">⚠️ ไม่รองรับเสียงพูด</span>
+            <span className="persona-note">อุปกรณ์ไม่รองรับระบบเสียงพูด</span>
+          </div>
+        ) : isCurrentTextActive ? (
           <div className="spiritual-active-persona-pill">
-            {speechState.isFallbackMelody ? (
-              <>
-                <span className="persona-badge">
-                  🎵 ดนตรีสวดมงคล: ระนาดเอก 7TET & ขิมสยาม
-                </span>
-                <span className="persona-note">สวดทำนองเสนาะคลอคำทำนาย</span>
-              </>
-            ) : speechState.engineType === 'google' ? (
+            {speechState.engineType === 'google' ? (
               <>
                 <span className="persona-badge">
                   🌐 เสียงอ่าน: Google Thai TTS ({speechState.googleTtsSpeed}x {speechState.googleTtsSpeed === 1.2 ? 'เร็วขึ้น 20%' : ''})
@@ -203,7 +224,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               </>
             )}
           </div>
-        )}
+        ) : null}
 
         {/* Synchronized Recitation Verse Highlight */}
         <div className="spiritual-verse-box">
@@ -220,11 +241,11 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               <span className="static-meditation-dot">🕯️</span>
             )}
             <span className="verse-reading-status">
-              {isCurrentTextActive
+              {speechState.isUnsupported
+                ? '⚠️ ไม่รองรับเสียงพูด'
+                : isCurrentTextActive
                 ? speechState.isPaused
                   ? '⏸ พักการอ่านชั่วคราว — กดปุ่มเพื่ออ่านต่อ'
-                  : speechState.isFallbackMelody
-                  ? '🎵 กำลังบรรเลงดนตรีสวดระนาดและขิมมงคลคลอบทอ่าน...'
                   : speechState.engineType === 'google'
                   ? '🌐 กำลังอ่านคำทำนายด้วยเสียง Google Thai TTS...'
                   : `📿 กำลังสวดบรรยายด้วยเสียง${activePreset.title}...`

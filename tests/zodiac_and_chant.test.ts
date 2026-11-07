@@ -117,6 +117,17 @@ test('Spiritual Text-to-Speech presets include Elder Sinsei, Dharma Calm, and Me
   spiritualSpeechEngine.setGoogleTtsSpeed(1.35);
   assert.equal(spiritualSpeechEngine.getState().googleTtsSpeed, 1.35);
   spiritualSpeechEngine.setGoogleTtsSpeed(1.2);
+
+  // Unsupported speech notification assertions
+  let receivedNotice = '';
+  const unsub = spiritualSpeechEngine.onNotice((msg) => {
+    receivedNotice = msg;
+  });
+  spiritualSpeechEngine.handleUnsupportedSpeech('ไม่รองรับเสียงพูด');
+  assert.equal(receivedNotice, 'ไม่รองรับเสียงพูด', 'Notice must emit ไม่รองรับเสียงพูด');
+  assert.equal(spiritualSpeechEngine.getState().isUnsupported, true, 'isUnsupported must be true');
+  assert.equal(spiritualSpeechEngine.getState().isFallbackMelody, false, 'Melodic fallback must be false');
+  unsub();
 });
 
 test('Multi-language translation dictionary covers TH, EN, and ZH with identical keys', async () => {
