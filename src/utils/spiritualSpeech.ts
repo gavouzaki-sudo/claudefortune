@@ -1,7 +1,7 @@
 // Spiritual Text-to-Speech Engine
 // Dual-Engine Architecture:
-// 1. Native Web Speech API (SpeechSynthesis) with mobile audio unlocking and voice resolution
-// 2. High-Compatibility Online Audio TTS fallback for mobile browsers/iframes lacking SpeechSynthesis
+// 1. Google Translate TTS (High-compatibility Thai online audio stream with tones and natural cadence) - Default for mobile & web
+// 2. Native Web Speech API (SpeechSynthesis) with mobile audio unlocking and voice resolution
 // 3. Sacred Melodic Ranat & Khim + Temple Chimes fallback if device is completely offline with no voice pack
 // Supports authentic Thai personas: ซินแสอาวุโส, ธรรมบรรยายสำรวม, กังวานสมาธิมงคล
 
@@ -11,6 +11,7 @@ import { logger } from './logger';
 import { clamp } from './formatters';
 
 export type SpiritualVoicePresetId = 'sinsei' | 'dharma' | 'meditation';
+export type SpeechEngineType = 'google' | 'native';
 
 export interface SpiritualVoicePreset {
   id: SpiritualVoicePresetId;
@@ -56,6 +57,7 @@ export const SPIRITUAL_PRESETS: Record<SpiritualVoicePresetId, SpiritualVoicePre
 export interface SpiritualSpeechState {
   isSpeaking: boolean;
   isPaused: boolean;
+  engineType: SpeechEngineType;
   activePresetId: SpiritualVoicePresetId;
   rateMultiplier: number;
   pitchMultiplier: number;
@@ -106,6 +108,8 @@ class SpiritualSpeechEngine {
   private state: SpiritualSpeechState = {
     isSpeaking: false,
     isPaused: false,
+    // Google Translate TTS is enabled by default to ensure 100% reliable Thai speech on all mobile devices & PCs
+    engineType: 'google',
     activePresetId: 'sinsei',
     rateMultiplier: 1.0,
     pitchMultiplier: 1.0,
@@ -235,6 +239,20 @@ class SpiritualSpeechEngine {
     return { ...this.state };
   }
 
+  /**
+   * Switch speech engine between 'google' (Google Translate TTS) and 'native' (Device Web Speech API)
+   */
+  setEngineType(engine: SpeechEngineType): void {
+    this.state.engineType = engine;
+    this.notify();
+    if (this.state.isSpeaking && this.state.currentText && !this.state.isFallbackMelody) {
+      const text = this.state.currentText;
+      const curLine = this.state.currentLineIndex;
+      this.stop();
+      this.speak(text, { startLine: Math.max(0, curLine), withChime: false });
+    }
+  }
+
   setPreset(presetId: SpiritualVoicePresetId): void {
     this.state.activePresetId = presetId;
     this.notify();
@@ -329,37 +347,35 @@ class SpiritualSpeechEngine {
     this.textLines = this.prepareLines(rawText);
     this.state.currentText = rawText;
     this.state.totalLines = this.textLines.length;
-    this.state.currentLineIndex = options.startLine ?? 0;
+    const startIdx = options.startLine ?? 0;
+    this.state.currentLineIndex = startIdx;
     this.state.isSpeaking = true;
     this.state.isPaused = false;
     this.state.isFallbackMelody = false;
     this.notify();
 
-    // 3. Dynamically obtain speech synthesis instance
-    const synth = this.getSynth();
-
-    // If device/browser does not support Web Speech API (e.g. mobile Firefox, WebViews),
-    // immediately use the high-compatibility Audio TTS fallback!
-    if (!synth) {
-      this.speakWithAudioTTS(this.state.currentLineIndex);
+    // 3. Engine routing:
+    // If engine is 'google' (default for mobile & web), or if native synth is unavailable:
+    if (this.state.engineType === 'google' || !this.getSynth()) {
+      this.speakWithAudioTTS(startIdx);
       return;
     }
 
-    // 4. Mobile iOS Safari / Chrome wake-up
-    try {
-      if (synth.paused) {
-        synth.resume();
-      }
-    } catch {}
+    // Otherwise use native device speech synthesis
+    const synth = this.getSynth();
+    if (synth) {
+      try {
+        if (synth.paused) {
+          synth.resume();
+        }
+      } catch {}
 
-    // Refresh voices
-    this.loadVoices();
-
-    // 5. Speak first line
-    this.speakLine(this.state.currentLineIndex);
-
-    // 6. Start keep-alive loop to prevent mobile Chrome 15s freeze bug
-    this.startKeepAlive();
+      this.loadVoices();
+      this.speakLine(startIdx);
+      this.startKeepAlive();
+    } else {
+      this.speakWithAudioTTS(startIdx);
+    }
   }
 
   private speakLine(index: number): void {
@@ -456,7 +472,7 @@ class SpiritualSpeechEngine {
         logger.warn('SpeechSynthesis utterance error:', errType, 'at line', index);
 
         // If Web Speech API fails on mobile (e.g. missing Thai voice data on Android),
-        // seamlessly fall back to high-compatibility Audio TTS!
+        // seamlessly fall back to high-compatibility Google Translate Audio TTS!
         this.speakWithAudioTTS(index);
       };
 
@@ -468,9 +484,10 @@ class SpiritualSpeechEngine {
   }
 
   /**
-   * High-compatibility Audio TTS fallback:
-   * Uses direct HTML5 Audio streaming with authentic Thai pronunciation.
-   * Works on 100% of mobile browsers, WebViews, and iframes without needing device voice packages.
+   * Google Translate Audio TTS engine:
+   * Uses HTML5 Audio with authentic Thai pronunciation and tones.
+   * By reusing the same audio element instance across verse lines, mobile browsers
+   * (iOS Safari & Android Chrome) allow continuous recitation without autoplay block!
    */
   private speakWithAudioTTS(index: number): void {
     if (!this.state.isSpeaking || index >= this.textLines.length) {
@@ -490,17 +507,23 @@ class SpiritualSpeechEngine {
 
     // Google Translate TTS stream: clear Thai articulation with tones and correct vowel lengths
     const cleanText = lineText.replace(/[#*_~`]/g, '').trim().slice(0, 180);
-    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q=${encodeURIComponent(cleanText)}`;
+    const query = encodeURIComponent(cleanText);
+    // Use server proxy (/api/tts) first to eliminate Referer-based 404 block from Google Translate
+    const ttsUrl = `/api/tts?ie=UTF-8&client=tw-ob&tl=th&q=${query}`;
+    const directTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q=${query}`;
 
     try {
-      if (this.audioPlayer) {
-        this.audioPlayer.pause();
-        this.audioPlayer.removeAttribute('src');
-        this.audioPlayer.load();
+      // Reuse existing Audio instance if available to maintain mobile user activation authorization
+      if (!this.audioPlayer) {
+        this.audioPlayer = new Audio();
       }
 
-      const audio = new Audio(ttsUrl);
-      this.audioPlayer = audio;
+      const audio = this.audioPlayer;
+      audio.pause();
+      try {
+        (audio as any).referrerPolicy = 'no-referrer';
+      } catch {}
+      audio.src = ttsUrl;
 
       const preset = SPIRITUAL_PRESETS[this.state.activePresetId] || SPIRITUAL_PRESETS.sinsei;
       try {
@@ -517,7 +540,19 @@ class SpiritualSpeechEngine {
 
       audio.onerror = (e) => {
         logger.warn('Audio TTS stream error at line', index, e);
-        // Only if network audio fails (e.g. completely offline), fall back to melodic chime
+        // If the local proxy path had an issue, attempt direct endpoint once
+        if (audio.src && audio.src.includes('/api/tts')) {
+          audio.src = directTtsUrl;
+          audio.play().catch(() => {
+            this.startMelodicFallback(
+              index,
+              '💡 กำลังเปิดเสียงระนาดเอกและระฆังมงคลบรรเลงคลอคำทำนาย'
+            );
+          });
+          return;
+        }
+
+        // Only if both fail (e.g. completely offline), fall back to melodic chime
         this.startMelodicFallback(
           index,
           '💡 กำลังเปิดเสียงระนาดเอกและระฆังมงคลบรรเลงคลอคำทำนาย'
@@ -532,7 +567,7 @@ class SpiritualSpeechEngine {
         });
       }
     } catch (err) {
-      logger.error('Failed to create Audio TTS element:', err);
+      logger.error('Failed to play Audio TTS:', err);
       this.startMelodicFallback(index);
     }
   }
@@ -669,7 +704,7 @@ class SpiritualSpeechEngine {
     }
 
     const synth = this.getSynth();
-    if (!synth) {
+    if (!synth || this.state.engineType === 'google') {
       if (this.state.currentText) {
         this.speakWithAudioTTS(Math.max(0, this.state.currentLineIndex));
       }

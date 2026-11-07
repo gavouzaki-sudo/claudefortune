@@ -67,6 +67,16 @@ export default defineConfig(({ command }) => ({
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/glo/, '/api'),
       },
+      '/api/tts': {
+        target: 'https://translate.google.com',
+        changeOrigin: true,
+        secure: false,
+        headers: {
+          Referer: '',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+        rewrite: (path) => path.replace(/^\/api\/tts/, '/translate_tts'),
+      },
     },
   },
   preview: {
@@ -80,6 +90,16 @@ export default defineConfig(({ command }) => ({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/glo/, '/api'),
+      },
+      '/api/tts': {
+        target: 'https://translate.google.com',
+        changeOrigin: true,
+        secure: false,
+        headers: {
+          Referer: '',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+        rewrite: (path) => path.replace(/^\/api\/tts/, '/translate_tts'),
       },
     },
   },

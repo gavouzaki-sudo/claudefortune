@@ -4871,6 +4871,59 @@ body[data-theme="native_american"] {
   padding: 0.85rem 1rem 1rem;
 }
 
+/* Engine Selector Row */
+.spiritual-engine-selector-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+  padding: 0.35rem 0.5rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  border: 1px solid rgba(232, 185, 74, 0.15);
+}
+
+.spiritual-engine-selector-row .selector-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gold2);
+  white-space: nowrap;
+}
+
+.spiritual-engine-selector {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.btn-engine-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.22rem 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-engine-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-color: rgba(232, 185, 74, 0.4);
+}
+
+.btn-engine-toggle.active {
+  background: linear-gradient(135deg, rgba(232, 185, 74, 0.28), rgba(180, 110, 30, 0.35));
+  border-color: var(--gold);
+  color: #fff8e1;
+  box-shadow: 0 0 10px rgba(232, 185, 74, 0.3);
+}
+
 /* Active persona indicator */
 .spiritual-active-persona-pill {
   display: flex;

@@ -20,7 +20,7 @@ interface SpiritualTTSPlayerProps {
 export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
   textToRead,
   title = 'สดับฟังคำทำนายด้วยเสียงสวด / ธรรมบรรยาย',
-  subtitle = 'เสียงอ่านสังเคราะห์ช้าๆ กังวาน นุ่มนวล สุ่มท่วงทำนองสงบใจอัตโนมัติ',
+  subtitle = 'เสียงอ่านภาษาไทยความคมชัดสูง สตรีมมิ่งสดผ่าน Google Translate TTS & เสียงสังเคราะห์',
 }) => {
   const [speechState, setSpeechState] = useState<SpiritualSpeechState>(
     spiritualSpeechEngine.getState()
@@ -87,7 +87,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               type="button"
               className="btn-tts-action-primary"
               onClick={handlePlay}
-              title="เริ่มฟังเสียงอ่านธรรมบรรยาย (สุ่มท่วงทำนองอัตโนมัติ)"
+              title="เริ่มฟังเสียงอ่านคำทำนาย"
             >
               <span>▶ อ่าน</span>
             </button>
@@ -126,7 +126,30 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
 
       {/* Recitation Content & Active Aura Lines */}
       <div className="spiritual-tts-body">
-        {/* Active randomized persona pill or Fallback Melodic Chant Pill */}
+        {/* Voice Engine Toggle Selector */}
+        <div className="spiritual-engine-selector-row">
+          <span className="selector-label">ระบบเสียง:</span>
+          <div className="spiritual-engine-selector" role="group" aria-label="เลือกระบบเสียงอ่าน">
+            <button
+              type="button"
+              className={`btn-engine-toggle ${speechState.engineType === 'google' ? 'active' : ''}`}
+              onClick={() => spiritualSpeechEngine.setEngineType('google')}
+              title="เสียงอ่านภาษาไทยออนไลน์ Google TTS (แนะนำสำหรับมือถือและทุกอุปกรณ์ ออกเสียงชัดเจน 100%)"
+            >
+              <span>🌐 Google TTS (ชัดเจน)</span>
+            </button>
+            <button
+              type="button"
+              className={`btn-engine-toggle ${speechState.engineType === 'native' ? 'active' : ''}`}
+              onClick={() => spiritualSpeechEngine.setEngineType('native')}
+              title="เสียงสังเคราะห์ของเครื่องเบราว์เซอร์"
+            >
+              <span>🎙️ เสียงในเครื่อง</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Active persona or Google TTS pill */}
         {isCurrentTextActive && (
           <div className="spiritual-active-persona-pill">
             {speechState.isFallbackMelody ? (
@@ -135,6 +158,13 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
                   🎵 ดนตรีสวดมงคล: ระนาดเอก 7TET & ขิมสยาม
                 </span>
                 <span className="persona-note">สวดทำนองเสนาะคลอคำทำนาย</span>
+              </>
+            ) : speechState.engineType === 'google' ? (
+              <>
+                <span className="persona-badge">
+                  🌐 เสียงอ่าน: Google Thai TTS
+                </span>
+                <span className="persona-note">สตรีมเสียงอ่านภาษาไทยชัดเจนทุกวรรณยุกต์</span>
               </>
             ) : (
               <>
@@ -167,6 +197,8 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
                   ? '⏸ พักการอ่านชั่วคราว — กดปุ่มเพื่ออ่านต่อ'
                   : speechState.isFallbackMelody
                   ? '🎵 กำลังบรรเลงดนตรีสวดระนาดและขิมมงคลคลอบทอ่าน...'
+                  : speechState.engineType === 'google'
+                  ? '🌐 กำลังอ่านคำทำนายด้วยเสียง Google Thai TTS...'
                   : `📿 กำลังสวดบรรยายด้วยเสียง${activePreset.title}...`
                 : 'กดปุ่มด้านบนเพื่อสดับรับฟังเสียง'}
             </span>
@@ -209,9 +241,12 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
             {showMobileTip && (
               <div className="mobile-hint-content">
                 <p>
-                  🔊 <b>หากกดอ่านแล้วเสียงไม่ออกในมือถือ:</b>
+                  🔊 <b>ข้อแนะนำสำหรับการฟังเสียงบนมือถือ:</b>
                 </p>
                 <ul>
+                  <li>
+                    <b>ระบบเลือก Google Thai TTS เป็นค่าเริ่มต้น:</b> ออกเสียงภาษาไทยชัดเจน 100% ครบทุกวรรณยุกต์ ไม่จำเป็นต้องมีชุดเสียงในเครื่อง
+                  </li>
                   <li>
                     <b>iPhone / iPad:</b> โปรดตรวจดูสวิตช์ปิดเสียง (Silent Mode Switch) ด้านข้างตัวเครื่องว่าไม่ได้เปิดแถบสีส้มอยู่
                   </li>
@@ -219,7 +254,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
                     <b>Android:</b> โปรดเพิ่มระดับเสียงของ <u>มีเดีย (Media Volume)</u> ไม่ใช่แค่เสียงเรียกเข้า
                   </li>
                   <li>
-                    ระบบรองรับทั้งเสียงสังเคราะห์ของเครื่อง และสตรีมมิ่งเสียงอ่านภาษาไทยความคมชัดสูงอัตโนมัติ
+                    สามารถสลับไปฟัง <b>"🎙️ เสียงในเครื่อง"</b> เพื่อสัมผัสท่วงทำนองซินแสอาวุโสได้ตามต้องการ
                   </li>
                 </ul>
               </div>
