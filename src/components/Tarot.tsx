@@ -110,9 +110,6 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
 
   return (
     <section id="tab-tarot" className="ritual-frameless-stage tab" role="tabpanel">
-      <h2 className="title">ไพ่ยิปซี</h2>
-      <p className="lead">เลือกรูปแบบการเปิดไพ่ ตั้งคำถามในใจ แล้วแตะไพ่แต่ละใบเพื่อพลิกดู</p>
-
       {/* Spread Type Selector */}
       <div className="chips" role="radiogroup" aria-label="รูปแบบการเปิดไพ่">
         <label className="chip">

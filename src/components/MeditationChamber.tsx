@@ -151,13 +151,6 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
 
   return (
     <section id="meditation-chamber" className="ritual-frameless-stage meditation-stage">
-      <div className="meditation-header-center">
-        <h2 className="title">🧘 มณฑลสมาธิ & คลื่นเสียงบำบัดจิต</h2>
-        <p className="lead">
-          พักผ่อนจิตใจในความสงบเงียบ กำหนดลมหายใจเข้าออก พร้อมรับฟังคลื่นเสียงธรรมชาติและเสียงสวดมนต์ศักดิ์สิทธิ์
-        </p>
-      </div>
-
       {/* Center Breathing Lotus Visualizer */}
       <div className="meditation-pacer-card">
         <div className={`meditation-lotus-wrap phase-${breathPhase}`}>

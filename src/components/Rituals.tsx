@@ -200,8 +200,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
 
   return (
     <section id="tab-ritual" className="ritual-frameless-stage tab" role="tabpanel">
-      <h2 className="title">สะเดาะเคราะห์ออนไลน์</h2>
-
       {/* High-visibility Ceremonial Ritual Tabs */}
       <div className="pills" role="tablist" aria-label="พิธีกรรมสะเดาะเคราะห์">
         <button

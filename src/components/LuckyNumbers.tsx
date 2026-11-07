@@ -178,14 +178,6 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
       {category === null ? (
         /* Asking first before playing the game: 2 digits or 3 digits */
         <div className="lucky-category-prompt-card" role="region" aria-label="เลือกประเภทเลขมงคล">
-          <div className="lucky-prompt-header">
-            <span className="lucky-prompt-seal">✦ ตั้งจิตอธิษฐานก่อนเริ่มพิธี ✦</span>
-            <h3 className="lucky-prompt-title">ท่านต้องการขอเลขมงคลกี่หลัก?</h3>
-            <p className="lucky-prompt-sub">
-              โปรดเลือกประเภทตัวเลขที่ท่านต้องการขอก่อนเริ่มเล่นมินิเกมจุดเพลิงเผายันต์ศาลเจ้า
-            </p>
-          </div>
-
           <div className="lucky-choice-grid">
             <button
               type="button"
@@ -196,7 +188,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
               <div className="choice-badge">2 หลัก</div>
               <div className="choice-seal-icon">🏮</div>
               <h4 className="choice-name">เลข 2 หลัก</h4>
-              <p className="choice-desc">เลขท้าย 2 ตัว · เสริมโชคลาภ คล่องตัว ทรัพย์หมุนเวียนดี</p>
+              <p className="choice-desc">เลขท้าย 2 ตัว · เสริมโชคลาภ ทรัพย์หมุนเวียนดี</p>
               <span className="choice-btn-cta">เลือกเลข 2 หลัก</span>
             </button>
 
@@ -209,13 +201,9 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
               <div className="choice-badge">3 หลัก</div>
               <div className="choice-seal-icon">✨</div>
               <h4 className="choice-name">เลข 3 หลัก</h4>
-              <p className="choice-desc">เลขท้าย 3 ตัว · เสริมมหาบารมี โชคก้อนใหญ่ ทรัพย์ทวีคูณ</p>
+              <p className="choice-desc">เลขท้าย 3 ตัว · เสริมมหาบารมี โชคก้อนใหญ่</p>
               <span className="choice-btn-cta">เลือกเลข 3 หลัก</span>
             </button>
-          </div>
-
-          <div className="lucky-prompt-note">
-            <span>🕯️ เมื่อเลือกประเภทเลขแล้ว จะเข้าสู่มินิเกม (เป่ายิ้งฉุบ ตีภูต OX จับคู่ ไพ่ปิศาจ) ชนะครบ 3 ครั้งเพื่อเผายันต์เผยเลขมงคล</span>
           </div>
         </div>
       ) : (

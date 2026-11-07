@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bridge } from '../bridge';
 import type { BlessingResult, TarotCard } from '../types';
+import { LoyKrathong3D } from './LoyKrathong3D';
 
 interface FestivalStageProps {
   bridge: Bridge;
@@ -8,23 +9,6 @@ interface FestivalStageProps {
   onToast: (msg: string) => void;
   onLaunchFireworks: (bursts?: number) => void;
 }
-
-const KRATHONG_SVG = (
-  <svg viewBox="0 0 90 70" aria-hidden="true">
-    <ellipse cx="45" cy="56" rx="38" ry="9" fill="#2e7d32" />
-    <g fill="#43a047">
-      <path d="M10 52 Q45 22 80 52 Q45 44 10 52Z" />
-      <path d="M18 48 Q45 28 72 48 Q45 42 18 48Z" fill="#66bb6a" />
-    </g>
-    <g fill="#ff80ab">
-      <path d="M45 20 Q54 34 45 46 Q36 34 45 20Z" />
-      <path d="M45 26 Q64 30 62 46 Q50 44 45 30Z" fill="#f06292" />
-      <path d="M45 26 Q26 30 28 46 Q40 44 45 30Z" fill="#f06292" />
-    </g>
-    <rect x="43" y="10" width="4" height="22" fill="#fff1d3" />
-    <path d="M45 1 Q50 7 45 12 Q40 7 45 1Z" fill="#ffb347" />
-  </svg>
-);
 
 const GLYPHS = [
   "🃏", "🪄", "🌙", "👑", "🏛️", "📿", "💞", "🛞", "🦁", "🏮", "☸️", "⚖️", "🙃", "🦋", "⚗️", "⛓️", "🗼", "⭐", "🌕", "☀️", "📯", "🌏"
@@ -36,13 +20,17 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
   onToast,
   onLaunchFireworks,
 }) => {
+  // Allow switching festivals with Loy Krathong (3) as default
+  const [activeFestivalId, setActiveFestivalId] = useState<number>(() => {
+    return festivalId === 0 ? 3 : festivalId;
+  });
+
   const [blessing, setBlessing] = useState<BlessingResult | null>(null);
 
   // Stage specific state
   const [drops, setDrops] = useState<Array<{ id: number; left: string; dx: string; dy: string }>>([]);
   const [coffinOpen, setCoffinOpen] = useState(false);
   const [coffinCard, setCoffinCard] = useState<TarotCard | null>(null);
-  const [krathongs, setKrathongs] = useState<number[]>([]);
   const [angpaoOpen, setAngpaoOpen] = useState(false);
 
   const fetchBlessing = (id: number): BlessingResult | null => {
@@ -55,8 +43,6 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
       return null;
     }
   };
-
-  const info = bridge.festivalInfo(festivalId);
 
   // Songkran splash
   const handleSplash = () => {
@@ -93,18 +79,6 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
     }
   };
 
-  // Loy Krathong
-  const handleFloatKrathong = async () => {
-    const id = Date.now();
-    setKrathongs((prev) => [...prev, id]);
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    await new Promise((r) => setTimeout(r, reduceMotion ? 0 : 3200));
-    fetchBlessing(3);
-    setTimeout(() => {
-      setKrathongs((prev) => prev.filter((k) => k !== id));
-    }, 4200);
-  };
-
   // CNY Angpao
   const handleToggleAngpao = () => {
     if (angpaoOpen) {
@@ -128,17 +102,34 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
   const nextYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
 
   return (
-    <section id="tab-festival" className="ritual-frameless-stage tab" role="tabpanel">
-      <h2 id="fest-title" className="title">
-        {festivalId === 0 ? 'ขอพรประจำวัน' : `เทศกาล${info.name}`}
-      </h2>
-      <p id="fest-tag" className="lead">
-        {info.tagline}
-      </p>
+    <section id="tab-festival" className="ritual-frameless-stage tab festival-section-stage" role="tabpanel">
+      {/* Festival Selector Bar */}
+      <div className="festival-tab-bar" role="tablist" aria-label="เลือกเทศกาล">
+        {[
+          { id: 3, name: '🪷 ลอยกระทง 3D' },
+          { id: 1, name: '💦 สงกรานต์' },
+          { id: 2, name: '🎃 ฮาโลวีน' },
+          { id: 4, name: '🧧 ตรุษจีน' },
+          { id: 5, name: '🎆 ปีใหม่' },
+          { id: 0, name: '🏮 ขอพรประจำวัน' },
+        ].map((fest) => (
+          <button
+            key={fest.id}
+            type="button"
+            className={`festival-tab-btn ${activeFestivalId === fest.id ? 'active' : ''}`}
+            onClick={() => {
+              setActiveFestivalId(fest.id);
+              setBlessing(null);
+            }}
+          >
+            {fest.name}
+          </button>
+        ))}
+      </div>
 
-      <div id="fest-stage" className="fest-stage">
+      <div id="fest-stage" className={`fest-stage ${activeFestivalId === 3 ? 'stage-3d-active' : ''}`}>
         {/* Stage 0: Daily */}
-        {festivalId === 0 && (
+        {activeFestivalId === 0 && (
           <>
             <div className="yantra active" style={{ opacity: 0.9 }}>
               <svg viewBox="0 0 200 200">
@@ -165,7 +156,7 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
         )}
 
         {/* Stage 1: Songkran */}
-        {festivalId === 1 && (
+        {activeFestivalId === 1 && (
           <>
             <div
               className="bowl"
@@ -203,7 +194,7 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
         )}
 
         {/* Stage 2: Halloween */}
-        {festivalId === 2 && (
+        {activeFestivalId === 2 && (
           <>
             <div
               className={`coffin ${coffinOpen ? 'open' : ''}`}
@@ -249,29 +240,17 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
           </>
         )}
 
-        {/* Stage 3: Loy Krathong */}
-        {festivalId === 3 && (
-          <>
-            <div className="pond">
-              <div className="moon" />
-              {krathongs.map((k) => (
-                <div key={k} className="krathong">
-                  {KRATHONG_SVG}
-                </div>
-              ))}
-            </div>
-            <button
-              className="btn primary stage-btn"
-              type="button"
-              onClick={handleFloatKrathong}
-            >
-              ลอยกระทง
-            </button>
-          </>
+        {/* Stage 3: Loy Krathong in 3D */}
+        {activeFestivalId === 3 && (
+          <LoyKrathong3D
+            bridge={bridge}
+            onToast={onToast}
+            onLaunchFireworks={onLaunchFireworks}
+          />
         )}
 
         {/* Stage 4: Chinese New Year */}
-        {festivalId === 4 && (
+        {activeFestivalId === 4 && (
           <>
             <div
               className={`angpao ${angpaoOpen ? 'open' : ''}`}
@@ -297,7 +276,7 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
         )}
 
         {/* Stage 5: New Year */}
-        {festivalId === 5 && (
+        {activeFestivalId === 5 && (
           <>
             <div className="countdown">
               สวัสดีปีใหม่ {nextYear + 543} / {nextYear}
@@ -313,7 +292,7 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
         )}
       </div>
 
-      {blessing && (
+      {blessing && activeFestivalId !== 3 && (
         <article id="fest-result" className="result" aria-live="polite">
           <h3>{blessing.title}</h3>
           <p className="verse">{blessing.text}</p>

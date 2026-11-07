@@ -65,12 +65,23 @@ export default defineConfig(({ command }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm,woff,woff2}'],
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
       },
       devOptions: {
         enabled: false,
       },
     }),
   ],
+  build: {
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          three: ['three'],
+        },
+      },
+    },
+  },
   server: {
     host: '0.0.0.0',
     port: 3000,

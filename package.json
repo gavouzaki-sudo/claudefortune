@@ -11,8 +11,10 @@
     "test": "tsx tests/core.test.mjs && tsx --test tests/zodiac_and_chant.test.ts"
   },
   "dependencies": {
+    "@types/three": "^0.187.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.10",

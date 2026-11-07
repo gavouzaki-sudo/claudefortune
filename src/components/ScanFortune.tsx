@@ -158,11 +158,6 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
 
   return (
     <section id="tab-scan" className="ritual-frameless-stage tab" role="tabpanel">
-      <h2 className="title">สแกนดวงชะตา</h2>
-      <p className="lead privacy">
-        🔒 ภาพและลายเซ็นถูกประมวลผลในเบราว์เซอร์ของคุณเท่านั้น ไม่มีการอัปโหลดหรือจัดเก็บ และไม่ได้ระบุตัวตนบุคคล — ใช้เพื่อความบันเทิง
-      </p>
-
       <div className="scan-grid">
         {/* Interactive Handwriting / Signature Pad */}
         <div className="card scan-card-primary">

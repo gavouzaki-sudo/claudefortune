@@ -109,11 +109,6 @@ export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) =>
 
   return (
     <section id="love-fortune" className="ritual-frameless-stage love-fortune-panel">
-      <h2 className="title">💖 มณฑลดวงความรัก & คู่แท้แห่งโชคชะตา</h2>
-      <p className="lead">
-        สดับรับฟังเสียงคลื่นหัวใจใต้เงาจันทร์เพ็ญสีชมพู พร้อมพลังอารยธรรม <b>{session.systemName}</b> ({session.symbolName})
-      </p>
-
       {/* Relationship Status Selector */}
       <div className="status-selector-row">
         <label className="status-choice-label">สถานะหัวใจของคุณ:</label>
@@ -162,7 +157,7 @@ export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) =>
       {reading && (
         <div className="result love-result-card animate-rise">
           <div className="love-card-header">
-            <span className="love-badge">{reading.status}</span>
+            <span className="love-badge">{reading.status} ({session.symbolName})</span>
             <span className="love-score-badge">ความสมพงษ์ {reading.score}%</span>
           </div>
 
