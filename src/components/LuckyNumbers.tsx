@@ -15,9 +15,9 @@ interface LuckyNumbersProps {
 }
 
 export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onOpenCard }) => {
-  // Category: 0 = เลขท้าย 2 ตัว, 1 = เลขท้าย 3 ตัว
-  const [category, setCategory] = useState<0 | 1>(0);
-  const categoryRef = useRef<0 | 1>(category);
+  // Category: null = ยังไม่ได้เลือก (ถามก่อนเล่นเกม), 0 = เลข 2 หลัก, 1 = เลข 3 หลัก
+  const [category, setCategory] = useState<0 | 1 | null>(null);
+  const categoryRef = useRef<0 | 1 | null>(null);
   useEffect(() => {
     categoryRef.current = category;
   }, [category]);
@@ -30,7 +30,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
   const [isBurning, setIsBurning] = useState<boolean>(false);
   const [isJournalSaved, setIsJournalSaved] = useState<boolean>(false);
 
-  // Initialize or fetch numbers when category changes or on mount
+  // Initialize or fetch numbers when category changes
   const generateNumber = useCallback(
     (cat: 0 | 1) => {
       try {
@@ -60,15 +60,27 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
     }
   }, [category, generateNumber]);
 
-  // Handle category switch
-  const handleCategoryChange = (newCat: 0 | 1) => {
-    categoryRef.current = newCat;
-    setCategory(newCat);
+  // Handle category selection before playing the game
+  const handleSelectCategory = (cat: 0 | 1) => {
+    categoryRef.current = cat;
+    setCategory(cat);
     setBurnLevel(0);
     setIsJournalSaved(false);
-    generateNumber(newCat);
+    generateNumber(cat);
     setTimeout(() => {
-      onToast(`เริ่มขอเลขมงคล: ${newCat === 0 ? 'เลข 2 ตัว' : 'เลข 3 ตัว'}`);
+      onToast(`ตั้งจิตขอ ${cat === 0 ? 'เลข 2 หลัก' : 'เลข 3 หลัก'} สำเร็จ! เริ่มเล่นมินิเกมได้เลย`);
+    }, 0);
+  };
+
+
+  // Reset back to category selection prompt
+  const handleResetToCategorySelection = () => {
+    categoryRef.current = null;
+    setCategory(null);
+    setBurnLevel(0);
+    setIsJournalSaved(false);
+    setTimeout(() => {
+      onToast('กลับสู่ขั้นตอนเลือกเลข 2 หลัก หรือ 3 หลัก');
     }, 0);
   };
 
@@ -76,7 +88,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
   const handleWin = useCallback(() => {
     if (categoryRef.current === null) {
       setTimeout(() => {
-        onToast('⚠️ กรุณาเลือกประเภทเลข 2 ตัว หรือ 3 ตัว ด้านบนก่อน');
+        onToast('⚠️ กรุณาเลือกประเภทเลข 2 หลัก หรือ 3 หลักก่อน');
       }, 0);
       return;
     }
@@ -112,7 +124,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
 
   // Save to journal and open card modal
   const handleSaveAndShare = () => {
-    if (burnLevel < 3) return;
+    if (burnLevel < 3 || category === null) return;
     const detailsObj = {
       luckyNumbers: {
         twoDigits: category === 0 ? [luckyNumber] : ['89'],
@@ -123,7 +135,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
     if (!isJournalSaved) {
       saveJournalEntry({
         type: 'number',
-        title: `เลขมงคล (${category === 0 ? 'เลขท้าย 2 ตัว' : 'เลขท้าย 3 ตัว'})`,
+        title: `เลขมงคล (${category === 0 ? 'เลข 2 หลัก' : 'เลข 3 หลัก'})`,
         summary: `เลขเด่น: ${luckyNumber} — เผายันต์สำเร็จ`,
         details: detailsObj,
       });
@@ -133,7 +145,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
     if (onOpenCard) {
       onOpenCard({
         type: 'number',
-        title: `เลขมงคลประจำตัว (${category === 0 ? 'เลข 2 ตัว' : 'เลข 3 ตัว'})`,
+        title: `เลขมงคลประจำตัว (${category === 0 ? 'เลข 2 หลัก' : 'เลข 3 หลัก'})`,
         details: detailsObj,
       });
     }
@@ -146,8 +158,9 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
     }, 0);
   }, [onToast]);
 
-  // Reset to start a new burning talisman
+  // Reset to start a new burning talisman with currently selected category
   const handleReset = () => {
+    if (category === null) return;
     setBurnLevel(0);
     setIsJournalSaved(false);
     generateNumber(category);
@@ -162,79 +175,131 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
       className="ritual-frameless-stage tab lucky-numbers-section-stage"
       role="tabpanel"
     >
-      {/* 1. Mini Games Section: Shifted right to the very top (ชิดด้านบน) */}
-      <LuckyMiniGames
-        onWin={handleWin}
-        onLose={handleLose}
-        burnLevel={burnLevel}
-        category={category}
-        onCategoryChange={handleCategoryChange}
-      />
-
-      {/* 2. Visual Altar Stage (Incense, Burning Talisman, and Wealth Treasure) */}
-      {burnLevel === 3 ? (
-        <article className="result lucky-final-card" aria-live="polite">
-          <div className="lucky-final-header">
-            <span className="lucky-final-seal">✦ มงคลฤกษ์ ✦</span>
-            <h3>
-              เลขมงคลประจำตัวของคุณ:{' '}
-              <span className="highlight-lucky-number">{luckyNumber}</span>
-            </h3>
-            <p className="lucky-final-sub">
-              ประเภท: <b>{category === 0 ? 'เลขท้าย 2 ตัว' : 'เลขท้าย 3 ตัว'}</b> · เผาด้วยจิตศรัทธาครบ 3 ตา
+      {category === null ? (
+        /* Asking first before playing the game: 2 digits or 3 digits */
+        <div className="lucky-category-prompt-card" role="region" aria-label="เลือกประเภทเลขมงคล">
+          <div className="lucky-prompt-header">
+            <span className="lucky-prompt-seal">✦ ตั้งจิตอธิษฐานก่อนเริ่มพิธี ✦</span>
+            <h3 className="lucky-prompt-title">ท่านต้องการขอเลขมงคลกี่หลัก?</h3>
+            <p className="lucky-prompt-sub">
+              โปรดเลือกประเภทตัวเลขที่ท่านต้องการขอก่อนเริ่มเล่นมินิเกมจุดเพลิงเผายันต์ศาลเจ้า
             </p>
           </div>
 
-          {luckyResult?.note && (
-            <p className="verse lucky-verse-text">{luckyResult.note}</p>
-          )}
-
-          <div className="aspects lucky-advice-grid">
-            <div className="aspect">
-              <b>ทิศนำโชคประจำวัน</b>
-              <span>ทิศตะวันออกเฉียงเหนือ (ทิศทรัพย์มงคล)</span>
-            </div>
-            <div className="aspect">
-              <b>สีกระเป๋าสตางค์เสริมดวง</b>
-              <span>สีทองคำ, สีส้มอิฐ และสีเขียวมรกต</span>
-            </div>
-            <div className="aspect">
-              <b>ข้อแนะนำการใช้เลข</b>
-              <span>เหมาะสำหรับใช้เป็นเลขตั้งเป้าหมาย หรือรหัสเสริมพลังใจ</span>
-            </div>
-            <div className="aspect">
-              <b>คำเตือนมงคล</b>
-              <span>เพื่อความบันเทิงและกำลังใจ ไม่ใช่การทำนายสลากจริง</span>
-            </div>
-          </div>
-
-          <div className="row center" style={{ marginTop: '1.1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-            {onOpenCard && (
-              <button
-                type="button"
-                className="btn gold"
-                onClick={handleSaveAndShare}
-                title="บันทึกและแชร์การ์ดเลขมงคล"
-              >
-                <span>🎴 บันทึก&แชร์</span>
-              </button>
-            )}
+          <div className="lucky-choice-grid">
             <button
               type="button"
-              className="btn primary glow-gold"
-              onClick={handleReset}
+              className="lucky-choice-card choice-2-card"
+              onClick={() => handleSelectCategory(0)}
+              aria-label="เลือกขอเลข 2 หลัก"
             >
-              <span>🔥 เผาแผ่นยันต์ขอเลขใหม่</span>
+              <div className="choice-badge">2 หลัก</div>
+              <div className="choice-seal-icon">🏮</div>
+              <h4 className="choice-name">เลข 2 หลัก</h4>
+              <p className="choice-desc">เลขท้าย 2 ตัว · เสริมโชคลาภ คล่องตัว ทรัพย์หมุนเวียนดี</p>
+              <span className="choice-btn-cta">เลือกเลข 2 หลัก</span>
+            </button>
+
+            <button
+              type="button"
+              className="lucky-choice-card choice-3-card"
+              onClick={() => handleSelectCategory(1)}
+              aria-label="เลือกขอเลข 3 หลัก"
+            >
+              <div className="choice-badge">3 หลัก</div>
+              <div className="choice-seal-icon">✨</div>
+              <h4 className="choice-name">เลข 3 หลัก</h4>
+              <p className="choice-desc">เลขท้าย 3 ตัว · เสริมมหาบารมี โชคก้อนใหญ่ ทรัพย์ทวีคูณ</p>
+              <span className="choice-btn-cta">เลือกเลข 3 หลัก</span>
             </button>
           </div>
-        </article>
+
+          <div className="lucky-prompt-note">
+            <span>🕯️ เมื่อเลือกประเภทเลขแล้ว จะเข้าสู่มินิเกม (เป่ายิ้งฉุบ ตีภูต OX จับคู่ ไพ่ปิศาจ) ชนะครบ 3 ครั้งเพื่อเผายันต์เผยเลขมงคล</span>
+          </div>
+        </div>
       ) : (
-        <BurnTalisman
-          burnLevel={burnLevel}
-          luckyNumber={luckyNumber}
-          category={category}
-          isBurning={isBurning}
-        />
+        <>
+          {/* 1. Mini Games Section: Placed snug right at the top */}
+          <LuckyMiniGames
+            onWin={handleWin}
+            onLose={handleLose}
+          />
+
+          {/* 2. Visual Altar Stage (Incense, Burning Talisman, and Wealth Treasure) */}
+          {burnLevel === 3 ? (
+            <article className="result lucky-final-card" aria-live="polite">
+              <div className="lucky-final-header">
+                <span className="lucky-final-seal">✦ มงคลฤกษ์ ✦</span>
+                <h3>
+                  เลขมงคลประจำตัวของคุณ:{' '}
+                  <span className="highlight-lucky-number">{luckyNumber}</span>
+                </h3>
+                <p className="lucky-final-sub">
+                  ประเภท: <b>{category === 0 ? 'เลข 2 หลัก (เลขท้าย 2 ตัว)' : 'เลข 3 หลัก (เลขท้าย 3 ตัว)'}</b> · เผาด้วยจิตศรัทธาครบ 3 ตา
+                </p>
+              </div>
+
+              {luckyResult?.note && (
+                <p className="verse lucky-verse-text">{luckyResult.note}</p>
+              )}
+
+              <div className="aspects lucky-advice-grid">
+                <div className="aspect">
+                  <b>ทิศนำโชคประจำวัน</b>
+                  <span>ทิศตะวันออกเฉียงเหนือ (ทิศทรัพย์มงคล)</span>
+                </div>
+                <div className="aspect">
+                  <b>สีกระเป๋าสตางค์เสริมดวง</b>
+                  <span>สีทองคำ, สีส้มอิฐ และสีเขียวมรกต</span>
+                </div>
+                <div className="aspect">
+                  <b>ข้อแนะนำการใช้เลข</b>
+                  <span>เหมาะสำหรับใช้เป็นเลขตั้งเป้าหมาย หรือรหัสเสริมพลังใจ</span>
+                </div>
+                <div className="aspect">
+                  <b>คำเตือนมงคล</b>
+                  <span>เพื่อความบันเทิงและกำลังใจ ไม่ใช่การทำนายสลากจริง</span>
+                </div>
+              </div>
+
+              <div className="row center" style={{ marginTop: '1.1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                {onOpenCard && (
+                  <button
+                    type="button"
+                    className="btn gold"
+                    onClick={handleSaveAndShare}
+                    title="บันทึกและแชร์การ์ดเลขมงคล"
+                  >
+                    <span>🎴 บันทึก&แชร์</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn primary glow-gold"
+                  onClick={handleReset}
+                >
+                  <span>🔥 เผาแผ่นยันต์ขอเลขใหม่</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={handleResetToCategorySelection}
+                  title="เปลี่ยนไปเลือกเลข 2 หลัก หรือ 3 หลักใหม่"
+                >
+                  <span>🔄 เลือก 2 หรือ 3 หลักใหม่</span>
+                </button>
+              </div>
+            </article>
+          ) : (
+            <BurnTalisman
+              burnLevel={burnLevel}
+              luckyNumber={luckyNumber}
+              category={category}
+              isBurning={isBurning}
+            />
+          )}
+        </>
       )}
     </section>
   );

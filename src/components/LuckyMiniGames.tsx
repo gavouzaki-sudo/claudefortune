@@ -5,9 +5,6 @@ export type MiniGameType = 'rps' | 'mole' | 'ox' | 'match' | 'demon';
 interface LuckyMiniGamesProps {
   onWin: () => void;
   onLose: () => void;
-  burnLevel: number;
-  category: 0 | 1;
-  onCategoryChange: (cat: 0 | 1) => void;
 }
 
 /* =========================================================================
@@ -784,23 +781,20 @@ const DemonCardGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
 export const LuckyMiniGames: React.FC<LuckyMiniGamesProps> = ({
   onWin,
   onLose,
-  burnLevel,
-  category,
-  onCategoryChange,
 }) => {
   const [activeTab, setActiveTab] = useState<MiniGameType>('rps');
 
-  const tabs: { id: MiniGameType; name: string; icon: string }[] = [
-    { id: 'rps', name: 'เป่ายิ้งฉุบ', icon: '✊' },
-    { id: 'mole', name: 'ตีภูต', icon: '👻' },
-    { id: 'ox', name: 'OX', icon: '⭕' },
-    { id: 'match', name: 'จับคู่', icon: '🎴' },
-    { id: 'demon', name: 'ไพ่ปิศาจ', icon: '👹' },
+  const tabs: { id: MiniGameType; name: string }[] = [
+    { id: 'rps', name: 'เป่ายิ้งฉุบ' },
+    { id: 'mole', name: 'ตีภูต' },
+    { id: 'ox', name: 'OX' },
+    { id: 'match', name: 'จับคู่' },
+    { id: 'demon', name: 'ไพ่ปิศาจ' },
   ];
 
   return (
     <div className="lucky-minigames-section">
-      {/* 5 Mini-Game Selector Tabs: Positioned at the very top (ชิดด้านบน) with centered alignment */}
+      {/* 5 Mini-Game Selector Tabs: Centered text without emojis */}
       <div className="minigame-tab-bar" role="tablist" aria-label="เลือกมินิเกม">
         {tabs.map((tab) => (
           <button
@@ -811,37 +805,12 @@ export const LuckyMiniGames: React.FC<LuckyMiniGamesProps> = ({
             className={`minigame-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
             onClick={() => setActiveTab(tab.id)}
           >
-            <span className="tab-icon">{tab.icon}</span>
             <span className="tab-name">{tab.name}</span>
           </button>
         ))}
       </div>
 
-      {/* Sleek Centered Category Switcher Row: No blocking boxes or frames */}
-      <div className="lucky-cat-switcher-row" role="group" aria-label="เลือกประเภทเลขมงคล">
-        <span className="lucky-cat-switcher-label">ประเภทเลขมงคล:</span>
-        <button
-          type="button"
-          className={`lucky-cat-pill ${category === 0 ? 'active' : ''}`}
-          onClick={() => onCategoryChange(0)}
-          title="เลือกขอเลขท้าย 2 ตัว"
-        >
-          <span>🏮 เลขท้าย 2 ตัว</span>
-        </button>
-        <button
-          type="button"
-          className={`lucky-cat-pill ${category === 1 ? 'active' : ''}`}
-          onClick={() => onCategoryChange(1)}
-          title="เลือกขอเลขท้าย 3 ตัว"
-        >
-          <span>✨ เลขท้าย 3 ตัว</span>
-        </button>
-        <span className="lucky-burn-badge-inline" title="ระดับไฟเผายันต์">
-          🔥 เผาแล้ว {burnLevel}/3 ตา
-        </span>
-      </div>
-
-      {/* Active Game Stage: All text and interactive items centered */}
+      {/* Active Game Stage: Directly below and snug to the tab buttons */}
       <div className="minigame-stage-wrapper">
         {activeTab === 'rps' && <RPSGame onWin={onWin} onLose={onLose} />}
         {activeTab === 'mole' && <WhackMoleGame onWin={onWin} onLose={onLose} />}

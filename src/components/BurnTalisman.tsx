@@ -960,16 +960,15 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
       <div className="burn-status-bar">
         <div className="burn-status-text">
           <span className="burn-status-left">
+            {category !== null && (
+              <span className="burn-category-tag">
+                {category === 0 ? '🏮 2 หลัก' : '✨ 3 หลัก'}
+              </span>
+            )}
             <span className="burn-fire-icon">🔥</span>
             <span>
               เพลิงเผายันต์: <b className="burn-highlight">{burnLevel} / 3 ตา</b>
             </span>
-          </span>
-          <span className="burn-status-hint">
-            {burnLevel === 0 && 'ชนะมินิเกมด้านบนเพื่อเริ่มจุดไฟ'}
-            {burnLevel === 1 && 'ชนะตาที่ 1: เพลิงเริ่มติดขอบยันต์'}
-            {burnLevel === 2 && 'ชนะตาที่ 2: เพลิงลามใจกลางควันโขมง'}
-            {burnLevel === 3 && 'ชนะตาที่ 3: เผาไหม้สมบูรณ์! ปรากฏเลขมงคล'}
           </span>
         </div>
         <div className="burn-meter-track" aria-hidden="true">
