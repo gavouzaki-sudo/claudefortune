@@ -153,14 +153,22 @@ export async function getLatestLotteryResult(): Promise<LotteryDisplayData> {
       });
 
       if (res.ok) {
-        const contentType = res.headers.get('content-type') || '';
+        const contentType = (res.headers.get('content-type') || '').toLowerCase();
         // Guard against static hosting / SPA fallback returning index.html
-        if (!contentType.includes('json')) {
+        if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
           continue;
         }
-        const json = await res.json();
-        if (json.status && json.response) {
-          return normalizeApiResponse(json);
+        const text = await res.text();
+        if (text.trim().startsWith('<')) {
+          continue;
+        }
+        try {
+          const json = JSON.parse(text);
+          if (json.status && json.response) {
+            return normalizeApiResponse(json);
+          }
+        } catch {
+          continue;
         }
       }
     } catch (err) {
@@ -215,13 +223,21 @@ export async function getLotteryResultByDate(
       });
 
       if (res.ok) {
-        const contentType = res.headers.get('content-type') || '';
-        if (!contentType.includes('json')) {
+        const contentType = (res.headers.get('content-type') || '').toLowerCase();
+        if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
           continue;
         }
-        const json = await res.json();
-        if (json.status && json.response?.result) {
-          return normalizeApiResponse(json);
+        const text = await res.text();
+        if (text.trim().startsWith('<')) {
+          continue;
+        }
+        try {
+          const json = JSON.parse(text);
+          if (json.status && json.response?.result) {
+            return normalizeApiResponse(json);
+          }
+        } catch {
+          continue;
         }
       }
     } catch (err) {
@@ -233,7 +249,7 @@ export async function getLotteryResultByDate(
     return { ...BACKUP_LATEST_DRAW };
   }
 
-  throw new Error(`ไม่พบข้อมูลผลการออกรางวัลของงวดวันที่ ${payload.date}/${payload.month}/${yearBe}`);
+  throw new Error(`ไม่พบข้อมูลผลการออกรางวัลของงวดวันที่ ${payload.date}/${payload.month}/${yearBe} (โปรดตรวจสอบการเชื่อมต่อเครือข่าย หรือเซิร์ฟเวอร์กองสลากฯ)`);
 }
 
 /**

@@ -542,20 +542,27 @@ class SpiritualSpeechEngine {
 
       const preset = SPIRITUAL_PRESETS[this.state.activePresetId] || SPIRITUAL_PRESETS.sinsei;
       const targetSpeed = this.state.googleTtsSpeed || 1.2;
-      try {
-        audio.playbackRate = targetSpeed;
-      } catch {}
+      const applyPlaybackRate = (rate: number) => {
+        try {
+          audio.defaultPlaybackRate = rate;
+          audio.playbackRate = rate;
+        } catch (err) {
+          logger.debug('playbackRate assignment constrained (e.g. Low Power Mode):', err);
+          try {
+            audio.defaultPlaybackRate = 1.0;
+            audio.playbackRate = 1.0;
+          } catch {}
+        }
+      };
+
+      applyPlaybackRate(targetSpeed);
 
       // Keep playbackRate sticky across browser media load/metadata events
       audio.onloadedmetadata = () => {
-        try {
-          audio.playbackRate = targetSpeed;
-        } catch {}
+        applyPlaybackRate(targetSpeed);
       };
       audio.onplay = () => {
-        try {
-          audio.playbackRate = targetSpeed;
-        } catch {}
+        applyPlaybackRate(targetSpeed);
       };
 
       audio.onended = () => {
@@ -571,6 +578,7 @@ class SpiritualSpeechEngine {
         // If the local proxy path had an issue, attempt direct endpoint once
         if (audio.src && audio.src.includes('/api/tts')) {
           audio.src = directTtsUrl;
+          applyPlaybackRate(targetSpeed);
           audio.play().catch(() => {
             this.startMelodicFallback(
               index,
@@ -591,7 +599,19 @@ class SpiritualSpeechEngine {
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
           logger.warn('Audio TTS play catch:', err);
-          this.startMelodicFallback(index);
+          // If play failed, attempt playback at standard 1.0 rate in case rate > 1.0 was restricted by Low Power Mode
+          try {
+            audio.defaultPlaybackRate = 1.0;
+            audio.playbackRate = 1.0;
+            const retryPromise = audio.play();
+            if (retryPromise !== undefined) {
+              retryPromise.catch(() => {
+                this.startMelodicFallback(index);
+              });
+            }
+          } catch {
+            this.startMelodicFallback(index);
+          }
         });
       }
     } catch (err) {

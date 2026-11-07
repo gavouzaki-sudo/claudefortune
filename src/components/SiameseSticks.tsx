@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Bridge } from '../bridge';
 import type { StickResult } from '../types';
 import { PuaPoi } from './PuaPoi';
@@ -32,10 +32,15 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
   const shakeValueRef = useRef(0);
   const shakeRawRef = useRef(0);
   const shakeTimeoutRef = useRef<number | null>(null);
+  const buttonIntervalRef = useRef<number | null>(null);
   const lastPointerRef = useRef<[number, number]>([0, 0]);
   const resultRef = useRef<HTMLDivElement>(null);
 
   const finishShake = useCallback(async () => {
+    if (buttonIntervalRef.current) {
+      clearInterval(buttonIntervalRef.current);
+      buttonIntervalRef.current = null;
+    }
     setBusy(true);
     await new Promise((r) => setTimeout(r, 450));
     setIsShaking(false);
@@ -93,15 +98,31 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
   );
 
   const handleButtonClick = () => {
-    if (busy) return;
-    const iv = setInterval(() => {
+    if (busy || buttonIntervalRef.current) return;
+    buttonIntervalRef.current = window.setInterval(() => {
       if (shakeValueRef.current >= 100) {
-        clearInterval(iv);
+        if (buttonIntervalRef.current) {
+          clearInterval(buttonIntervalRef.current);
+          buttonIntervalRef.current = null;
+        }
       } else {
         addShake(3 + Math.random() * 1.5);
       }
     }, 40);
   };
+
+  useEffect(() => {
+    return () => {
+      if (buttonIntervalRef.current) {
+        clearInterval(buttonIntervalRef.current);
+        buttonIntervalRef.current = null;
+      }
+      if (shakeTimeoutRef.current) {
+        clearTimeout(shakeTimeoutRef.current);
+        shakeTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     try {
@@ -120,6 +141,10 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
   };
 
   const handleResetToShake = () => {
+    if (buttonIntervalRef.current) {
+      clearInterval(buttonIntervalRef.current);
+      buttonIntervalRef.current = null;
+    }
     spiritualSpeechEngine.stop();
     setStep('cylinder');
     setFallenNum(null);

@@ -76,11 +76,15 @@ class WasmCoreEngine implements ICoreEngine {
     this.mem = this.x.memory;
   }
 
+  private get _buffer(): ArrayBuffer {
+    return (this.x.memory || this.mem).buffer;
+  }
+
   private _bytes(u8: Uint8Array): number {
     this.x.wasm_reset();
     const p = this.x.wasm_alloc(Math.max(u8.length, 1));
     if (!p) throw new Error("หน่วยความจำ Wasm ไม่พอ");
-    new Uint8Array(this.mem.buffer, p, u8.length).set(u8);
+    new Uint8Array(this._buffer, p, u8.length).set(u8);
     return p;
   }
 
@@ -90,7 +94,7 @@ class WasmCoreEngine implements ICoreEngine {
       err.code = n;
       throw err;
     }
-    const s = dec.decode(new Uint8Array(this.mem.buffer, this.x.out_ptr(), n));
+    const s = dec.decode(new Uint8Array(this._buffer, this.x.out_ptr(), n));
     return JSON.parse(s) as T;
   }
 

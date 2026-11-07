@@ -171,7 +171,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
       </div>
 
       {/* ชุดไพ่ยิปซี (Tarot Cards Table) */}
-      <div id="tarot-table" className="tarot-table" aria-live="polite">
+      <div id="tarot-table" className={`tarot-table spread-${spread}`} aria-live="polite">
         {activeCards.map((card, idx) => {
           const isFlipped = !!flipped[idx];
           const label = positions[idx] || `ใบที่ ${idx + 1}`;

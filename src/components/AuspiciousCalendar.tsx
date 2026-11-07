@@ -107,10 +107,12 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     if (!isMobile) {
       return allMonthDays[0].dayOfWeek;
     }
-    const firstDow = allMonthDays[0].dayOfWeek;
-    const colIdx = displayedWeekdays.findIndex((w) => w.dayOfWeek === firstDow);
+    // Mobile 5-column grid: align to the first visible day of the month
+    const firstVisible = displayedMonthDays[0];
+    if (!firstVisible) return 0;
+    const colIdx = displayedWeekdays.findIndex((w) => w.dayOfWeek === firstVisible.dayOfWeek);
     return colIdx >= 0 ? colIdx : 0;
-  }, [allMonthDays, isMobile, displayedWeekdays]);
+  }, [allMonthDays, displayedMonthDays, isMobile, displayedWeekdays]);
 
   // The engine is the single source of truth for birthday/Thaksa relations.
   // Calculate once per day and reuse in filters, reports, cards and the detail modal.

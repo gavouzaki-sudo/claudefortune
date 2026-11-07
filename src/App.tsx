@@ -31,6 +31,7 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 import { ambientSoundEngine } from './utils/ambientSoundscapes';
 import { getJournalEntries, subscribeJournal } from './utils/fortuneJournal';
 import { spiritualSpeechEngine } from './utils/spiritualSpeech';
+import { stopChant } from './utils/chantAudio';
 import type { CardData } from './utils/luckyCardCanvas';
 import type { DivinationTopic } from './types';
 
@@ -190,6 +191,9 @@ export const App: React.FC = () => {
   }, [theme, bridge]);
 
   const handleSessionChange = () => {
+    spiritualSpeechEngine.stop();
+    stopChant();
+    ambientSoundEngine.setSoundscape('none');
     safeStorage.remove('session', 'shrine.session');
     setSession(null);
   };
@@ -197,6 +201,8 @@ export const App: React.FC = () => {
   const festInfo = bridge?.festivalInfo(festivalId);
 
   const handleOpenAuspicious = useCallback(() => {
+    spiritualSpeechEngine.stop();
+    stopChant();
     if (!session && bridge) {
       const symName = 'มะเมีย (ม้าแก้ว)';
       const z = bridge.initSession('มะเมีย', 2569, 6);
@@ -318,6 +324,10 @@ export const App: React.FC = () => {
               <HorizontalRitualMenu
                 activeTopic={tab}
                 onSelectTopic={(selected) => {
+                  if (selected !== tab) {
+                    spiritualSpeechEngine.stop();
+                    stopChant();
+                  }
                   if (selected !== 'meditation') {
                     ambientSoundEngine.setSoundscape('none');
                   }

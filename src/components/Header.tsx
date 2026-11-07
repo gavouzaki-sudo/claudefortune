@@ -13,7 +13,7 @@ export const Header: React.FC<HeaderProps> = ({
   hasActiveSession,
 }) => {
   const { lang, setLang, t } = useLanguage();
-  const [muted, setMuted] = useState<boolean>(isChantMuted());
+  const [muted, setMuted] = useState<boolean>(() => isChantMuted());
 
   // Sync chant mute state
   useEffect(() => {

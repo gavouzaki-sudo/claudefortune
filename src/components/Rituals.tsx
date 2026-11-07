@@ -73,6 +73,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   const [lanternResult, setLanternResult] = useState<OfferingResult | null>(null);
   const [lanternFlying, setLanternFlying] = useState(false);
   const [lanternStyle, setLanternStyle] = useState<{ left: string; dx: string } | null>(null);
+  const lanternTimerRef = useRef<number | null>(null);
 
   // Chong state
   const [chongZodiac, setChongZodiac] = useState(userZodiac >= 0 ? userZodiac : 0);
@@ -86,6 +87,18 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
       setChongZodiac(userZodiac);
     }
   }, [userZodiac]);
+
+  useEffect(() => {
+    return () => {
+      if (lanternTimerRef.current) {
+        clearTimeout(lanternTimerRef.current);
+        lanternTimerRef.current = null;
+      }
+      if (candleRafRef.current) {
+        cancelAnimationFrame(candleRafRef.current);
+      }
+    };
+  }, []);
 
   // Candle Logic
   const loopCandle = useCallback(() => {
@@ -151,8 +164,10 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
       onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
     }
 
-    setTimeout(() => {
+    if (lanternTimerRef.current) clearTimeout(lanternTimerRef.current);
+    lanternTimerRef.current = window.setTimeout(() => {
       setLanternFlying(false);
+      lanternTimerRef.current = null;
     }, 6200);
   };
 

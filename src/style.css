@@ -6245,6 +6245,51 @@ body[data-theme="native_american"] {
   }
 }
 
+@media (max-width: 360px) {
+  .tarot-table {
+    gap: 0.35rem;
+    padding: 0 0.15rem;
+  }
+  .tslot {
+    width: 80px;
+    max-width: 80px;
+  }
+  .tslot .pos {
+    font-size: 0.68rem;
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px;
+  }
+  .tcard {
+    width: 78px;
+    height: 126px;
+  }
+  .tfront .glyph {
+    font-size: 1.3rem;
+  }
+  .tfront .nm {
+    font-size: 0.66rem;
+    line-height: 1.15;
+    padding: 0 0.1rem;
+  }
+  .tfront .en {
+    font-size: 0.5rem;
+  }
+  .tmean {
+    max-width: 78px;
+    font-size: 0.6rem;
+    line-height: 1.2;
+    padding: 0.15rem;
+  }
+  .tback .pat {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+
 .lang-option:hover,
 .lang-option.active {
   background: rgba(232, 185, 74, 0.18);

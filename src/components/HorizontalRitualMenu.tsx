@@ -303,17 +303,19 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     activeTopicRef.current = targetTopic;
     onSelectTopic(targetTopic);
 
+    // Disabling scroll snap via is-navigating must take effect before scrollTo is called
+    void el.offsetWidth;
+
     const targetCard = el.querySelector<HTMLElement>(
       `[data-topic="${targetTopic}"][data-copy="${nextCopy}"]`
     );
 
-    if (targetCard) {
-      const targetPos = getCardCenterPos(el, targetCard);
-      el.scrollTo({ left: targetPos, behavior: 'smooth' });
-    }
-
-    // After animation settles, silently normalize back to the exact middle copy (copy 2)
-    navigateTimeoutRef.current = window.setTimeout(() => {
+    const finishNav = () => {
+      if (navigateTimeoutRef.current) {
+        clearTimeout(navigateTimeoutRef.current);
+        navigateTimeoutRef.current = null;
+      }
+      el.removeEventListener('scrollend', finishNav);
       el.classList.remove('is-navigating');
       isNavigatingRef.current = false;
 
@@ -327,7 +329,16 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
           activeCopyRef.current = 2;
         }
       }
-    }, 380);
+    };
+
+    requestAnimationFrame(() => {
+      if (targetCard) {
+        const targetPos = getCardCenterPos(el, targetCard);
+        el.scrollTo({ left: targetPos, behavior: 'smooth' });
+      }
+      el.addEventListener('scrollend', finishNav, { once: true });
+      navigateTimeoutRef.current = window.setTimeout(finishNav, 550);
+    });
   };
 
   // Mouse Drag-to-Scroll handlers
@@ -392,10 +403,14 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     activeTopicRef.current = topic;
     onSelectTopic(topic);
 
-    const targetPos = getCardCenterPos(el, card);
-    el.scrollTo({ left: targetPos, behavior: 'smooth' });
+    void el.offsetWidth;
 
-    navigateTimeoutRef.current = window.setTimeout(() => {
+    const finishNav = () => {
+      if (navigateTimeoutRef.current) {
+        clearTimeout(navigateTimeoutRef.current);
+        navigateTimeoutRef.current = null;
+      }
+      el.removeEventListener('scrollend', finishNav);
       el.classList.remove('is-navigating');
       isNavigatingRef.current = false;
 
@@ -409,7 +424,14 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
           activeCopyRef.current = 2;
         }
       }
-    }, 380);
+    };
+
+    requestAnimationFrame(() => {
+      const targetPos = getCardCenterPos(el, card);
+      el.scrollTo({ left: targetPos, behavior: 'smooth' });
+      el.addEventListener('scrollend', finishNav, { once: true });
+      navigateTimeoutRef.current = window.setTimeout(finishNav, 550);
+    });
   };
 
   // Clean up timers on unmount
