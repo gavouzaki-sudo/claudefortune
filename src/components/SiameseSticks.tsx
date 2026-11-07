@@ -199,51 +199,9 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
 
   return (
     <section id="tab-stick" className="ritual-frameless-stage tab" role="tabpanel">
-      {/* Step Indicator Header */}
-      <div className="stick-step-progress" aria-label="ขั้นตอนพิธีกรรมเซียมซี">
-        <button
-          type="button"
-          className={`step-pill ${step === 'cylinder' ? 'active' : ''}`}
-          onClick={handleResetToShake}
-        >
-          <span className="step-num">1</span>
-          <span>เขย่าเซียมซี</span>
-        </button>
-        <span className="step-divider">&gt;</span>
-        <button
-          type="button"
-          className={`step-pill ${step === 'puapoi' ? 'active' : ''}`}
-          onClick={() => {
-            if (result) setStep('puapoi');
-          }}
-          disabled={!result}
-        >
-          <span className="step-num">2</span>
-          <span>เสี่ยงปัวปวย (筊杯)</span>
-        </button>
-        <span className="step-divider">&gt;</span>
-        <button
-          type="button"
-          className={`step-pill ${step === 'prophecy' ? 'active' : ''}`}
-          onClick={() => {
-            if (result && puaPoiVerified) setStep('prophecy');
-          }}
-          disabled={!result || !puaPoiVerified}
-          title={!puaPoiVerified ? 'ต้องเสี่ยงทายไม้ปัวปวยจนเทพเจ้าเห็นชอบก่อน' : 'อ่านคำทำนาย'}
-        >
-          <span className="step-num">3</span>
-          <span>อ่านคำทำนาย</span>
-        </button>
-      </div>
-
       {/* PHASE 1: CYLINDER SHAKING */}
       {step === 'cylinder' && (
         <div className="stick-cylinder-phase">
-          <h2 className="title">เสี่ยงเซียมซีโบราณ</h2>
-          <p className="lead">
-            ตั้งจิตอธิษฐาน แล้วเขย่ากระบอกจนไม้เซียมซีหล่นออกมา — กดปุ่มเขย่า หรือใช้นิ้วลาก/ปัดที่กระบอกเซียมซี
-          </p>
-
           <div className="stick-stage">
             <div
               id="cylinder"
@@ -286,6 +244,9 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
               เขย่าเซียมซี
             </button>
           </div>
+          <p className="stick-hint-sub">
+            ตั้งจิตอธิษฐานแล้วกดปุ่มเขย่า หรือใช้นิ้วลาก/ปัดที่กระบอกเซียมซี
+          </p>
         </div>
       )}
 
@@ -332,7 +293,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
               }}
               title="แสดงเฉพาะข้อความคำทำนาย"
             >
-              <span>📖 เฉพาะข้อความ (อ่าน)</span>
+              <span>📖 อ่าน</span>
             </button>
             <button
               type="button"
@@ -355,7 +316,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
               }}
               title="สุ่มเสียงและเริ่มอ่านออกเสียงทันที"
             >
-              <span>🔊 อ่าน</span>
+              <span>🔊 ฟัง</span>
             </button>
           </div>
 
@@ -367,9 +328,9 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
                 result.verse,
                 ...result.aspects.map((a) => `${a.name} ${a.text}`),
               ].join('\n')}
-              title={`เสียงสวดบทกลอนเซียมซี ใบที่ ${result.stick}`}
-              subtitle="สดับรับฟังเสียงสวดบทกลอนแบบช้าๆ กังวาน นุ่มนวล เสมือนซินแสผู้เฒ่าอ่านให้ฟัง"
+              subtitle="สดับรับฟัง"
               initialExpanded={true}
+              showTextLines={false}
             />
           )}
 

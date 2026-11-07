@@ -279,7 +279,6 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
       {/* Compact Header for Mobile & Desktop */}
       <div className="pua-poi-header">
         <div className="pua-poi-badge-row">
-          <span className="pua-badge-tradition">พิธีกรรมศาลเจ้าโบราณ</span>
           <span className="pua-stick-tag">
             ไม้เซียมซี: <b>ใบที่ {stickNumber}</b> {stickTitle ? `· ${stickTitle}` : ''}
           </span>
@@ -290,13 +289,13 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
             title="ปัวปวยคืออะไร?"
             aria-label="คำอธิบายไม้ปัวปวย"
           >
-            ❓ ความหมายปัวปวย
+            ปัวปวย
           </button>
         </div>
 
         <h3 className="pua-title">เสี่ยงทายไม้ปัวปวย (筊杯)</h3>
         <p className="pua-instruction">
-          ตั้งจิตอธิษฐานถามเทพเจ้าว่า <i>&ldquo;เซียมซีใบที่ {stickNumber} นี้ ใช่คำทำนายของข้าพเจ้าหรือไม่?&rdquo;</i> แล้วโยนไม้คว่ำหงายเพื่อขอยืนยัน
+          ตั้งจิตอธิษฐานถามเทพเจ้าว่า <i>&ldquo;เซียมซีใบที่ {stickNumber} นี้ ใช่คำทำนายของข้าพเจ้าหรือไม่?&rdquo;</i>
         </p>
 
         {showInfo && (

@@ -15,9 +15,9 @@ interface LuckyNumbersProps {
 }
 
 export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onOpenCard }) => {
-  // Category: 0 = เลขท้าย 2 ตัว, 1 = เลขท้าย 3 ตัว, null = ค่าเริ่มต้น ยังไม่เลือก
-  const [category, setCategory] = useState<0 | 1 | null>(null);
-  const categoryRef = useRef<0 | 1 | null>(category);
+  // Category: 0 = เลขท้าย 2 ตัว, 1 = เลขท้าย 3 ตัว
+  const [category, setCategory] = useState<0 | 1>(0);
+  const categoryRef = useRef<0 | 1>(category);
   useEffect(() => {
     categoryRef.current = category;
   }, [category]);
@@ -146,62 +146,32 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
     }, 0);
   }, [onToast]);
 
-  // Reset to start a new burning talisman (returns to unselected state)
+  // Reset to start a new burning talisman
   const handleReset = () => {
     setBurnLevel(0);
     setIsJournalSaved(false);
-    setCategory(null);
+    generateNumber(category);
     setTimeout(() => {
-      onToast('รีเซ็ตพร้อมเลือกประเภทเลขมงคลใหม่');
+      onToast('รีเซ็ตพร้อมเริ่มเผายันต์ขอเลขใหม่');
     }, 0);
   };
 
   return (
     <section
       id="tab-number"
-      className={`ritual-frameless-stage tab lucky-numbers-section-stage ${
-        category !== null ? 'has-category-selected' : 'awaiting-category'
-      }`}
+      className="ritual-frameless-stage tab lucky-numbers-section-stage"
       role="tabpanel"
     >
-      {/* Category Selector Bar: Only visible when NOT yet selected (ค่าเริ่มต้น ยังไม่เลือก) */}
-      {/* Button 2 digits on far LEFT, Button 3 digits on far RIGHT */}
-      {category === null ? (
-        <div className="lucky-choose-category-bar" role="group" aria-label="เลือกประเภทเลขมงคล">
-          <button
-            type="button"
-            className="btn gold btn-choose-cat btn-cat-left"
-            onClick={() => handleCategoryChange(0)}
-            title="เลือกเลขท้าย 2 ตัว"
-          >
-            <span>🏮 เลข 2 ตัว</span>
-          </button>
-
-          <span className="choose-cat-center-hint">
-            แตะเลือกประเภทเลขมงคล
-          </span>
-
-          <button
-            type="button"
-            className="btn gold btn-choose-cat btn-cat-right"
-            onClick={() => handleCategoryChange(1)}
-            title="เลือกเลขท้าย 3 ตัว"
-          >
-            <span>✨ เลข 3 ตัว</span>
-          </button>
-        </div>
-      ) : null}
-
-      {/* Talisman Burning Stage (When chosen, automatically moves up to touch top edge) */}
-      <BurnTalisman
+      {/* 1. Mini Games Section: Shifted right to the very top (ชิดด้านบน) */}
+      <LuckyMiniGames
+        onWin={handleWin}
+        onLose={handleLose}
         burnLevel={burnLevel}
-        luckyNumber={luckyNumber}
         category={category}
-        isBurning={isBurning}
-        onResetCategory={() => setCategory(null)}
+        onCategoryChange={handleCategoryChange}
       />
 
-      {/* When fully burned (3/3): Show Complete Prophecy Card */}
+      {/* 2. Visual Altar Stage (Incense, Burning Talisman, and Wealth Treasure) */}
       {burnLevel === 3 ? (
         <article className="result lucky-final-card" aria-live="polite">
           <div className="lucky-final-header">
@@ -258,22 +228,12 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
             </button>
           </div>
         </article>
-      ) : category === null ? (
-        /* When NOT yet chosen (category === null): Lock mini-games and guide user to select 2 or 3 digits first */
-        <div className="lucky-choose-prompt-card" role="region" aria-label="คำแนะนำเลือกเลขมงคล">
-          <div className="prompt-glow-ring">🏮</div>
-          <h4 className="prompt-title">กรุณาเลือกประเภทเลขมงคลด้านบน</h4>
-          <p className="prompt-text">
-            แตะปุ่ม <b>"🏮 เลข 2 ตัว"</b> (ซ้าย) หรือ <b>"✨ เลข 3 ตัว"</b> (ขวา) ด้านบน<br />
-            เพื่อปลดล็อกมินิเกมจุดไฟเผายันต์ขอเลขมงคล
-          </p>
-        </div>
       ) : (
-        /* While burning (0..2) and category is chosen: Show the 5 Mini-Games Section */
-        <LuckyMiniGames
-          onWin={handleWin}
-          onLose={handleLose}
+        <BurnTalisman
           burnLevel={burnLevel}
+          luckyNumber={luckyNumber}
+          category={category}
+          isBurning={isBurning}
         />
       )}
     </section>

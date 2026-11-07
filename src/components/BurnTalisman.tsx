@@ -925,33 +925,6 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
       className={`talisman-burn-stage ${isBurning ? 'is-burning-active' : ''}`}
       ref={containerRef}
     >
-      {/* Burn Progress Status Header */}
-      <div className="burn-status-bar">
-        <div className="burn-status-text">
-          <span className="burn-status-left">
-            <span className="burn-fire-icon">🔥</span>
-            <span>
-              เพลิงเผายันต์: <b className="burn-highlight">{burnLevel} / 3 ตา</b>
-            </span>
-          </span>
-          <span className="burn-status-hint">
-            {burnLevel === 0 &&
-              (category === null
-                ? 'เลือกเลข 2 ตัว (ซ้าย) หรือ 3 ตัว (ขวา) ด้านบน'
-                : 'ชนะมินิเกมด้านล่างเพื่อเริ่มจุดไฟ')}
-            {burnLevel === 1 && 'ชนะตาที่ 1: เพลิงเริ่มติดขอบยันต์'}
-            {burnLevel === 2 && 'ชนะตาที่ 2: เพลิงลามใจกลางควันโขมง'}
-            {burnLevel === 3 && 'ชนะตาที่ 3: เผาไหม้สมบูรณ์! ปรากฏเลขมงคล'}
-          </span>
-        </div>
-        <div className="burn-meter-track" aria-hidden="true">
-          <div
-            className={`burn-meter-fill burn-lv-${burnLevel}`}
-            style={{ width: `${burnPercent}%` }}
-          />
-        </div>
-      </div>
-
       {/* Canvas Frame: Sacred Altar [ธูป(ซ้าย) | ยันต์(กลาง) | กองเงินทองเปล่งประกาย(ขวา)] */}
       <div
         className="talisman-canvas-frame"
@@ -981,6 +954,30 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
             burnLevel === 3 ? luckyNumber : 'ยังไม่เปิดเผย'
           }`}
         />
+      </div>
+
+      {/* Burn Progress Status: Positioned directly below the Talisman image */}
+      <div className="burn-status-bar">
+        <div className="burn-status-text">
+          <span className="burn-status-left">
+            <span className="burn-fire-icon">🔥</span>
+            <span>
+              เพลิงเผายันต์: <b className="burn-highlight">{burnLevel} / 3 ตา</b>
+            </span>
+          </span>
+          <span className="burn-status-hint">
+            {burnLevel === 0 && 'ชนะมินิเกมด้านบนเพื่อเริ่มจุดไฟ'}
+            {burnLevel === 1 && 'ชนะตาที่ 1: เพลิงเริ่มติดขอบยันต์'}
+            {burnLevel === 2 && 'ชนะตาที่ 2: เพลิงลามใจกลางควันโขมง'}
+            {burnLevel === 3 && 'ชนะตาที่ 3: เผาไหม้สมบูรณ์! ปรากฏเลขมงคล'}
+          </span>
+        </div>
+        <div className="burn-meter-track" aria-hidden="true">
+          <div
+            className={`burn-meter-fill burn-lv-${burnLevel}`}
+            style={{ width: `${burnPercent}%` }}
+          />
+        </div>
       </div>
     </div>
   );

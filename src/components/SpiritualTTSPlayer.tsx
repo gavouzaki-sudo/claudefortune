@@ -15,12 +15,15 @@ interface SpiritualTTSPlayerProps {
   subtitle?: string;
   /** Optional whether expanded */
   initialExpanded?: boolean;
+  /** Whether to show duplicate lines of text in the player (defaults to false) */
+  showTextLines?: boolean;
 }
 
 export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
   textToRead,
-  title = 'สดับฟังคำทำนายด้วยเสียงสวด / ธรรมบรรยาย',
-  subtitle = 'เสียงอ่านภาษาไทยผ่านระบบเสียงสังเคราะห์ธรรมชาติ (Google TTS & Web Speech API)',
+  title,
+  subtitle,
+  showTextLines = false,
 }) => {
   const [speechState, setSpeechState] = useState<SpiritualSpeechState>(
     spiritualSpeechEngine.getState()
@@ -76,8 +79,14 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
             {speechState.isUnsupported ? '⚠️' : isCurrentTextActive ? '📿' : '🎙️'}
           </span>
           <div>
-            <h4 className="spiritual-tts-title">{title}</h4>
-            <p className="spiritual-tts-sub">{subtitle}</p>
+            {title ? (
+              <>
+                <h4 className="spiritual-tts-title">{title}</h4>
+                {subtitle && <p className="spiritual-tts-sub">{subtitle}</p>}
+              </>
+            ) : (
+              <h4 className="spiritual-tts-title">{subtitle || 'สดับรับฟัง'}</h4>
+            )}
           </div>
         </div>
 
@@ -227,56 +236,58 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
           </div>
         ) : null}
 
-        {/* Synchronized Recitation Verse Highlight */}
-        <div className="spiritual-verse-box">
-          <div className="spiritual-verse-ambient-indicator">
-            {isCurrentTextActive && !speechState.isPaused ? (
-              <div className="audio-wave-bars" aria-hidden="true">
-                <span className="bar b1" />
-                <span className="bar b2" />
-                <span className="bar b3" />
-                <span className="bar b4" />
-                <span className="bar b5" />
-              </div>
-            ) : (
-              <span className="static-meditation-dot">🕯️</span>
-            )}
-            <span className="verse-reading-status">
-              {speechState.isUnsupported
-                ? '⚠️ ไม่รองรับเสียงพูด'
-                : isCurrentTextActive
-                ? speechState.isPaused
+        {/* Synchronized Recitation Verse Highlight - only displayed when active or unsupported */}
+        {(isCurrentTextActive || speechState.isUnsupported) && (
+          <div className="spiritual-verse-box">
+            <div className="spiritual-verse-ambient-indicator">
+              {isCurrentTextActive && !speechState.isPaused ? (
+                <div className="audio-wave-bars" aria-hidden="true">
+                  <span className="bar b1" />
+                  <span className="bar b2" />
+                  <span className="bar b3" />
+                  <span className="bar b4" />
+                  <span className="bar b5" />
+                </div>
+              ) : (
+                <span className="static-meditation-dot">🕯️</span>
+              )}
+              <span className="verse-reading-status">
+                {speechState.isUnsupported
+                  ? '⚠️ ไม่รองรับเสียงพูด'
+                  : speechState.isPaused
                   ? '⏸ พักการอ่านชั่วคราว — กดปุ่มเพื่ออ่านต่อ'
                   : speechState.engineType === 'google'
                   ? `🌐 กำลังอ่านคำทำนายด้วยเสียง Google Translate (ท่วงทำนอง${activePreset.title})...`
-                  : `📿 กำลังสวดบรรยายด้วยเสียง${activePreset.title}...`
-                : 'กดปุ่มด้านบนเพื่อสดับรับฟังเสียง'}
-            </span>
-          </div>
+                  : `📿 กำลังสวดบรรยายด้วยเสียง${activePreset.title}...`}
+              </span>
+            </div>
 
-          <div className="spiritual-lines-display">
-            {lines.map((line, idx) => {
-              const isLineActive = isCurrentTextActive && speechState.currentLineIndex === idx;
-              const isPassed = isCurrentTextActive && speechState.currentLineIndex > idx;
-              return (
-                <p
-                  key={idx}
-                  className={`spiritual-verse-line ${isLineActive ? 'line-reciting' : ''} ${
-                    isPassed ? 'line-passed' : ''
-                  }`}
-                  onClick={() => {
-                    // Click line to jump recitation directly
-                    spiritualSpeechEngine.speak(textToRead, { startLine: idx, withChime: false });
-                  }}
-                  title="คลิกเพื่อเริ่มอ่านจากวรรคนี้"
-                >
-                  {isLineActive && <span className="line-golden-cursor">✨</span>}
-                  {line}
-                </p>
-              );
-            })}
+            {showTextLines && (
+              <div className="spiritual-lines-display">
+                {lines.map((line, idx) => {
+                  const isLineActive = isCurrentTextActive && speechState.currentLineIndex === idx;
+                  const isPassed = isCurrentTextActive && speechState.currentLineIndex > idx;
+                  return (
+                    <p
+                      key={idx}
+                      className={`spiritual-verse-line ${isLineActive ? 'line-reciting' : ''} ${
+                        isPassed ? 'line-passed' : ''
+                      }`}
+                      onClick={() => {
+                        // Click line to jump recitation directly
+                        spiritualSpeechEngine.speak(textToRead, { startLine: idx, withChime: false });
+                      }}
+                      title="คลิกเพื่อเริ่มอ่านจากวรรคนี้"
+                    >
+                      {isLineActive && <span className="line-golden-cursor">✨</span>}
+                      {line}
+                    </p>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         {/* Mobile Audio Helper / Silent Mode Reminder */}
         {isMobile && (
