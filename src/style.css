@@ -3235,6 +3235,440 @@ body[data-theme="native_american"] {
   filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.5));
 }
 
+/* Tight alignment of ritual visuals right under the top buttons */
+#tab-ritual .pills {
+  margin: 0.2rem auto 0.35rem;
+  gap: 0.45rem;
+}
+
+#tab-ritual .pills .pill {
+  font-size: 0.78rem;
+  padding: 0.4rem 1.05rem;
+  min-height: auto;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+}
+
+#tab-ritual .pills .pill:hover {
+  transform: translateY(-1px);
+}
+
+#tab-ritual .pills .pill.active {
+  font-size: 0.78rem;
+  transform: scale(1.02);
+}
+
+#tab-ritual .candle-wrap {
+  margin: 0.15rem auto 0.25rem !important;
+}
+
+#tab-ritual .sky {
+  margin: 0.15rem auto 0.5rem !important;
+  max-width: 580px;
+  height: 230px;
+  min-height: 230px;
+}
+
+#tab-ritual .yantra-wrap {
+  margin: 0.2rem auto 0.55rem !important;
+}
+
+/* =========================================================================
+   CHONG 13-PART INTERACTIVE SWEEPING CEREMONY (พิธีปัดตัวด้วยหงิ่งเตี๋ย 13 ครั้ง)
+   ========================================================================= */
+.chong-interactive-stage {
+  position: relative;
+  max-width: 540px;
+  margin: 0.1rem auto 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chong-figure-container {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  height: 420px;
+  margin: 0.15rem auto 0.3rem;
+  user-select: none;
+  touch-action: pan-y;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.chong-human-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.7));
+}
+
+.body-node-group {
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.body-node-group:hover {
+  transform: scale(1.15);
+}
+
+.body-node-bg {
+  transition: all 0.25s ease;
+}
+
+.body-node-swept .body-node-bg {
+  fill: #2e7d32 !important;
+  stroke: #76ff03 !important;
+  filter: drop-shadow(0 0 6px #76ff03);
+}
+
+.body-node-current .body-node-bg {
+  stroke: #ffd700 !important;
+  stroke-width: 2.4 !important;
+}
+
+.pulse-guide-ring {
+  animation: pulseGuide 1.4s infinite alternate ease-in-out;
+  transform-origin: center;
+}
+
+@keyframes pulseGuide {
+  0% { opacity: 0.4; stroke-width: 1.5; }
+  100% { opacity: 1; stroke-width: 2.8; stroke: #fff176; }
+}
+
+.chong-sweep-counter-bar {
+  width: 100%;
+  max-width: 480px;
+  margin: 0.2rem auto 0.4rem;
+  background: rgba(20, 10, 16, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(232, 185, 74, 0.35);
+  border-radius: 12px;
+  padding: 0.5rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.chong-counter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.84rem;
+  color: #fff1d0;
+}
+
+.btn-sound-toggle {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(232, 185, 74, 0.4);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  color: var(--gold);
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-sound-toggle:hover {
+  background: rgba(232, 185, 74, 0.2);
+  transform: scale(1.04);
+}
+
+.chong-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.chong-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd700, #ff9100, #76ff03);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.75);
+}
+
+.nging-tee-paper-group {
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.35));
+}
+
+.chong-talisman-flutter {
+  animation: talismanSway 0.42s ease-out;
+}
+
+@keyframes talismanSway {
+  0% { transform: scale(0.9) rotate(-15deg); opacity: 0.7; }
+  50% { transform: scale(1.15) rotate(8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-4deg); opacity: 0.95; }
+}
+
+.chong-last-swept-banner {
+  background: rgba(30, 20, 10, 0.85);
+  border: 1px solid rgba(232, 185, 74, 0.4);
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.82rem;
+  color: #fff4db;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.2rem auto 0.4rem;
+  max-width: 90%;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.chong-action-buttons-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.btn-sweep-action {
+  font-size: 0.95rem;
+  padding: 0.7rem 1.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sweep-btn-sub {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  font-weight: normal;
+}
+
+
+/* Ritual Result Modal Window (Popup Overlay) */
+.ritual-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+  animation: fadeIn 0.22s ease-out;
+}
+
+.ritual-modal-card {
+  position: relative;
+  background: linear-gradient(175deg, rgba(28, 16, 22, 0.98), rgba(14, 8, 12, 0.98));
+  border: 1.5px solid var(--gold);
+  border-radius: 20px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.6rem 1.6rem 1.4rem;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 35px color-mix(in srgb, var(--glow) 35%, transparent);
+  animation: scaleUp 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.25);
+  color: #fff4db;
+}
+
+.ritual-modal-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 185, 74, 0.4);
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--gold);
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.ritual-modal-close-btn:hover {
+  background: rgba(232, 185, 74, 0.25);
+  transform: scale(1.08);
+}
+
+.ritual-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.1rem;
+  padding-right: 2.2rem;
+  border-bottom: 1px solid rgba(232, 185, 74, 0.25);
+  padding-bottom: 0.85rem;
+}
+
+.ritual-modal-header.care-header {
+  border-bottom-color: rgba(255, 179, 107, 0.35);
+}
+
+.ritual-modal-emblem {
+  font-size: 2.2rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.4));
+}
+
+.ritual-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-family: 'Chonburi', cursive, serif;
+  color: var(--gold);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--glow) 40%, transparent);
+}
+
+.ritual-modal-sub {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: #f7e7c4;
+  opacity: 0.88;
+}
+
+.ritual-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.ritual-verse-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(232, 185, 74, 0.25);
+  border-radius: 12px;
+  padding: 0.85rem 1.1rem;
+}
+
+.ritual-verse-text {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.6;
+  text-align: center;
+  color: #fff9ea;
+}
+
+.ritual-section-heading {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gold2);
+  margin-bottom: 0.4rem;
+}
+
+.ritual-mantras-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ritual-mantra-item {
+  background: rgba(232, 185, 74, 0.08);
+  border-left: 3px solid var(--gold);
+  border-radius: 4px 8px 8px 4px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.9rem;
+  color: #fff3d1;
+}
+
+.ritual-lucky-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: rgba(232, 185, 74, 0.12);
+  border: 1px dashed rgba(232, 185, 74, 0.5);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  margin-top: 0.2rem;
+}
+
+.ritual-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+  text-align: center;
+}
+
+@media (max-width: 500px) {
+  .ritual-meta-grid {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+  }
+}
+
+.ritual-meta-item {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(232, 185, 74, 0.2);
+  border-radius: 10px;
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.ritual-meta-item .meta-k {
+  font-size: 0.76rem;
+  color: #d1b894;
+}
+
+.gold-text {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.ritual-chong-severity-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.4rem 0.6rem;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 10px;
+}
+
+.ritual-chong-summary {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #fff2d6;
+  text-align: center;
+  margin: 0.2rem 0;
+}
+
+.ritual-chong-kv {
+  margin: 0.4rem 0;
+  font-size: 0.88rem;
+}
+
+.ritual-disclaimer {
+  font-size: 0.76rem;
+  color: #c9ab86;
+  margin: 0.2rem 0 0;
+}
+
+.ritual-modal-footer {
+  margin-top: 1.1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(232, 185, 74, 0.2);
+}
+
+.full-width {
+  width: 100%;
+}
+
 /* =========================================================================
    HORIZONTAL RITUAL SCROLL MENU (Compact 1.5-card View & Infinite Loop)
    ========================================================================= */
