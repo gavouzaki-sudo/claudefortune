@@ -133,14 +133,13 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               <span className="unsupported-icon">⚠️</span>
               <div>
                 <div className="unsupported-title">ไม่รองรับเสียงพูด</div>
-                <div className="unsupported-desc">อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับระบบเสียงพูดภาษาไทย</div>
+                <div className="unsupported-desc">อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับระบบเสียงพูด</div>
               </div>
             </div>
             <button
               type="button"
               className="btn-unsupported-retry"
               onClick={() => {
-                spiritualSpeechEngine.setEngineType('google');
                 spiritualSpeechEngine.speak(textToRead, { withChime: false });
               }}
             >
@@ -157,15 +156,15 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               type="button"
               className={`btn-engine-toggle ${speechState.engineType === 'google' ? 'active' : ''}`}
               onClick={() => spiritualSpeechEngine.setEngineType('google')}
-              title="เสียงอ่านภาษาไทยออนไลน์ Google TTS (แนะนำสำหรับมือถือและทุกอุปกรณ์ ออกเสียงชัดเจน 100%)"
+              title="เสียงอ่านภาษาไทย Google Translate (ออกเสียงชัดเจนเป็นธรรมชาติ)"
             >
-              <span>🌐 Google TTS (ชัดเจน)</span>
+              <span>🌐 Google Translate</span>
             </button>
             <button
               type="button"
               className={`btn-engine-toggle ${speechState.engineType === 'native' ? 'active' : ''}`}
               onClick={() => spiritualSpeechEngine.setEngineType('native')}
-              title="เสียงสังเคราะห์ของเครื่องเบราว์เซอร์"
+              title="เสียงสังเคราะห์ในตัวเครื่อง (Web Speech API)"
             >
               <span>🎙️ เสียงในเครื่อง</span>
             </button>
@@ -200,25 +199,27 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
           </div>
         </div>
 
-        {/* Active persona or Google TTS pill */}
+        {/* Active persona indicator */}
         {speechState.isUnsupported ? (
           <div className="spiritual-active-persona-pill spiritual-unsupported-pill">
             <span className="persona-badge">⚠️ ไม่รองรับเสียงพูด</span>
-            <span className="persona-note">อุปกรณ์ไม่รองรับระบบเสียงพูด</span>
+            <span className="persona-note">อุปกรณ์หรือเบราว์เซอร์ไม่รองรับระบบเสียงพูด</span>
           </div>
         ) : isCurrentTextActive ? (
           <div className="spiritual-active-persona-pill">
             {speechState.engineType === 'google' ? (
               <>
                 <span className="persona-badge">
-                  🌐 เสียงอ่าน: Google Thai TTS ({speechState.googleTtsSpeed}x {speechState.googleTtsSpeed === 1.2 ? 'เร็วขึ้น 20%' : ''})
+                  🌐 เสียงอ่าน: Google Translate ({speechState.googleTtsSpeed}x)
                 </span>
-                <span className="persona-note">สตรีมเสียงอ่านภาษาไทยชัดเจนทุกวรรณยุกต์</span>
+                <span className="persona-note">
+                  {activePreset.icon} สุ่มท่วงทำนอง: {activePreset.title}
+                </span>
               </>
             ) : (
               <>
                 <span className="persona-badge">
-                  {activePreset.icon} ท่วงทำนอง: {activePreset.title}
+                  {activePreset.icon} ท่วงทำนองสุ่ม: {activePreset.title} ({speechState.googleTtsSpeed}x)
                 </span>
                 <span className="persona-note">สุ่มอัตโนมัติ · เว้นวรรคสงบใจ</span>
               </>
@@ -247,7 +248,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
                 ? speechState.isPaused
                   ? '⏸ พักการอ่านชั่วคราว — กดปุ่มเพื่ออ่านต่อ'
                   : speechState.engineType === 'google'
-                  ? '🌐 กำลังอ่านคำทำนายด้วยเสียง Google Thai TTS...'
+                  ? `🌐 กำลังอ่านคำทำนายด้วยเสียง Google Translate (ท่วงทำนอง${activePreset.title})...`
                   : `📿 กำลังสวดบรรยายด้วยเสียง${activePreset.title}...`
                 : 'กดปุ่มด้านบนเพื่อสดับรับฟังเสียง'}
             </span>
@@ -294,16 +295,16 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
                 </p>
                 <ul>
                   <li>
-                    <b>ระบบเลือก Google Thai TTS เป็นค่าเริ่มต้น:</b> ออกเสียงภาษาไทยชัดเจน 100% ครบทุกวรรณยุกต์ ไม่จำเป็นต้องมีชุดเสียงในเครื่อง
+                    <b>ระบบเสียง Google Translate:</b> ให้เสียงภาษาไทยที่ชัดเจนเป็นธรรมชาติ สตรีมสดจาก Google Translate พร้อมระบบสุ่มท่วงทำนอง
+                  </li>
+                  <li>
+                    <b>ระบบเสียงในเครื่อง:</b> ใช้งานเอนจินเสียงสังเคราะห์ของระบบ (Web Speech API) ทำงานได้โดยตรง
                   </li>
                   <li>
                     <b>iPhone / iPad:</b> โปรดตรวจดูสวิตช์ปิดเสียง (Silent Mode Switch) ด้านข้างตัวเครื่องว่าไม่ได้เปิดแถบสีส้มอยู่
                   </li>
                   <li>
-                    <b>Android:</b> โปรดเพิ่มระดับเสียงของ <u>มีเดีย (Media Volume)</u> ไม่ใช่แค่เสียงเรียกเข้า
-                  </li>
-                  <li>
-                    สามารถสลับไปฟัง <b>"🎙️ เสียงในเครื่อง"</b> เพื่อสัมผัสท่วงทำนองซินแสอาวุโสได้ตามต้องการ
+                    <b>Android:</b> โปรดเพิ่มระดับเสียงของ <u>มีเดีย (Media Volume)</u> ในการตั้งค่าเสียงของเครื่อง
                   </li>
                 </ul>
               </div>
