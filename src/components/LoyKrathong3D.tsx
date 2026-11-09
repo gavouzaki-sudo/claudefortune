@@ -624,7 +624,7 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
         container.removeChild(renderer.domElement);
       }
     };
-  }, [buildKrathongModel, selectedStyle]);
+  }, [buildKrathongModel]);
 
   // Handle changing Krathong 3D Style
   const handleSelectStyle = (style: KrathongStyle) => {

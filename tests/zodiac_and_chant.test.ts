@@ -375,3 +375,46 @@ test('Refactored utilities and constants integrity', async () => {
   assert.equal(ALL_WEEKDAYS.length, 7);
 });
 
+test('Thai Astrological Calendar: C.E. and B.E. year normalization works seamlessly', async () => {
+  const { normalizeToBE, getKalaYogaForYear, generateMonthAuspiciousDays } = await import('../src/data/auspiciousCalendarData');
+  assert.equal(normalizeToBE(2026), 2569);
+  assert.equal(normalizeToBE(2569), 2569);
+
+  const kalaCE = getKalaYogaForYear(2026);
+  const kalaBE = getKalaYogaForYear(2569);
+  assert.deepEqual(kalaCE, kalaBE);
+  assert.equal(kalaCE.thongchai, 3);
+  assert.equal(kalaCE.ubatha, 4);
+
+  const daysCE = generateMonthAuspiciousDays(2026, 11);
+  const daysBE = generateMonthAuspiciousDays(2569, 11);
+  assert.equal(daysCE.length, 30);
+  assert.equal(daysBE.length, 30);
+  assert.equal(daysCE[0].date, daysBE[0].date);
+  assert.equal(daysCE[23].lunarDay, 15);
+});
+
+test('safeStorage handles objects safely with fallback support', async () => {
+  const { safeStorage } = await import('../src/utils/storage');
+  const testSession = {
+    systemId: 'thai',
+    systemName: 'ไทย',
+    symbolName: 'มังกร',
+    symbolIcon: '🐉',
+    element: 'ทอง',
+    aura: '#ffd700',
+    attribute: 'เดช',
+    year: 2569,
+    zodiac: 4,
+  };
+
+  const saved = safeStorage.set('session', '__test_shrine_session__', testSession);
+  assert.equal(saved, true);
+  const retrieved = safeStorage.get<typeof testSession | null>('session', '__test_shrine_session__', null);
+  assert.deepEqual(retrieved, testSession);
+  safeStorage.remove('session', '__test_shrine_session__');
+  const removed = safeStorage.get('session', '__test_shrine_session__', null);
+  assert.equal(removed, null);
+});
+
+

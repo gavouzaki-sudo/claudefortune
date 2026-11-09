@@ -435,10 +435,19 @@ export function calculateThaiRuk(yearCE: number, month: number, day: number): {
   };
 }
 
+// Helper to normalize Common Era (C.E.) or Buddhist Era (B.E.) years
+export function normalizeToBE(year: number): number {
+  if (!Number.isInteger(year)) return 2569;
+  if (year >= 1800 && year < 2400) {
+    return year + 543;
+  }
+  return year;
+}
+
 // Kala Yoga calculation for Buddhist Era years (กาลโยคประจำปี)
 // In B.E. 2569 (C.E. 2026, Chula Sakarat 1388):
 // Thongchai = Wednesday (3), Athipadi = Tuesday (2), Ubatha = Thursday (4), Lokawinas = Saturday (6)
-export function getKalaYogaForYear(yearBE: number): {
+export function getKalaYogaForYear(inputYear: number): {
   thongchai: number;
   athipadi: number;
   ubatha: number;
@@ -449,6 +458,7 @@ export function getKalaYogaForYear(yearBE: number): {
   lokawinasNameTh: string;
   warningText: string;
 } {
+  const yearBE = normalizeToBE(inputYear);
   const dayNames = ['วันอาทิตย์', 'วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์'];
 
   if (yearBE === 2569) {
@@ -623,7 +633,8 @@ export function getThaksaRelation(birthDayId: BirthDayId, dayOfWeek: number): Th
 }
 
 // Dynamic & Authentic Month Generator with Continuous Lunar Progression and 9 Non-repeating Thai Ruks
-export function generateMonthAuspiciousDays(yearBE: number, month: number): AuspiciousDay[] {
+export function generateMonthAuspiciousDays(inputYear: number, month: number): AuspiciousDay[] {
+  const yearBE = normalizeToBE(inputYear);
   if (!Number.isInteger(yearBE) || yearBE < 2400 || yearBE > 9999) return [];
   if (!Number.isInteger(month) || month < 1 || month > 12) return [];
 

@@ -214,11 +214,13 @@ const WhackMoleGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
     timerRef.current = window.setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          clearInterval(moleIntervalRef.current!);
-          setGameRunning(false);
-          setGameOverResult('lose');
-          onLose();
+          if (timerRef.current) clearInterval(timerRef.current);
+          if (moleIntervalRef.current) clearInterval(moleIntervalRef.current);
+          setTimeout(() => {
+            setGameRunning(false);
+            setGameOverResult('lose');
+            onLose();
+          }, 0);
           return 0;
         }
         return prev - 1;
@@ -513,7 +515,7 @@ const shuffleHardMatchCards = (): MatchCard[] => {
   return deck;
 };
 
-const AuspiciousMatchGame: React.FC<{ onWin: () => void }> = ({ onWin }) => {
+const AuspiciousMatchGame: React.FC<{ onWin: () => void; onLose?: () => void }> = ({ onWin, onLose }) => {
   const [cards, setCards] = useState<MatchCard[]>(() => shuffleHardMatchCards());
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [matchedKeys, setMatchedKeys] = useState<string[]>([]);
@@ -531,8 +533,11 @@ const AuspiciousMatchGame: React.FC<{ onWin: () => void }> = ({ onWin }) => {
     timerRef.current = window.setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          setTimeUp(true);
+          if (timerRef.current) clearInterval(timerRef.current);
+          setTimeout(() => {
+            setTimeUp(true);
+            onLose?.();
+          }, 0);
           return 0;
         }
         return prev - 1;
@@ -542,7 +547,7 @@ const AuspiciousMatchGame: React.FC<{ onWin: () => void }> = ({ onWin }) => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [timerStarted, isWon, timeUp]);
+  }, [timerStarted, isWon, timeUp, onLose]);
 
   const handleCardClick = (idx: number) => {
     if (isLocked || isWon || timeUp) return;
@@ -815,7 +820,7 @@ export const LuckyMiniGames: React.FC<LuckyMiniGamesProps> = ({
         {activeTab === 'rps' && <RPSGame onWin={onWin} onLose={onLose} />}
         {activeTab === 'mole' && <WhackMoleGame onWin={onWin} onLose={onLose} />}
         {activeTab === 'ox' && <TicTacToeGame onWin={onWin} onLose={onLose} />}
-        {activeTab === 'match' && <AuspiciousMatchGame onWin={onWin} />}
+        {activeTab === 'match' && <AuspiciousMatchGame onWin={onWin} onLose={onLose} />}
         {activeTab === 'demon' && <DemonCardGame onWin={onWin} onLose={onLose} />}
       </div>
     </div>

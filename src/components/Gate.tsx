@@ -6,6 +6,7 @@ import {
   playChant,
   stopChant,
 } from '../utils/chantAudio';
+import { safeStorage } from '../utils/storage';
 
 interface GateProps {
   bridge: Bridge;
@@ -120,11 +121,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
       info,
     };
 
-    try {
-      sessionStorage.setItem('shrine.session', JSON.stringify(session));
-    } catch {
-      // Ignore private mode storage failure
-    }
+    safeStorage.set('session', 'shrine.session', session);
 
     bridge.seed();
     window.scrollTo({ top: 0, behavior: 'instant' });

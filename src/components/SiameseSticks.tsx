@@ -43,6 +43,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
   const shakeTimeoutRef = useRef<number | null>(null);
   const buttonIntervalRef = useRef<number | null>(null);
   const lastPointerRef = useRef<[number, number]>([0, 0]);
+  const isPointerDownRef = useRef(false);
   const resultRef = useRef<HTMLDivElement>(null);
 
   const finishShake = useCallback(async () => {
@@ -134,6 +135,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
   }, []);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    isPointerDownRef.current = true;
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch (err) {
@@ -143,10 +145,22 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPointerDownRef.current && e.buttons === 0) return;
     if (!lastPointerRef.current) return;
     const d = Math.hypot(e.clientX - lastPointerRef.current[0], e.clientY - lastPointerRef.current[1]);
     lastPointerRef.current = [e.clientX, e.clientY];
     addShake(d / 18);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    isPointerDownRef.current = false;
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // ignore
+    }
   };
 
   const handleResetToShake = () => {
@@ -214,6 +228,8 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
               role="img"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
             >
               <div className="sticks">
                 <i />
