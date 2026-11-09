@@ -342,7 +342,7 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
     renderer.toneMappingExposure = 1.15;
     renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = !isSoftwareGl;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
 
     container.appendChild(renderer.domElement);
 
@@ -503,7 +503,7 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
 
     // Animation & Physics Loop
     let animationFrameId = 0;
-    let clock = new THREE.Clock();
+    const timer = new THREE.Timer();
 
     function afterDraw(cb: () => void) {
       const gl = renderer.getContext() as WebGL2RenderingContext;
@@ -522,8 +522,9 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
     }
 
     const tick = () => {
-      const delta = clock.getDelta();
-      const time = clock.getElapsedTime();
+      timer.update();
+      const delta = timer.getDelta();
+      const time = timer.getElapsed();
 
       // Candle Flame Flicker animation
       if (flameLightRef.current && flameMeshRef.current) {
