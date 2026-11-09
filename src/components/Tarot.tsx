@@ -120,7 +120,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
             checked={spread === 1}
             onChange={() => handleSpreadChange(1)}
           />
-          <span>ไพ่ประจำวัน (1 ใบ)</span>
+          <span>ไพ่ 1 ใบ</span>
         </label>
         <label className="chip">
           <input
@@ -130,7 +130,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
             checked={spread === 3}
             onChange={() => handleSpreadChange(3)}
           />
-          <span>อดีต · ปัจจุบัน · อนาคต (3 ใบ)</span>
+          <span>ไพ่ 3 ใบ</span>
         </label>
         <label className="chip">
           <input

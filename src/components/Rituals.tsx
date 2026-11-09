@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Bridge } from '../bridge';
 import type { CandleResult, OfferingResult, RemedyResult } from '../types';
 
@@ -855,7 +856,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
       )}
 
       {/* Ceremonial Result Popup Modal Overlay (หน้าต่างซ้อนป๊อปอัปผลลัพธ์พิธีกรรม) */}
-      {activeModal && (
+      {activeModal && typeof document !== 'undefined' && createPortal(
         <div
           className="ritual-modal-overlay"
           onClick={handleCloseModal}
@@ -897,10 +898,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                       </div>
                     ))}
                   </div>
-
-                  <p className="center ritual-disclaimer">
-                    เพื่อความสบายใจและเป็นสิริมงคล เป็นความเชื่อเชิงวัฒนธรรม
-                  </p>
                 </div>
 
                 <div className="ritual-modal-footer">
@@ -1036,10 +1033,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                       </div>
                     ))}
                   </div>
-
-                  <p className="center ritual-disclaimer">
-                    เป็นความเชื่อเชิงวัฒนธรรมเพื่อความสบายใจและเป็นกำลังใจในการดำเนินชีวิต
-                  </p>
                 </div>
 
                 <div className="ritual-modal-footer">
@@ -1054,7 +1047,8 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );

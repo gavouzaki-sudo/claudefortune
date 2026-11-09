@@ -136,27 +136,7 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     onToast(`📅 เปลี่ยนเป็น พ.ศ. ${newYearBE}`);
   }, [onToast]);
 
-  const handlePrevMonth = useCallback(() => {
-    if (selectedMonth > 1) {
-      handleMonthChange(selectedMonth - 1);
-    } else {
-      setSelectedYearBE((prev) => prev - 1);
-      setSelectedMonth(12);
-      setInspectedDay(null);
-      onToast(`📅 เปลี่ยนเป็นเดือน ธันวาคม พ.ศ. ${selectedYearBE - 1}`);
-    }
-  }, [selectedMonth, handleMonthChange, selectedYearBE, onToast]);
 
-  const handleNextMonth = useCallback(() => {
-    if (selectedMonth < 12) {
-      handleMonthChange(selectedMonth + 1);
-    } else {
-      setSelectedYearBE((prev) => prev + 1);
-      setSelectedMonth(1);
-      setInspectedDay(null);
-      onToast(`📅 เปลี่ยนเป็นเดือน มกราคม พ.ศ. ${selectedYearBE + 1}`);
-    }
-  }, [selectedMonth, handleMonthChange, selectedYearBE, onToast]);
 
 
 
@@ -417,16 +397,7 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
         {/* Compact Dropdown Toolbar Row: เดือน -> ปี -> ฤกษ์ -> วันกาลกิณี + จำนวนวัน */}
         <div className="auspicious-compact-toolbar-row">
           {/* 1. เดือน */}
-          <div className="dropdown-compact-item month-compact-stepper" title="เลือกเดือน">
-            <button
-              type="button"
-              className="btn-month-nav"
-              onClick={handlePrevMonth}
-              title="เดือนก่อนหน้า"
-              aria-label="เปลี่ยนเป็นเดือนก่อนหน้า"
-            >
-              ◀
-            </button>
+          <div className="dropdown-compact-item" title="เลือกเดือน">
             <select
               id="month-select"
               className="dropdown-compact-select month-select"
@@ -437,34 +408,25 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
             >
               {THAI_MONTHS.map((m, idx) => (
                 <option key={m} value={idx + 1}>
-                  เดือน {m}
+                  {m}
                 </option>
               ))}
             </select>
-            <button
-              type="button"
-              className="btn-month-nav"
-              onClick={handleNextMonth}
-              title="เดือนถัดไป"
-              aria-label="เปลี่ยนเป็นเดือนถัดไป"
-            >
-              ▶
-            </button>
           </div>
 
           {/* 2. ปี */}
-          <div className="dropdown-compact-item" title="เลือกปี พ.ศ.">
+          <div className="dropdown-compact-item" title="เลือกปี">
             <select
               id="year-select"
               className="dropdown-compact-select year-select"
               value={selectedYearBE}
               onChange={(e) => handleYearChange(Number(e.target.value))}
-              aria-label="เลือกปี พ.ศ."
-              title="เลือกปี พ.ศ."
+              aria-label="เลือกปี"
+              title="เลือกปี"
             >
               {Array.from({ length: Math.max(2575, selectedYearBE + 5) - Math.min(2567, selectedYearBE - 5) + 1 }, (_, i) => Math.min(2567, selectedYearBE - 5) + i).map((y) => (
                 <option key={y} value={y}>
-                  พ.ศ. {y}
+                  {y}
                 </option>
               ))}
             </select>

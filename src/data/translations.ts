@@ -215,8 +215,8 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
 
     tarotTitle: 'ไพ่ยิปซีสากล',
     tarotLead: 'เลือกรูปแบบการเปิดไพ่ ตั้งคำถามในใจ แล้วแตะไพ่แต่ละใบเพื่อพลิกดู',
-    tarotDaily: 'ไพ่ประจำวัน (1 ใบ)',
-    tarot3Cards: 'อดีต · ปัจจุบัน · อนาคต (3 ใบ)',
+    tarotDaily: 'ไพ่ 1 ใบ',
+    tarot3Cards: 'ไพ่ 3 ใบ',
     tarot5Cards: 'ภาพรวมชะตา (5 ใบ)',
     tarotShuffleBtn: 'สับไพ่และจั่ว',
     tarotFlipAll: 'พลิกทั้งหมด',
