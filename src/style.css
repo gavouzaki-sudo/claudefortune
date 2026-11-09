@@ -8510,32 +8510,10 @@ body[data-theme="native_american"] {
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
-  gap: 0.4rem 0.55rem;
-  padding-bottom: 0.4rem;
-  margin-bottom: 0.45rem;
+  gap: 0.35rem 0.5rem;
+  padding-bottom: 0.3rem;
+  margin-bottom: 0.35rem;
   border-bottom: 1.5px solid rgba(239, 68, 68, 0.4);
-}
-
-.toolbar-result-badge {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.toolbar-result-badge .found-count-text {
-  font-size: 0.85rem;
-  color: #bae6fd;
-  background: rgba(22, 11, 8, 0.9);
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  padding: 0.28rem 0.65rem;
-  border-radius: 6px;
-  white-space: nowrap;
-}
-
-.toolbar-result-badge .highlight-count {
-  color: #38bdf8;
-  font-weight: 800;
 }
 
 .mobile-cut-notice {
@@ -10582,12 +10560,6 @@ select.input-select:focus,
   .birthday-select-compact {
     min-width: 170px;
     font-size: 0.8rem !important;
-  }
-
-  .toolbar-result-badge {
-    margin-left: 0;
-    width: 100%;
-    justify-content: flex-end;
   }
 
   .calendar-kalayoga-banner {

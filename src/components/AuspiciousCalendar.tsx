@@ -493,18 +493,6 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
               </button>
             )}
           </div>
-
-          {/* Compact Right-Aligned Status & Found Count */}
-          <div className="toolbar-result-badge">
-            {isMobile && (
-              <span className="mobile-cut-notice" title="บนมือถือระบบตัดวันอุบาทว์และวันโลกาวินาศออก">
-                📱 ซ่อนวันอุบาทว์/โลกาวินาศ
-              </span>
-            )}
-            <span className="found-count-text">
-              พบ <strong className="highlight-count">{filteredDays.length}</strong> วัน
-            </span>
-          </div>
         </div>
 
         {/* Weekday Header with Prominent Labels and Kala Yoga Status */}

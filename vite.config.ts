@@ -87,6 +87,7 @@ export default defineConfig(({ command }) => ({
     port: 3000,
     cors: true,
     allowedHosts: true,
+    hmr: false,
     proxy: {
       '/api/glo': {
         target: 'https://www.glo.or.th',

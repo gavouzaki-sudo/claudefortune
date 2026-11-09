@@ -27,7 +27,7 @@ interface KrathongConfig {
 const KRATHONG_STYLES: KrathongConfig[] = [
   {
     id: 'classic',
-    name: 'กระทงใบตองมงคล',
+    name: 'ใบตองมงคล',
     icon: '🌿',
     desc: 'ใบตองธรรมชาติ ดอกดาวเรืองทอง บูชาพระแม่คงคาดั้งเดิม',
     leafColor: 0x2e7d32,
@@ -38,7 +38,7 @@ const KRATHONG_STYLES: KrathongConfig[] = [
   },
   {
     id: 'lotus',
-    name: 'กระทงดอกบัวสวรรค์',
+    name: 'บัวสวรรค์',
     icon: '🪷',
     desc: 'กลีบบัวหลวงสีชมพู เสริมความสงบ ร่มเย็น และความรักบริสุทธิ์',
     leafColor: 0x1b5e20,
@@ -49,7 +49,7 @@ const KRATHONG_STYLES: KrathongConfig[] = [
   },
   {
     id: 'gold',
-    name: 'กระทงทองคำมหาลาภ',
+    name: 'ทองมหาลาภ',
     icon: '✨',
     desc: 'กลีบทองอร่าม ดอกไม้แก้ว เสริมบารมี ทรัพย์สินเงินทองทวีคูณ',
     leafColor: 0xd4af37,

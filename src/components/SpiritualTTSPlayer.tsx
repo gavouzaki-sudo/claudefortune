@@ -180,20 +180,16 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
           </div>
         </div>
 
-        {/* Speed Adjustment Selector Row */}
+        {/* Speed Adjustment Selector Row: 1.35x option removed & current speed status display removed per request */}
         <div className="spiritual-speed-selector-row">
           <div className="speed-label-wrap">
             <span className="selector-label">ความเร็วเสียง:</span>
-            <span className="speed-active-badge">
-              {speechState.googleTtsSpeed}x {speechState.googleTtsSpeed === 1.2 ? '(+20%)' : ''}
-            </span>
           </div>
           <div className="spiritual-speed-selector" role="group" aria-label="ปรับความเร็วเสียงอ่าน">
             {[
               { val: 0.9, label: '0.9x ช้า' },
               { val: 1.0, label: '1.0x ปกติ' },
               { val: 1.2, label: '⚡ 1.2x (+20%)' },
-              { val: 1.35, label: '1.35x ไว' },
             ].map((opt) => (
               <button
                 key={opt.val}
@@ -208,7 +204,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
           </div>
         </div>
 
-        {/* Active persona indicator */}
+        {/* Active persona indicator: speed status value omitted per request */}
         {speechState.isUnsupported ? (
           <div className="spiritual-active-persona-pill spiritual-unsupported-pill">
             <span className="persona-badge">⚠️ ไม่รองรับเสียงพูด</span>
@@ -219,7 +215,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
             {speechState.engineType === 'google' ? (
               <>
                 <span className="persona-badge">
-                  🌐 เสียงอ่าน: Google Translate ({speechState.googleTtsSpeed}x)
+                  🌐 เสียงอ่าน: Google Translate
                 </span>
                 <span className="persona-note">
                   {activePreset.icon} สุ่มท่วงทำนอง: {activePreset.title}
@@ -228,7 +224,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
             ) : (
               <>
                 <span className="persona-badge">
-                  {activePreset.icon} ท่วงทำนองสุ่ม: {activePreset.title} ({speechState.googleTtsSpeed}x)
+                  {activePreset.icon} ท่วงทำนองสุ่ม: {activePreset.title}
                 </span>
                 <span className="persona-note">สุ่มอัตโนมัติ · เว้นวรรคสงบใจ</span>
               </>
