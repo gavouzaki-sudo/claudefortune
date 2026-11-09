@@ -1,48 +1,60 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { TRANSLATIONS, type SupportedLang, type Translations } from '../data/translations';
+import { safeStorage } from '../utils/storage';
 
-interface LanguageContextType {
+const STORAGE_KEY = 'shrine.lang';
+
+export interface LanguageContextType {
   lang: SupportedLang;
   setLang: (lang: SupportedLang) => void;
+  cycleLang: () => void;
   t: Translations;
 }
 
 const LanguageContext = createContext<LanguageContextType>({
   lang: 'th',
   setLang: () => {},
+  cycleLang: () => {},
   t: TRANSLATIONS.th,
 });
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [lang, setLangState] = useState<SupportedLang>('th');
+  const [lang, setLangState] = useState<SupportedLang>(() => {
+    const saved = safeStorage.get<string>('local', STORAGE_KEY, 'th');
+    return saved === 'en' || saved === 'zh' ? saved : 'th';
+  });
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('shrine.lang') as SupportedLang | null;
-      if (saved && (saved === 'th' || saved === 'en' || saved === 'zh')) {
-        setLangState(saved);
-        document.documentElement.lang = saved;
-      }
-    } catch {
-      // Ignore
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
     }
+  }, [lang]);
+
+  const setLang = useCallback((newLang: SupportedLang) => {
+    setLangState(newLang);
+    safeStorage.set('local', STORAGE_KEY, newLang);
   }, []);
 
-  const setLang = (newLang: SupportedLang) => {
-    setLangState(newLang);
-    document.documentElement.lang = newLang;
-    try {
-      localStorage.setItem('shrine.lang', newLang);
-    } catch {
-      // Ignore
-    }
-  };
+  const cycleLang = useCallback(() => {
+    setLangState((curr) => {
+      const next: SupportedLang = curr === 'th' ? 'en' : curr === 'en' ? 'zh' : 'th';
+      safeStorage.set('local', STORAGE_KEY, next);
+      return next;
+    });
+  }, []);
 
-  return (
-    <LanguageContext.Provider value={{ lang, setLang, t: TRANSLATIONS[lang] }}>
-      {children}
-    </LanguageContext.Provider>
+  const value = useMemo(
+    () => ({
+      lang,
+      setLang,
+      cycleLang,
+      t: TRANSLATIONS[lang],
+    }),
+    [lang, setLang, cycleLang]
   );
+
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 };
 
 export const useLanguage = () => useContext(LanguageContext);
+

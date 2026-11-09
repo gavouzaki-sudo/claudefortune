@@ -345,3 +345,33 @@ test('Thai Lottery: B.E. year parsing, formatThaiDate, and prize checks', async 
   assert.equal(noWin.totalReward, 0);
   assert.equal(noWin.wonPrizes.length, 0);
 });
+
+test('Refactored utilities and constants integrity', async () => {
+  const { FEST_INDEX_MAP } = await import('../src/hooks/useThemeManager');
+  assert.equal(FEST_INDEX_MAP.shrine, 0);
+  assert.equal(FEST_INDEX_MAP.songkran, 1);
+  assert.equal(FEST_INDEX_MAP.loy, 3);
+
+  const { formatStickReading } = await import('../src/components/SiameseSticks');
+  const dummyStick = {
+    stick: 9,
+    title: 'นกน้อยรังใหม่',
+    level: 1,
+    level_name: 'ดี',
+    verse: 'เริ่มจากสิ่งเล็ก ค่อยๆ สร้างค่อยๆ มั่นคง',
+    aspects: [
+      { name: 'การเงิน', text: 'การเงินราบรื่น' },
+      { name: 'ความรัก', text: 'ความสัมพันธ์ดี' },
+    ],
+  };
+  const formatted = formatStickReading(dummyStick);
+  assert.ok(formatted.includes('เซียมซีใบที่ 9 นกน้อยรังใหม่'));
+  assert.ok(formatted.includes('คำทำนาย: ดี'));
+  assert.ok(formatted.includes('การเงิน การเงินราบรื่น'));
+
+  const { THAI_MONTHS, ALL_WEEKDAYS } = await import('../src/components/AuspiciousCalendar');
+  assert.equal(THAI_MONTHS.length, 12);
+  assert.equal(THAI_MONTHS[10], 'พฤศจิกายน');
+  assert.equal(ALL_WEEKDAYS.length, 7);
+});
+

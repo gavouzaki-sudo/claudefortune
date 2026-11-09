@@ -9,6 +9,15 @@ import type { CardData } from '../utils/luckyCardCanvas';
 import { buildStickCardData } from '../utils/cardDataBuilder';
 import { logger } from '../utils/logger';
 
+export function formatStickReading(res: StickResult): string {
+  return [
+    `เซียมซีใบที่ ${res.stick} ${res.title}`,
+    `คำทำนาย: ${res.level_name}`,
+    res.verse,
+    ...res.aspects.map((a) => `${a.name} ${a.text}`),
+  ].join('\n');
+}
+
 interface SiameseSticksProps {
   bridge: Bridge;
   onToast: (msg: string) => void;
@@ -185,12 +194,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
     }, 50);
 
     if (mode === 'listen' && result) {
-      const fullText = [
-        `เซียมซีใบที่ ${result.stick} ${result.title}`,
-        `คำทำนาย: ${result.level_name}`,
-        result.verse,
-        ...result.aspects.map((a) => `${a.name} ${a.text}`),
-      ].join('\n');
+      const fullText = formatStickReading(result);
       spiritualSpeechEngine.speak(fullText, { withChime: true });
     } else {
       spiritualSpeechEngine.stop();
@@ -301,12 +305,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
               onClick={(e) => {
                 e.preventDefault();
                 setProphecyMode('listen');
-                const fullText = [
-                  `เซียมซีใบที่ ${result.stick} ${result.title}`,
-                  `คำทำนาย: ${result.level_name}`,
-                  result.verse,
-                  ...result.aspects.map((a) => `${a.name} ${a.text}`),
-                ].join('\n');
+                const fullText = formatStickReading(result);
                 const state = spiritualSpeechEngine.getState();
                 if (state.isSpeaking && state.isPaused && state.currentText === fullText) {
                   spiritualSpeechEngine.resume();
@@ -322,12 +321,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
 
           {prophecyMode === 'listen' && (
             <SpiritualTTSPlayer
-              textToRead={[
-                `เซียมซีใบที่ ${result.stick} ${result.title}`,
-                `คำทำนาย: ${result.level_name}`,
-                result.verse,
-                ...result.aspects.map((a) => `${a.name} ${a.text}`),
-              ].join('\n')}
+              textToRead={formatStickReading(result)}
               subtitle="สดับรับฟัง"
               initialExpanded={true}
               showTextLines={false}

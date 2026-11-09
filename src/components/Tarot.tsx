@@ -91,16 +91,28 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
     }
   };
 
+  const flipTimersRef = React.useRef<number[]>([]);
+
+  React.useEffect(() => {
+    return () => {
+      flipTimersRef.current.forEach((t) => clearTimeout(t));
+      flipTimersRef.current = [];
+    };
+  }, []);
+
   const handleFlip = (index: number) => {
     setFlipped((prev) => ({ ...prev, [index]: true }));
   };
 
   const handleFlipAll = () => {
+    flipTimersRef.current.forEach((t) => clearTimeout(t));
+    flipTimersRef.current = [];
     const activeCards = cards.slice(0, spread);
     activeCards.forEach((_, i) => {
-      setTimeout(() => {
+      const t = window.setTimeout(() => {
         setFlipped((prev) => ({ ...prev, [i]: true }));
       }, i * 180);
+      flipTimersRef.current.push(t);
     });
   };
 

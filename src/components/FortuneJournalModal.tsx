@@ -1,14 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  getJournalEntries,
-  deleteJournalEntry,
-  toggleJournalBookmark,
-  updateJournalNote,
-  clearJournal,
-  subscribeJournal,
   type FortuneJournalEntry,
   type FortuneType,
 } from '../utils/fortuneJournal';
+import { useFortuneJournal } from '../hooks/useFortuneJournal';
 import { useLanguage } from '../context/LanguageContext';
 import type { CardData } from '../utils/luckyCardCanvas';
 
@@ -26,23 +21,18 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
   onToast,
 }) => {
   const { t } = useLanguage();
-  const [entries, setEntries] = useState<FortuneJournalEntry[]>([]);
+  const {
+    entries,
+    removeEntry,
+    toggleBookmark,
+    saveNote,
+    clearAllEntries,
+  } = useFortuneJournal(isOpen);
+
   const [filter, setFilter] = useState<FortuneType | 'all' | 'bookmarked'>('all');
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState<string>('');
   const [showClearConfirm, setShowClearConfirm] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setShowClearConfirm(false);
-      return;
-    }
-    setEntries(getJournalEntries());
-    const unsub = subscribeJournal(() => {
-      setEntries(getJournalEntries());
-    });
-    return () => unsub();
-  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -54,17 +44,13 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    deleteJournalEntry(id);
-    setEntries((prev) => prev.filter((item) => item.id !== id));
+    removeEntry(id);
     onToast('ลบรายการออกจากสมุดแล้ว');
   };
 
   const handleToggleBookmark = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const isNow = toggleJournalBookmark(id);
-    setEntries((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, bookmarked: isNow } : item))
-    );
+    const isNow = toggleBookmark(id);
     onToast(isNow ? 'บันทึกในรายการโปรด ⭐' : 'ยกเลิกรายการโปรด');
   };
 
@@ -73,8 +59,7 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
   };
 
   const handleExecuteClearAll = () => {
-    clearJournal();
-    setEntries([]);
+    clearAllEntries();
     setShowClearConfirm(false);
     onToast('ล้างประวัติดวงชะตาทั้งหมดแล้ว');
   };
@@ -84,10 +69,7 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
   };
 
   const handleSaveNote = (id: string) => {
-    updateJournalNote(id, noteText);
-    setEntries((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, notes: noteText } : item))
-    );
+    saveNote(id, noteText);
     setEditingNoteId(null);
     setNoteText('');
     onToast('บันทึกคำอธิษฐานแล้ว ✨');

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { toggleMuteChant, isChantMuted, subscribeChantState } from '../utils/chantAudio';
+import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useChantAudioState } from '../hooks/useChantAudioState';
 import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
@@ -12,31 +12,9 @@ export const Header: React.FC<HeaderProps> = ({
   onGoHome,
   hasActiveSession,
 }) => {
-  const { lang, setLang, t } = useLanguage();
-  const [muted, setMuted] = useState<boolean>(() => isChantMuted());
+  const { lang, cycleLang, t } = useLanguage();
+  const { isMuted, toggle: toggleAudio } = useChantAudioState();
 
-  // Sync chant mute state
-  useEffect(() => {
-    const unsub = subscribeChantState(() => {
-      setMuted(isChantMuted());
-    });
-    return () => unsub();
-  }, []);
-
-  const handleToggleAudio = () => {
-    const next = toggleMuteChant();
-    setMuted(next);
-  };
-
-  const handleCycleLang = () => {
-    if (lang === 'th') {
-      setLang('en');
-    } else if (lang === 'en') {
-      setLang('zh');
-    } else {
-      setLang('th');
-    }
-  };
 
   return (
     <header className={`mystical-header-sticky-wrapper ${hasActiveSession ? 'header-session-compact' : ''}`}>
@@ -67,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             className="btn-lang-cycle"
-            onClick={handleCycleLang}
+            onClick={cycleLang}
             title={
               lang === 'th'
                 ? 'ภาษาไทย (คลิกเพื่อเปลี่ยนเป็น EN)'
@@ -87,12 +65,12 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="header-audio-control">
             <button
               type="button"
-              className={`btn-speaker-icon-only ${muted ? 'is-muted' : 'is-active'}`}
-              onClick={handleToggleAudio}
-              title={muted ? t.soundOn : t.soundOff}
-              aria-label={muted ? t.soundOn : t.soundOff}
+              className={`btn-speaker-icon-only ${isMuted ? 'is-muted' : 'is-active'}`}
+              onClick={toggleAudio}
+              title={isMuted ? t.soundOn : t.soundOff}
+              aria-label={isMuted ? t.soundOn : t.soundOff}
             >
-              <span className="speaker-icon">{muted ? '🔇' : '🔊'}</span>
+              <span className="speaker-icon">{isMuted ? '🔇' : '🔊'}</span>
             </button>
           </div>
         </div>

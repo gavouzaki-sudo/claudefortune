@@ -20,6 +20,23 @@ interface AuspiciousCalendarProps {
 
 export type ViewMode = 'calendar';
 
+// Month names in Thai
+export const THAI_MONTHS: readonly string[] = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
+];
+
+// All 7 weekdays definition with colors and Kala Yoga day mapping
+export const ALL_WEEKDAYS = [
+  { full: 'วันอาทิตย์', short: 'อา.', col: 'sun', dayOfWeek: 0, color: '#ef4444' },
+  { full: 'วันจันทร์', short: 'จ.', col: 'mon', dayOfWeek: 1, color: '#eab308' },
+  { full: 'วันอังคาร', short: 'อ.', col: 'tue', dayOfWeek: 2, color: '#ec4899' },
+  { full: 'วันพุธ', short: 'พ.', col: 'wed', dayOfWeek: 3, color: '#10b981' },
+  { full: 'วันพฤหัสบดี', short: 'พฤ.', col: 'thu', dayOfWeek: 4, color: '#f97316' },
+  { full: 'วันศุกร์', short: 'ศ.', col: 'fri', dayOfWeek: 5, color: '#06b6d4' },
+  { full: 'วันเสาร์', short: 'ส.', col: 'sat', dayOfWeek: 6, color: '#a855f7' },
+] as const;
+
 export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
   initialBirthDay,
   onToast,
@@ -52,12 +69,6 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Month names in Thai
-  const THAI_MONTHS = [
-    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
-  ];
-
   // Calculate Kala Yoga for current year
   const kalaYoga = useMemo(() => getKalaYogaForYear(selectedYearBE), [selectedYearBE]);
 
@@ -65,20 +76,6 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
   const allMonthDays = useMemo(
     () => generateMonthAuspiciousDays(selectedYearBE, selectedMonth),
     [selectedYearBE, selectedMonth]
-  );
-
-  // All 7 weekdays
-  const ALL_WEEKDAYS = useMemo(
-    () => [
-      { full: 'วันอาทิตย์', short: 'อา.', col: 'sun', dayOfWeek: 0, color: '#ef4444' },
-      { full: 'วันจันทร์', short: 'จ.', col: 'mon', dayOfWeek: 1, color: '#eab308' },
-      { full: 'วันอังคาร', short: 'อ.', col: 'tue', dayOfWeek: 2, color: '#ec4899' },
-      { full: 'วันพุธ', short: 'พ.', col: 'wed', dayOfWeek: 3, color: '#10b981' },
-      { full: 'วันพฤหัสบดี', short: 'พฤ.', col: 'thu', dayOfWeek: 4, color: '#f97316' },
-      { full: 'วันศุกร์', short: 'ศ.', col: 'fri', dayOfWeek: 5, color: '#06b6d4' },
-      { full: 'วันเสาร์', short: 'ส.', col: 'sat', dayOfWeek: 6, color: '#a855f7' },
-    ],
-    []
   );
 
   // If env is mobile: cut out วันอุบาทว์ and วันโลกาวินาศ columns completely
@@ -89,7 +86,7 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
       );
     }
     return ALL_WEEKDAYS;
-  }, [isMobile, ALL_WEEKDAYS, kalaYoga]);
+  }, [isMobile, kalaYoga]);
 
   // If env is mobile: cut out วันอุบาทว์ and วันโลกาวินาศ days completely
   const displayedMonthDays = useMemo(() => {
@@ -128,7 +125,7 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     setSelectedMonth(newMonth);
     setInspectedDay(null);
     onToast(`📅 เปลี่ยนเป็นเดือน ${THAI_MONTHS[newMonth - 1]} พ.ศ. ${selectedYearBE}`);
-  }, [onToast, selectedYearBE, THAI_MONTHS]);
+  }, [onToast, selectedYearBE]);
 
   const handleYearChange = useCallback((newYearBE: number) => {
     setSelectedYearBE(newYearBE);
@@ -265,7 +262,7 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
 
       return searchableBlob.includes(rawQ);
     });
-  }, [allMonthDays, thaksaByDate, selectedBirthDay, avoidKalakini, selectedCategory, searchQuery, THAI_MONTHS]);
+  }, [allMonthDays, thaksaByDate, selectedBirthDay, avoidKalakini, selectedCategory, searchQuery]);
 
 
 

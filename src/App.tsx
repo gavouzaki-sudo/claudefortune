@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Bridge } from './bridge';
-import type { UserSession } from './types';
-import { MYSTICAL_THEMES } from './data/themes';
-import { detectSmartTheme } from './utils/smartTheme';
+import type { UserSession, DivinationTopic } from './types';
+import { useToast } from './hooks/useToast';
+import { useThemeManager } from './hooks/useThemeManager';
+import { useFortuneJournal } from './hooks/useFortuneJournal';
 import { safeStorage } from './utils/storage';
 import { logger } from './utils/logger';
 import { LanguageProvider } from './context/LanguageContext';
@@ -29,57 +30,28 @@ import { FortuneJournalModal } from './components/FortuneJournalModal';
 import { ThaiLotteryModal } from './components/ThaiLotteryModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { ambientSoundEngine } from './utils/ambientSoundscapes';
-import { getJournalEntries, subscribeJournal } from './utils/fortuneJournal';
 import { spiritualSpeechEngine } from './utils/spiritualSpeech';
 import { stopChant } from './utils/chantAudio';
 import type { CardData } from './utils/luckyCardCanvas';
-import type { DivinationTopic } from './types';
-
-const FEST_INDEX_MAP: Record<string, number> = {
-  shrine: 0,
-  songkran: 1,
-  halloween: 2,
-  loy: 3,
-  cny: 4,
-  newyear: 5,
-};
 
 export const App: React.FC = () => {
   const [bridge, setBridge] = useState<Bridge | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [session, setSession] = useState<UserSession | null>(null);
-  const [theme, setTheme] = useState<string>('auto');
-  const [activeThemeId, setActiveThemeId] = useState<string>('shrine');
-  const [festivalId, setFestivalId] = useState<number>(0);
   const [tab, setTab] = useState<DivinationTopic>('stick');
   const [tarotVariant, setTarotVariant] = useState<0 | 1>(0);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
-  const toastTimerRef = useRef<number | null>(null);
   const fireworksRef = useRef<FireworksHandle>(null);
 
-  // Modals for Option A (Lucky Card), Option B (Fortune Journal) & Thai Lottery
+  // Custom Hooks
+  const { toastMsg, showToast } = useToast();
+  const { activeThemeId, festivalId } = useThemeManager(!!bridge);
+  const { count: journalCount } = useFortuneJournal(true);
+
+  // Modals
   const [activeCardData, setActiveCardData] = useState<CardData | null>(null);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [isJournalOpen, setIsJournalOpen] = useState(false);
   const [isLotteryOpen, setIsLotteryOpen] = useState(false);
-  const [journalCount, setJournalCount] = useState(0);
-
-  // Sync journal entry count safely
-  useEffect(() => {
-    setJournalCount(getJournalEntries().length);
-    const unsub = subscribeJournal(() => {
-      setJournalCount(getJournalEntries().length);
-    });
-    return () => unsub();
-  }, []);
-
-  const showToast = useCallback((msg: string) => {
-    setToastMsg(msg);
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => {
-      setToastMsg(null);
-    }, 3800);
-  }, []);
 
   // Subscribe to spiritual speech engine notices (e.g. mobile audio guidance or fallback alerts)
   useEffect(() => {
@@ -89,17 +61,18 @@ export const App: React.FC = () => {
     return () => unsub();
   }, [showToast]);
 
-  const handleOpenCard = (data: CardData) => {
-    if (session) {
-      data.systemName = data.systemName || session.systemName;
-      data.symbolName = data.symbolName || session.symbolName;
-      data.symbolIcon = data.symbolIcon || session.symbolIcon;
-      data.element = data.element || session.element;
-      data.aura = data.aura || session.aura;
-    }
-    setActiveCardData(data);
+  const handleOpenCard = useCallback((data: CardData) => {
+    const enrichedData: CardData = {
+      ...data,
+      systemName: data.systemName || session?.systemName,
+      symbolName: data.symbolName || session?.symbolName,
+      symbolIcon: data.symbolIcon || session?.symbolIcon,
+      element: data.element || session?.element,
+      aura: data.aura || session?.aura,
+    };
+    setActiveCardData(enrichedData);
     setIsCardModalOpen(true);
-  };
+  }, [session]);
 
   // Initialize bridge and restore saved session
   useEffect(() => {
@@ -110,10 +83,6 @@ export const App: React.FC = () => {
         if (!isMounted) return;
         b.setDate();
         setBridge(b);
-
-        // Restore saved theme safely
-        const savedTheme = safeStorage.get<string>('session', 'shrine.theme', 'auto');
-        setTheme(savedTheme);
 
         // Restore saved session safely
         const savedSessionRaw = safeStorage.get<Record<string, unknown> | null>('session', 'shrine.session', null);
@@ -153,50 +122,13 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Update theme, festival ID, and CSS variables safely
-  useEffect(() => {
-    if (!bridge) return;
-
-    let targetThemeId: string;
-    let targetFestId = 0;
-
-    if (theme === 'auto') {
-      targetThemeId = detectSmartTheme();
-      targetFestId = FEST_INDEX_MAP[targetThemeId] ?? 0;
-    } else {
-      targetThemeId = theme;
-      targetFestId = FEST_INDEX_MAP[theme] ?? 0;
-    }
-
-    setActiveThemeId(targetThemeId);
-    setFestivalId(targetFestId);
-
-    // Apply data-theme attribute and custom CSS properties
-    document.body.dataset.theme = targetThemeId;
-
-    const matchedTheme = MYSTICAL_THEMES.find((t) => t.id === targetThemeId);
-    if (matchedTheme) {
-      const root = document.documentElement;
-      root.style.setProperty('--bg', matchedTheme.bgColors.bg);
-      root.style.setProperty('--bg2', matchedTheme.bgColors.bg2);
-      root.style.setProperty('--panel', matchedTheme.bgColors.panel);
-      root.style.setProperty('--panel-line', matchedTheme.bgColors.panelLine);
-      root.style.setProperty('--gold', matchedTheme.bgColors.gold);
-      root.style.setProperty('--gold2', matchedTheme.bgColors.gold2);
-      root.style.setProperty('--red', matchedTheme.bgColors.red);
-      root.style.setProperty('--glow', matchedTheme.bgColors.glow);
-    }
-
-    safeStorage.set('session', 'shrine.theme', theme);
-  }, [theme, bridge]);
-
-  const handleSessionChange = () => {
+  const handleSessionChange = useCallback(() => {
     spiritualSpeechEngine.stop();
     stopChant();
     ambientSoundEngine.setSoundscape('none');
     safeStorage.remove('session', 'shrine.session');
     setSession(null);
-  };
+  }, []);
 
   const festInfo = bridge?.festivalInfo(festivalId);
 
