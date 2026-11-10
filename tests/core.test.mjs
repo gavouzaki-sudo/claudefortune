@@ -126,4 +126,12 @@ t("festivals by date", () => {
   assert.ok([8, 18, 28, 66, 88, 168, 888].includes(w.blessing(4).angpao));
 });
 
+t("pure js fallback engine: input validations", async () => {
+  const jsBridge = await Bridge.fromBytes(new Uint8Array(0));
+  assert.throws(() => jsBridge.signature([[1, 1, 0]]));
+  assert.throws(() => jsBridge.imageScan(new Uint8Array(4), 0));
+  assert.throws(() => jsBridge.offering(-1, "test"));
+  assert.throws(() => jsBridge.offering(9, "test"));
+});
+
 console.log(`\n${passed} test groups passed`);

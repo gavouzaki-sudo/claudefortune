@@ -550,9 +550,12 @@ class JsCoreEngine implements ICoreEngine {
     return res;
   }
 
-  processDigitalOffering(_type: number, text: string): OfferingResult {
+  processDigitalOffering(type: number, text: string): OfferingResult {
+    if (type < 0 || type > 5) {
+      throw new Error("Invalid offering type: must be between 0 and 5");
+    }
     const CARE_WORDS = ["ฆ่าตัวตาย", "อยากตาย", "ทำร้ายตัวเอง", "ไม่อยากมีชีวิต", "จบชีวิต"];
-    const t = text || "";
+    const t = (text || "").slice(0, 4000);
     for (const w of CARE_WORDS) {
       if (t.includes(w)) {
         return {
@@ -605,6 +608,9 @@ class JsCoreEngine implements ICoreEngine {
   }
 
   processImageScan(rgba: Uint8ClampedArray | Uint8Array, mode: number): ImageScanResult {
+    if (!rgba || rgba.length < 16 || rgba.length > 1024 * 1024 || (mode !== 0 && mode !== 1)) {
+      throw new Error("Invalid image scan input");
+    }
     let sum = 0;
     const len = rgba.length;
     for (let i = 0; i < len; i += 16) {
@@ -636,6 +642,9 @@ class JsCoreEngine implements ICoreEngine {
   }
 
   processSignature(points: [number, number, number][]): SignatureResult {
+    if (!points || points.length < 8 || points.length > 20000) {
+      throw new Error("Invalid signature points: length must be between 8 and 20000");
+    }
     const n = points.length;
     let strokes = 0;
     let maxStroke = -1;

@@ -506,15 +506,21 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
     const timer = new THREE.Timer();
 
     function afterDraw(cb: () => void) {
-      const gl = renderer.getContext() as WebGL2RenderingContext;
+      const gl = renderer.getContext() as WebGL2RenderingContext | null;
+      if (!gl || typeof gl.fenceSync !== 'function') {
+        animationFrameId = window.setTimeout(cb, 80);
+        return;
+      }
       const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
       gl.flush();
       const poll = () => {
-        const state = sync && gl.getSyncParameter(sync, gl.SYNC_STATUS);
+        const state = sync && typeof gl.getSyncParameter === 'function' ? gl.getSyncParameter(sync, gl.SYNC_STATUS) : null;
         if (state === gl.UNSIGNALED) {
           animationFrameId = window.setTimeout(poll, 5);
         } else {
-          gl.deleteSync(sync);
+          if (sync && typeof gl.deleteSync === 'function') {
+            gl.deleteSync(sync);
+          }
           animationFrameId = window.setTimeout(cb, 80);
         }
       };

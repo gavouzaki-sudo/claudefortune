@@ -57,8 +57,8 @@ export function buildLuckyNumbersCardData(
 ): { cardData: CardData; details: NonNullable<CardData['details']> } {
   const detailsObj = {
     luckyNumbers: {
-      twoDigits: category === 0 ? [luckyNumber] : ['89'],
-      threeDigits: category === 1 ? [luckyNumber] : ['728'],
+      twoDigits: category === 0 ? [luckyNumber] : undefined,
+      threeDigits: category === 1 ? [luckyNumber] : undefined,
     },
   };
 

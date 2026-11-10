@@ -318,16 +318,30 @@ export async function generateLuckyCardBlob(data: CardData): Promise<Blob> {
     ctx.fill();
     ctx.stroke();
 
+    const twoDigit = data.details.luckyNumbers?.twoDigits?.[0];
+    const threeDigit = data.details.luckyNumbers?.threeDigits?.[0];
+
+    let numberDisplayText = '';
+    let categoryLabel = 'เลขเด่นประทานพร';
+    if (twoDigit && threeDigit) {
+      numberDisplayText = `${twoDigit}   ·   ${threeDigit}`;
+    } else if (twoDigit) {
+      categoryLabel = 'เลขท้าย 2 ตัวมงคล';
+      numberDisplayText = twoDigit;
+    } else if (threeDigit) {
+      categoryLabel = 'เลขท้าย 3 ตัวมงคล';
+      numberDisplayText = threeDigit;
+    } else {
+      numberDisplayText = '89   ·   728';
+    }
+
     ctx.fillStyle = '#e8b94a';
     ctx.font = '18px "Noto Sans Thai", sans-serif';
-    ctx.fillText('เลขเด่นประทานพร', width / 2, sealY + 45);
-
-    const twoDigit = data.details.luckyNumbers?.twoDigits?.[0] || '89';
-    const threeDigit = data.details.luckyNumbers?.threeDigits?.[0] || '728';
+    ctx.fillText(categoryLabel, width / 2, sealY + 45);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 64px "Chonburi", "Noto Serif Thai", serif';
-    ctx.fillText(`${twoDigit}   ·   ${threeDigit}`, width / 2, sealY + 135);
+    ctx.fillText(numberDisplayText, width / 2, sealY + 135);
 
     ctx.fillStyle = '#7fd99a';
     ctx.font = '16px "Noto Sans Thai", sans-serif';

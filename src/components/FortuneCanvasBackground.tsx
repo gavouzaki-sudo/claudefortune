@@ -833,6 +833,7 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
         g.rotate(c.rot);
         g.scale(M.abs(k) * c.sc + 0.001, c.sc);
 
+        g.beginPath();
         const anyG = g as any;
         if (typeof anyG.roundRect === 'function') {
           anyG.roundRect(-cw / 2, -ch / 2, cw, ch, 7);
