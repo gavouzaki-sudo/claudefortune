@@ -1,9 +1,9 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { playWoodClatter } from '../utils/chantAudio';
 
-export type PuaPoiResultType = 'sheng' | 'yin' | 'xiao';
+type PuaPoiResultType = 'sheng' | 'yin' | 'xiao';
 
-export interface PuaPoiResult {
+interface PuaPoiResult {
   type: PuaPoiResultType;
   title: string;
   subtitle: string;

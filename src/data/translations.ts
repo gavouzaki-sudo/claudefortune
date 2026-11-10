@@ -66,6 +66,8 @@ export interface Translations {
   topicMeditation: string;
   topicFestival: string;
   topicAuspicious: string;
+  topicKrathong: string;
+  topicCoffin: string;
   
   // Siamese Sticks
   stickTitle: string;
@@ -192,6 +194,8 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     topicMeditation: 'สมาธิ',
     topicFestival: 'ไหว้พระขอพร',
     topicAuspicious: 'ฤกษ์มงคล',
+    topicKrathong: 'ลอยกระทง',
+    topicCoffin: 'ไพ่จากโลงศพ',
 
     stickTitle: 'เซียมซีโบราณ',
     stickLead: 'ตั้งจิตอธิษฐาน เขย่ากระบอกเซียมซี แล้วโยนไม้ปัวปวยเพื่อยืนยันคำทำนาย',
@@ -312,6 +316,8 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     topicMeditation: 'Meditation',
     topicFestival: 'Sacred Prayers',
     topicAuspicious: 'Auspicious Calendar',
+    topicKrathong: 'Loy Krathong',
+    topicCoffin: 'Coffin Tarot',
 
     stickTitle: 'Siamese Sticks (Kau Chim)',
     stickLead: 'Hold your intention, shake the sacred cylinder, and toss Pua Poi blocks for verification.',
@@ -432,6 +438,8 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     topicMeditation: '静心禅修',
     topicFestival: '道场祈愿',
     topicAuspicious: '吉日吉时历',
+    topicKrathong: '水灯祈福',
+    topicCoffin: '灵棺拔煞',
 
     stickTitle: '正宗灵签 (求签掷茭)',
     stickLead: '诚心默念心中所求，摇晃签筒，并掷杯向神明求取圣茭以验证签诗。',

@@ -2,16 +2,9 @@
 // Fetches official lottery results from GLO API with proxy & fallback support
 
 import { logger } from './logger';
+import { THAI_MONTHS } from '../data/auspiciousCalendarData';
 
-export interface LotteryNumberItem {
-  round: number;
-  value: string;
-}
 
-export interface LotteryPrizeGroup {
-  price: string;
-  number: LotteryNumberItem[];
-}
 
 export interface LotteryDisplayData {
   first: string; // 6 digits e.g. "423224"
@@ -39,11 +32,6 @@ export interface CheckTicketResult {
     reward: number;
   }[];
 }
-
-const THAI_MONTHS = [
-  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-];
 
 export function formatThaiDate(yearCe: number, month1Indexed: number, day: number): string {
   const monthName = THAI_MONTHS[month1Indexed - 1] || '';

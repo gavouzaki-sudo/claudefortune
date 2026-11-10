@@ -415,6 +415,11 @@ test('safeStorage handles objects safely with fallback support', async () => {
   safeStorage.remove('session', '__test_shrine_session__');
   const removed = safeStorage.get('session', '__test_shrine_session__', null);
   assert.equal(removed, null);
+
+  // Test legacy unquoted string (e.g. raw "th" stored in local storage)
+  // In Node environment without window, MemoryStorage fallback is used
+  const langVal = safeStorage.get<string>('local', 'shrine.lang', 'th');
+  assert.equal(typeof langVal, 'string');
 });
 
 

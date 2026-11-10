@@ -55,10 +55,23 @@ export const safeStorage = {
     try {
       const storage = getStorage(type);
       const raw = storage.getItem(key);
-      if (!raw) return fallback;
-      return JSON.parse(raw) as T;
-    } catch (err) {
-      logger.warn(`Failed to read key "${key}" from ${type} storage`, err);
+      if (raw === null || raw === undefined) return fallback;
+      try {
+        return JSON.parse(raw) as T;
+      } catch {
+        // If raw value is a legacy plain string (e.g. unquoted "th" or "auto")
+        if (typeof fallback === 'string') {
+          // Self-heal storage with proper JSON-encoded value
+          try {
+            storage.setItem(key, JSON.stringify(raw));
+          } catch {
+            // Ignore write errors during recovery
+          }
+          return raw as unknown as T;
+        }
+        return fallback;
+      }
+    } catch {
       return fallback;
     }
   },

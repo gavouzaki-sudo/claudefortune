@@ -10,7 +10,7 @@ interface LoyKrathong3DProps {
   onLaunchFireworks?: (count?: number) => void;
 }
 
-export type KrathongStyle = 'classic' | 'lotus' | 'gold';
+type KrathongStyle = 'classic' | 'lotus' | 'gold';
 
 interface KrathongConfig {
   id: KrathongStyle;

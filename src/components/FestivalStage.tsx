@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Bridge } from '../bridge';
-import type { BlessingResult, TarotCard } from '../types';
-import { LoyKrathong3D } from './LoyKrathong3D';
+import type { Bridge } from '../bridge';
+import type { BlessingResult } from '../types';
 
 interface FestivalStageProps {
   bridge: Bridge;
@@ -10,27 +9,21 @@ interface FestivalStageProps {
   onLaunchFireworks: (bursts?: number) => void;
 }
 
-const GLYPHS = [
-  "🃏", "🪄", "🌙", "👑", "🏛️", "📿", "💞", "🛞", "🦁", "🏮", "☸️", "⚖️", "🙃", "🦋", "⚗️", "⛓️", "🗼", "⭐", "🌕", "☀️", "📯", "🌏"
-];
-
 export const FestivalStage: React.FC<FestivalStageProps> = ({
   bridge,
   festivalId,
   onToast,
   onLaunchFireworks,
 }) => {
-  // Allow switching festivals with Loy Krathong (3) as default
+  // Seasonal festivals: 1 = Songkran, 4 = Chinese New Year, 5 = New Year, 0 = Daily Prayer
   const [activeFestivalId, setActiveFestivalId] = useState<number>(() => {
-    return festivalId === 0 ? 3 : festivalId;
+    return festivalId === 0 ? 1 : festivalId;
   });
 
   const [blessing, setBlessing] = useState<BlessingResult | null>(null);
 
   // Stage specific state
   const [drops, setDrops] = useState<Array<{ id: number; left: string; dx: string; dy: string }>>([]);
-  const [coffinOpen, setCoffinOpen] = useState(false);
-  const [coffinCard, setCoffinCard] = useState<TarotCard | null>(null);
   const [angpaoOpen, setAngpaoOpen] = useState(false);
 
   const fetchBlessing = (id: number): BlessingResult | null => {
@@ -59,26 +52,6 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
     fetchBlessing(1);
   };
 
-  // Halloween coffin
-  const toggleCoffin = async () => {
-    const nextState = !coffinOpen;
-    setCoffinOpen(nextState);
-    if (!nextState) {
-      setCoffinCard(null);
-      setBlessing(null);
-      return;
-    }
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    await new Promise((r) => setTimeout(r, reduceMotion ? 0 : 900));
-    try {
-      const tarot = bridge.drawTarot(1);
-      setCoffinCard(tarot.cards[0]);
-      fetchBlessing(2);
-    } catch {
-      onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
-    }
-  };
-
   // CNY Angpao
   const handleToggleAngpao = () => {
     if (angpaoOpen) {
@@ -104,13 +77,11 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
   return (
     <section id="tab-festival" className="ritual-frameless-stage tab festival-section-stage" role="tabpanel">
       {/* Festival Selector Bar */}
-      <div className="festival-tab-bar" role="tablist" aria-label="เลือกเทศกาล">
+      <div className="festival-tab-bar" role="tablist" aria-label="เลือกเทศกาลขอพร">
         {[
-          { id: 3, name: '🪷 ลอยกระทง 3D' },
           { id: 1, name: '💦 สงกรานต์' },
-          { id: 2, name: '🎃 ฮาโลวีน' },
           { id: 4, name: '🧧 ตรุษจีน' },
-          { id: 5, name: '🎆 ปีใหม่' },
+          { id: 5, name: '🎆 วันขึ้นปีใหม่' },
           { id: 0, name: '🏮 ขอพรประจำวัน' },
         ].map((fest) => (
           <button
@@ -127,8 +98,8 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
         ))}
       </div>
 
-      <div id="fest-stage" className={`fest-stage ${activeFestivalId === 3 ? 'stage-3d-active' : ''}`}>
-        {/* Stage 0: Daily */}
+      <div id="fest-stage" className="fest-stage">
+        {/* Stage 0: Daily Blessing */}
         {activeFestivalId === 0 && (
           <>
             <div className="yantra active" style={{ opacity: 0.9 }}>
@@ -150,7 +121,7 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
               type="button"
               onClick={() => fetchBlessing(0)}
             >
-              จุดธูปขอพร
+              จุดธูปขอพรประจำวัน
             </button>
           </>
         )}
@@ -189,64 +160,8 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
                 />
               ))}
             </div>
-            <p className="hint">แตะขันน้ำเพื่อสาดน้ำทายโชค</p>
+            <p className="hint">แตะขันน้ำเพื่อสาดน้ำทายโชคชุ่มฉ่ำใจ</p>
           </>
-        )}
-
-        {/* Stage 2: Halloween */}
-        {activeFestivalId === 2 && (
-          <>
-            <div
-              className={`coffin ${coffinOpen ? 'open' : ''}`}
-              role="button"
-              tabIndex={0}
-              aria-label="เปิดโลงศพ"
-              onClick={toggleCoffin}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  toggleCoffin();
-                }
-              }}
-            >
-              <div className="box" />
-              <div className="lid" />
-            </div>
-            <p className="hint">แตะโลงศพเพื่อเปิดฝา (แตะอีกครั้งเพื่อปิด)</p>
-            {coffinCard && (
-              <div className="coffin-card">
-                <div className="tslot revealed">
-                  <div className="pos">ไพ่จากโลงศพ</div>
-                  <div className="tcard flipped">
-                    <div className="tcard-in">
-                      <div className="tface tback" />
-                      <div className={`tface tfront ${coffinCard.reversed ? 'rev' : ''}`}>
-                        <div className="num">{String(coffinCard.id).padStart(2, '0')}</div>
-                        <div className="glyph">{GLYPHS[coffinCard.id] || '🎴'}</div>
-                        <div>
-                          <div className="nm">{coffinCard.name}</div>
-                          <div className="en">{coffinCard.en}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="tmean">
-                    {coffinCard.reversed && <span className="rv">ไพ่กลับหัว</span>}
-                    {coffinCard.meaning}
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Stage 3: Loy Krathong in 3D */}
-        {activeFestivalId === 3 && (
-          <LoyKrathong3D
-            bridge={bridge}
-            onToast={onToast}
-            onLaunchFireworks={onLaunchFireworks}
-          />
         )}
 
         {/* Stage 4: Chinese New Year */}
@@ -271,7 +186,7 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
               </div>
               <div className="flap" />
             </div>
-            <p className="hint">แตะซองอั่งเปาเพื่อเปิด</p>
+            <p className="hint">แตะซองอั่งเปาเพื่อเปิดรับโชครับทรัพย์</p>
           </>
         )}
 
@@ -286,13 +201,13 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
               type="button"
               onClick={handleNewYearPray}
             >
-              จุดพลุอธิษฐาน
+              จุดพลุอธิษฐานรับปีใหม่
             </button>
           </>
         )}
       </div>
 
-      {blessing && activeFestivalId !== 3 && (
+      {blessing && (
         <article id="fest-result" className="result" aria-live="polite">
           <h3>{blessing.title}</h3>
           <p className="verse">{blessing.text}</p>

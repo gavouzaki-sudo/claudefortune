@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { UserSession } from '../types';
 import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
+import { getRandomArrayItem } from '../utils/formatters';
 
 interface LoveFortuneProps {
   session: UserSession;
@@ -100,7 +101,7 @@ export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) =>
 
     setTimeout(() => {
       const pool = LOVE_PREDICTIONS[selectedStatus] || LOVE_PREDICTIONS.single;
-      const chosen = pool[Math.floor(Math.random() * pool.length)];
+      const chosen = getRandomArrayItem(pool, pool[0]);
       setReading(chosen);
       setIsReading(false);
       onToast(`✨ ดวงความรักคลี่คลาย: คะแนนรัก ${chosen.score}%`);

@@ -1,6 +1,7 @@
 import React from 'react';
+import { clamp } from '../utils/formatters';
 
-export interface ScoreItem {
+interface ScoreItem {
   key: string;
   label: string;
   score: number;
@@ -15,7 +16,7 @@ export const ScoreBars: React.FC<ScoreBarsProps> = ({ scores, maxScore = 5 }) =>
   return (
     <div className="bars">
       {scores.map(({ key, label, score }) => {
-        const percentage = Math.min(100, Math.max(0, (score / maxScore) * 100));
+        const percentage = clamp((score / maxScore) * 100, 0, 100);
         return (
           <div key={key} className="bar">
             <span>{label}</span>

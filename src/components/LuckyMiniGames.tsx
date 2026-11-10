@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getRandomArrayItem } from '../utils/formatters';
 
-export type MiniGameType = 'rps' | 'mole' | 'ox' | 'match' | 'demon';
+type MiniGameType = 'rps' | 'mole' | 'ox' | 'match' | 'demon';
 
 interface LuckyMiniGamesProps {
   onWin: () => void;
@@ -44,7 +45,7 @@ const RPSGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({ onWin, o
         else if (lastPlayerChoiceRef.current === 'paper') ai = 'scissors';
         else ai = 'rock';
       } else {
-        ai = all[Math.floor(Math.random() * all.length)];
+        ai = getRandomArrayItem(all, all[0]);
       }
 
       lastPlayerChoiceRef.current = choice;
@@ -386,11 +387,11 @@ const TicTacToeGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
     // 4. Take corner squares (0, 2, 6, 8)
     const corners = [0, 2, 6, 8].filter((c) => currentBoard[c] === null);
     if (corners.length > 0) {
-      return corners[Math.floor(Math.random() * corners.length)];
+      return getRandomArrayItem(corners, corners[0]);
     }
 
     // 5. Take any remaining available cell
-    return available[Math.floor(Math.random() * available.length)];
+    return getRandomArrayItem(available, available[0]);
   };
 
   const handleCellClick = (idx: number) => {

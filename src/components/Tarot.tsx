@@ -3,6 +3,7 @@ import { Bridge } from '../bridge';
 import type { TarotCard } from '../types';
 import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
 import { saveJournalEntry } from '../utils/fortuneJournal';
+import { buildTarotCardData } from '../utils/cardDataBuilder';
 import type { CardData } from '../utils/luckyCardCanvas';
 import { logger } from '../utils/logger';
 import { pad2 } from '../utils/formatters';
@@ -45,20 +46,17 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
   const handleSaveAndShare = () => {
     if (cards.length === 0) return;
     const activeCards = cards.slice(0, spread);
-    const tarotDetails = {
-      tarotCards: activeCards.map((c, i) => ({
-        name: c.name,
-        nameEn: c.en,
-        glyph: GLYPHS[c.id] || '🔮',
-        reversed: c.reversed,
-        position: SPREAD_POSITIONS[spread]?.[i] || `ใบที่ ${i + 1}`,
-      })),
-    };
+    const { cardData, details: tarotDetails } = buildTarotCardData(
+      activeCards,
+      spread,
+      GLYPHS,
+      SPREAD_POSITIONS
+    );
 
     if (!isJournalSaved) {
       saveJournalEntry({
         type: 'tarot',
-        title: `ไพ่ยิปซี (${spread} ใบ)`,
+        title: cardData.title,
         summary: activeCards.map((c) => `${c.name}${c.reversed ? ' (กลับหัว)' : ''}`).join(' · '),
         details: tarotDetails,
       });
@@ -66,11 +64,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
       onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
     }
     if (onOpenCard) {
-      onOpenCard({
-        type: 'tarot',
-        title: `ไพ่ยิปซี (${spread} ใบ)`,
-        details: tarotDetails,
-      });
+      onOpenCard(cardData);
     }
   };
 

@@ -189,7 +189,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
             {[
               { val: 0.9, label: '0.9x ช้า' },
               { val: 1.0, label: '1.0x ปกติ' },
-              { val: 1.2, label: '⚡ 1.2x (+20%)' },
+              { val: 1.2, label: '1.2x(เร็ว)' },
             ].map((opt) => (
               <button
                 key={opt.val}

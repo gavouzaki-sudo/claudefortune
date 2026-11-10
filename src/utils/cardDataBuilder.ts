@@ -4,7 +4,9 @@
  */
 
 import type { CardData } from './luckyCardCanvas';
-import type { StickResult, TarotResult, LuckyNumbersResult, ZodiacInfo } from '../types';
+import type { StickResult, TarotCard } from '../types';
+import type { AuspiciousDay } from '../data/auspiciousCalendarData';
+import { WORK_CATEGORIES_INFO } from '../data/auspiciousCalendarData';
 
 export function buildStickCardData(result: StickResult): CardData {
   return {
@@ -24,53 +26,74 @@ export function buildStickCardData(result: StickResult): CardData {
   };
 }
 
-export function buildTarotCardData(result: TarotResult): CardData {
-  const c = result.cards[0];
-  return {
-    type: 'tarot',
-    title: `ไพ่ยิปซี: ${c.name} (${c.en})`,
-    details: {
-      tarotCards: [
-        {
-          name: c.name,
-          nameEn: c.en,
-          reversed: c.reversed,
-        },
-      ],
-    },
+export function buildTarotCardData(
+  activeCards: TarotCard[],
+  spread: number = activeCards.length,
+  glyphs: Record<number, string> = {},
+  spreadPositions: Record<number, string[]> = {}
+): { cardData: CardData; details: NonNullable<CardData['details']> } {
+  const tarotDetails = {
+    tarotCards: activeCards.map((c, i) => ({
+      name: c.name,
+      nameEn: c.en,
+      glyph: glyphs[c.id] || '🔮',
+      reversed: c.reversed,
+      position: spreadPositions[spread]?.[i] || `ใบที่ ${i + 1}`,
+    })),
   };
+
+  const cardData: CardData = {
+    type: 'tarot',
+    title: `ไพ่ยิปซี (${spread} ใบ)`,
+    details: tarotDetails,
+  };
+
+  return { cardData, details: tarotDetails };
 }
 
 export function buildLuckyNumbersCardData(
-  result: LuckyNumbersResult,
-  _zodiacInfo?: ZodiacInfo
-): CardData {
-  return {
-    type: 'number',
-    title: `เลขมงคลประจำดวงชะตา`,
-    details: {
-      luckyNumbers: {
-        twoDigits: result.two || [],
-        threeDigits: result.three || [],
-      },
+  luckyNumber: string,
+  category: 0 | 1
+): { cardData: CardData; details: NonNullable<CardData['details']> } {
+  const detailsObj = {
+    luckyNumbers: {
+      twoDigits: category === 0 ? [luckyNumber] : ['89'],
+      threeDigits: category === 1 ? [luckyNumber] : ['728'],
     },
   };
+
+  const cardData: CardData = {
+    type: 'number',
+    title: `เลขมงคลประจำตัว (${category === 0 ? 'เลข 2 หลัก' : 'เลข 3 หลัก'})`,
+    details: detailsObj,
+  };
+
+  return { cardData, details: detailsObj };
 }
 
 export function buildAuspiciousCardData(
-  eventTitle: string,
-  eventDate: string,
-  goodFor: string,
-  tip: string
+  day: AuspiciousDay,
+  monthName: string
 ): CardData {
   return {
     type: 'auspicious',
-    title: `ฤกษ์มงคล: ${eventTitle}`,
+    title: `ฤกษ์มงคล ${day.thaiRukNameTh}`,
+    subtitle: `${day.dayNameTh}ที่ ${day.dayOfMonth} ${monthName} พ.ศ. ${day.yearBE}`,
+    dateStr: day.date,
     details: {
       auspiciousInfo: {
-        dateFormatted: eventDate,
-        category: goodFor,
-        ceremonyTip: tip,
+        dateFormatted: `${day.dayNameTh}ที่ ${day.dayOfMonth} ${monthName} ${day.yearBE}`,
+        lunarDate: day.lunarDateTh,
+        thaiRukName: day.thaiRukNameTh,
+        thaiRukMeaning: day.thaiRukHighlight,
+        kalaYoga: day.kalaYogaLabel,
+        category:
+          day.suitableCategories.map((c) => WORK_CATEGORIES_INFO[c]?.titleTh || c).join(', ') ||
+          'งานมงคลทั่วไป',
+        bestHours: day.bestHours.primaryTime,
+        direction: day.auspiciousDirection,
+        luckyColors: day.luckyColors.join(' / '),
+        ceremonyTip: Object.values(day.ceremonyTips)[0] || 'จุดธูปบูชาพระพุทธและเทพยดาอำนวยพร',
       },
     },
   };

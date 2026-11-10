@@ -5,6 +5,7 @@ import { BurnTalisman } from './BurnTalisman';
 import { LuckyMiniGames } from './LuckyMiniGames';
 import { playFireCrackle } from '../utils/chantAudio';
 import { saveJournalEntry } from '../utils/fortuneJournal';
+import { buildLuckyNumbersCardData } from '../utils/cardDataBuilder';
 import type { CardData } from '../utils/luckyCardCanvas';
 import { logger } from '../utils/logger';
 
@@ -125,12 +126,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
   // Save to journal and open card modal
   const handleSaveAndShare = () => {
     if (burnLevel < 3 || category === null) return;
-    const detailsObj = {
-      luckyNumbers: {
-        twoDigits: category === 0 ? [luckyNumber] : ['89'],
-        threeDigits: category === 1 ? [luckyNumber] : ['728'],
-      },
-    };
+    const { cardData, details: detailsObj } = buildLuckyNumbersCardData(luckyNumber, category);
 
     if (!isJournalSaved) {
       saveJournalEntry({
@@ -143,11 +139,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
       onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
     }
     if (onOpenCard) {
-      onOpenCard({
-        type: 'number',
-        title: `เลขมงคลประจำตัว (${category === 0 ? 'เลข 2 หลัก' : 'เลข 3 หลัก'})`,
-        details: detailsObj,
-      });
+      onOpenCard(cardData);
     }
   };
 
@@ -200,11 +192,13 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
         </div>
       ) : (
         <>
-          {/* 1. Mini Games Section: Placed snug right at the top */}
-          <LuckyMiniGames
-            onWin={handleWin}
-            onLose={handleLose}
-          />
+          {/* 1. Mini Games Section: Shown only while burning the talisman, hidden once successfully burned */}
+          {burnLevel < 3 && (
+            <LuckyMiniGames
+              onWin={handleWin}
+              onLose={handleLose}
+            />
+          )}
 
           {/* 2. Visual Altar Stage (Incense, Burning Talisman, and Wealth Treasure) */}
           {burnLevel === 3 ? (

@@ -5,26 +5,23 @@ import {
   getThaksaRelation,
   BIRTH_DAYS,
   WORK_CATEGORIES_INFO,
+  THAI_MONTHS,
   type AuspiciousDay,
   type AuspiciousWorkCategory,
   type BirthDayId,
 } from '../data/auspiciousCalendarData';
 import { saveJournalEntry } from '../utils/fortuneJournal';
+import { buildAuspiciousCardData } from '../utils/cardDataBuilder';
 import type { CardData } from '../utils/luckyCardCanvas';
+
+// Re-export THAI_MONTHS from canonical source for external consumers and test suites
+export { THAI_MONTHS };
 
 interface AuspiciousCalendarProps {
   initialBirthDay?: BirthDayId;
   onToast: (msg: string) => void;
   onOpenCard?: (card: CardData) => void;
 }
-
-export type ViewMode = 'calendar';
-
-// Month names in Thai
-export const THAI_MONTHS: readonly string[] = [
-  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
-];
 
 // All 7 weekdays definition with colors and Kala Yoga day mapping
 export const ALL_WEEKDAYS = [
@@ -318,26 +315,7 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
   // Handle Generate Lucky Card
   const handleOpenLuckyCard = (day: AuspiciousDay) => {
     if (!onOpenCard) return;
-    const cardData: CardData = {
-      type: 'auspicious',
-      title: `ฤกษ์มงคล ${day.thaiRukNameTh}`,
-      subtitle: `${day.dayNameTh}ที่ ${day.dayOfMonth} ${THAI_MONTHS[day.month - 1]} พ.ศ. ${day.yearBE}`,
-      dateStr: day.date,
-      details: {
-        auspiciousInfo: {
-          dateFormatted: `${day.dayNameTh}ที่ ${day.dayOfMonth} ${THAI_MONTHS[day.month - 1]} ${day.yearBE}`,
-          lunarDate: day.lunarDateTh,
-          thaiRukName: day.thaiRukNameTh,
-          thaiRukMeaning: day.thaiRukHighlight,
-          kalaYoga: day.kalaYogaLabel,
-          category: day.suitableCategories.map((c) => WORK_CATEGORIES_INFO[c].titleTh).join(', ') || 'งานมงคลทั่วไป',
-          bestHours: day.bestHours.primaryTime,
-          direction: day.auspiciousDirection,
-          luckyColors: day.luckyColors.join(' / '),
-          ceremonyTip: Object.values(day.ceremonyTips)[0] || 'จุดธูปบูชาพระพุทธและเทพยดาอำนวยพร',
-        },
-      },
-    };
+    const cardData = buildAuspiciousCardData(day, THAI_MONTHS[day.month - 1]);
     onOpenCard(cardData);
   };
 

@@ -1,6 +1,11 @@
 // Thai Astrological Calendar & Auspicious Timing Engine (โหราศาสตร์ไทย & ปฏิทินฤกษ์มงคล)
 // Complete calculations for Kala Yoga, Maha Thaksa, 9 Thai Ruk (นพดลฤกษ์ทั้ง ๙), 27 Nakshatras, Continuous Lunar Dithi, and Auspicious Categories
 
+export const THAI_MONTHS: readonly string[] = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
+] as const;
+
 export type ThaiRukType =
   | 'daliddo'      // 1. ทลิทโทฤกษ์ (ฤกษ์ขอความเมตตา ชูชก ทวงหนี้ เจรจาประนีประนอม)
   | 'mahatthano'   // 2. มหัทธโนฤกษ์ (ฤกษ์เศรษฐี ค้าขาย ร่ำรวย ทรัพย์สิน ออกรถ เปิดร้าน)
@@ -155,7 +160,7 @@ export const WORK_CATEGORIES_INFO: Record<
 };
 
 // 9 Authentic Thai Astrological Ruks (นพดลฤกษ์ทั้ง ๙)
-export const THAI_RUK_DESCRIPTIONS: Record<
+const THAI_RUK_DESCRIPTIONS: Record<
   ThaiRukType,
   { nameTh: string; alias: string; meaningTh: string; highlightTh: string; bestFor: string; icon: string }
 > = {
@@ -234,7 +239,7 @@ export const THAI_RUK_DESCRIPTIONS: Record<
 };
 
 // 27 Thai Nakshatras (กลุ่มดาวนักษัตร ๒๗ กลุ่ม)
-export interface ThaiNakshatra {
+interface ThaiNakshatra {
   number: number; // 1-27
   nameTh: string;
   transliteration: string;
@@ -242,7 +247,7 @@ export interface ThaiNakshatra {
   meaningTh: string;
 }
 
-export const THAI_NAKSHATRAS: ThaiNakshatra[] = [
+const THAI_NAKSHATRAS: ThaiNakshatra[] = [
   { number: 1, nameTh: 'อัศวินี', transliteration: 'Ashwini', thaiRuk: 'daliddo', meaningTh: 'ดาวม้า / ปฐมนักษัตร คล่องแคล่ว รวดเร็ว' },
   { number: 2, nameTh: 'ภรณี', transliteration: 'Bharani', thaiRuk: 'mahatthano', meaningTh: 'ดาวแม่ไก่ / อุดมสมบูรณ์ มั่งคั่ง ทรัพย์สิน' },
   { number: 3, nameTh: 'กฤติกา', transliteration: 'Krittika', thaiRuk: 'joro', meaningTh: 'ดาวลูกไก่ / รวดเร็ว เด็ดขาด แข่งขัน ชิงไหวชิงพริบ' },
@@ -273,7 +278,7 @@ export const THAI_NAKSHATRAS: ThaiNakshatra[] = [
 ];
 
 // Julian Day Number Calculation
-export function getJulianDay(yearCE: number, month: number, day: number): number {
+function getJulianDay(yearCE: number, month: number, day: number): number {
   let y = yearCE;
   let m = month;
   if (m <= 2) {
@@ -286,7 +291,7 @@ export function getJulianDay(yearCE: number, month: number, day: number): number
 }
 
 // Thai Digits Formatter
-export function toThaiDigits(n: number): string {
+function toThaiDigits(n: number): string {
   const thaiDigits = ['๐', '๑', '๒', '๓', '๔', '๕', '๖', '๗', '๘', '๙'];
   return n.toString().split('').map((ch) => thaiDigits[parseInt(ch, 10)] ?? ch).join('');
 }
@@ -296,7 +301,7 @@ export function toThaiDigits(n: number): string {
 // Month 11 is an odd month (เดือนคี่/เดือนขาด): 29 days (Waxing 1-15, Waning 1-14). Ends on Nov 9 (แรม ๑๔ ค่ำ เดือน ๑๑).
 // Month 12 is an even month (เดือนคู่/เดือนเต็ม): 30 days (Waxing 1-15, Waning 1-15).
 // Nov 24, 2026 is ขึ้น ๑๕ ค่ำ เดือน ๑๒ (วันลอยกระทง / วันเพ็ญ 🌕).
-export interface ThaiLunarResult {
+interface ThaiLunarResult {
   lunarDay: number;
   isWaning: boolean;
   lunarMonth: number;
@@ -306,7 +311,7 @@ export interface ThaiLunarResult {
   moonIcon: string;
 }
 
-export function calculateThaiLunarDate(yearCE: number, month: number, day: number): ThaiLunarResult {
+function calculateThaiLunarDate(yearCE: number, month: number, day: number): ThaiLunarResult {
   // Anchor: 2026-11-10 is Month 12, Waxing (ขึ้น), Day 1
   const targetDate = new Date(Date.UTC(yearCE, month - 1, day));
   const anchorDate = new Date(Date.UTC(2026, 10, 10)); // Nov 10, 2026
@@ -415,7 +420,7 @@ export function calculateThaiLunarDate(yearCE: number, month: number, day: numbe
 
 // Authentic Thai Ruk & Nakshatra Calculation (ดาวเสวยนักษัตร & นพดลฤกษ์)
 // Moon advances ~1 nakshatra per day through 27 nakshatras, cycling through 9 ruks.
-export function calculateThaiRuk(yearCE: number, month: number, day: number): {
+function calculateThaiRuk(yearCE: number, month: number, day: number): {
   nakshatraNumber: number;
   nakshatraNameTh: string;
   thaiRuk: ThaiRukType;
@@ -861,6 +866,3 @@ export function generateMonthAuspiciousDays(inputYear: number, month: number): A
 
   return result;
 }
-
-// Pre-computed authoritative dataset for November 2569 (Nov 2026)
-export const NOVEMBER_2569_DAYS: AuspiciousDay[] = generateMonthAuspiciousDays(2569, 11);

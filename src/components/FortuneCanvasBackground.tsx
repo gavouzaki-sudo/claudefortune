@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
+import { clamp } from '../utils/formatters';
 
-export type FortuneTopic = 'stick' | 'tarot' | 'number' | 'ritual' | 'scan' | 'festival' | 'love' | 'cosmic' | 'meditation' | 'auspicious';
+type FortuneTopic = 'stick' | 'tarot' | 'number' | 'ritual' | 'scan' | 'festival' | 'love' | 'cosmic' | 'meditation' | 'auspicious' | 'krathong' | 'coffin';
 
 interface FortuneCanvasBackgroundProps {
   activeTopic: FortuneTopic;
@@ -33,7 +34,6 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
     const PAD = 70;
     const reduce = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-    const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 
     let DPR = 1;
     let LD = 1;
@@ -1754,6 +1754,8 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       festival: new TempleScene(),
       cosmic: new CosmicScene(),
       meditation: new CosmicScene(),
+      krathong: new TempleScene(),
+      coffin: new CemeteryScene(),
     };
 
     let curSceneKey = activeTopic === 'tarot' ? (tarotVariant === 1 ? 'tarot1' : 'tarot0') : activeTopic;

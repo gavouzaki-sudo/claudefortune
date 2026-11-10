@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import type { DivinationTopic } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 
-export interface RitualMenuItem {
+interface RitualMenuItem {
   id: DivinationTopic;
   title: string;
 }
@@ -10,7 +10,6 @@ export interface RitualMenuItem {
 interface HorizontalRitualMenuProps {
   activeTopic: DivinationTopic;
   onSelectTopic: (topic: DivinationTopic) => void;
-  festivalName?: string;
 }
 
 /**
@@ -28,9 +27,8 @@ const getCardCenterPos = (track: HTMLElement, card: HTMLElement): number => {
 export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
   activeTopic,
   onSelectTopic,
-  festivalName,
 }) => {
-  const { lang, t } = useLanguage();
+  const { t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const activeTopicRef = useRef<DivinationTopic>(activeTopic);
@@ -82,18 +80,19 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
         title: t.topicAuspicious,
       },
       {
+        id: 'krathong',
+        title: t.topicKrathong,
+      },
+      {
+        id: 'coffin',
+        title: t.topicCoffin,
+      },
+      {
         id: 'festival',
-        title:
-          lang === 'th'
-            ? festivalName
-              ? festivalName.includes('ลอยกระทง')
-                ? 'ลอยกระทง'
-                : `${t.topicFestival} (${festivalName})`
-              : 'ลอยกระทง'
-            : t.topicFestival,
+        title: t.topicFestival,
       },
     ],
-    [lang, t, festivalName]
+    [t]
   );
 
   // Repeat 5 copies (0, 1, 2, 3, 4) for seamless infinite cyclical looping

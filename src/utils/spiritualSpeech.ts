@@ -85,7 +85,7 @@ export const isMobileDevice = (): boolean => {
   return /iPhone|iPad|iPod|Android|Mobile|Silk|Kindle|BlackBerry/i.test(navigator.userAgent || '');
 };
 
-export const isThaiVoice = (v: SpeechSynthesisVoice): boolean => {
+const isThaiVoice = (v: SpeechSynthesisVoice): boolean => {
   const lang = (v.lang || '').toLowerCase().replace(/_/g, '-');
   const name = (v.name || '').toLowerCase();
   return (

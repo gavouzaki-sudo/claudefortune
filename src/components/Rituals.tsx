@@ -20,7 +20,7 @@ const AMBIENT_LANTERNS = [
   { id: 5, left: '48%', bottom: '70px', size: 9, delay: '6s', drift: '15px' },
 ];
 
-export interface BodySweepPart {
+interface BodySweepPart {
   id: number;
   name: string;
   sub: string;
@@ -30,7 +30,7 @@ export interface BodySweepPart {
   nodeR: number;
 }
 
-export const BODY_SWEEP_PARTS: BodySweepPart[] = [
+const BODY_SWEEP_PARTS: BodySweepPart[] = [
   { id: 1, name: 'ศีรษะ', sub: 'กระหม่อม', blessing: 'ปัดเคราะห์ความคิด จิตใจปลอดโปร่ง สว่างสดใส', x: 140, y: 38, nodeR: 15 },
   { id: 2, name: 'ใบหน้า', sub: 'หน้าผากและตา', blessing: 'ปัดสิ่งอัปมงคล เสริมสง่าราศี เมตตามหานิยม', x: 140, y: 64, nodeR: 14 },
   { id: 3, name: 'ลำคอ', sub: 'คอและคำพูด', blessing: 'ปัดเคราะห์ทางวาจา พูดจาเป็นทรัพย์ แคล้วคลาดปลอดภัย', x: 140, y: 92, nodeR: 13 },

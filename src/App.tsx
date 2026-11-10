@@ -18,6 +18,8 @@ import { Rituals } from './components/Rituals';
 import { ScanFortune } from './components/ScanFortune';
 import { LoveFortune } from './components/LoveFortune';
 import { FestivalStage } from './components/FestivalStage';
+import { LoyKrathong3D } from './components/LoyKrathong3D';
+import { CoffinCard } from './components/CoffinCard';
 import { FortuneCanvasBackground } from './components/FortuneCanvasBackground';
 import { HorizontalRitualMenu } from './components/HorizontalRitualMenu';
 import { Footer } from './components/Footer';
@@ -129,8 +131,6 @@ export const App: React.FC = () => {
     safeStorage.remove('session', 'shrine.session');
     setSession(null);
   }, []);
-
-  const festInfo = bridge?.festivalInfo(festivalId);
 
   const handleOpenAuspicious = useCallback(() => {
     spiritualSpeechEngine.stop();
@@ -265,7 +265,6 @@ export const App: React.FC = () => {
                   }
                   setTab(selected);
                 }}
-                festivalName={festInfo?.name}
               />
 
               <div className="ritual-active-wrapper">
@@ -320,6 +319,24 @@ export const App: React.FC = () => {
 
                   {tab === 'auspicious' && (
                     <AuspiciousCalendar
+                      onToast={showToast}
+                      onOpenCard={handleOpenCard}
+                    />
+                  )}
+
+                  {tab === 'krathong' && (
+                    <section id="tab-krathong" className="ritual-frameless-stage tab krathong-ritual-stage" role="tabpanel">
+                      <LoyKrathong3D
+                        bridge={bridge}
+                        onToast={showToast}
+                        onLaunchFireworks={(b) => fireworksRef.current?.launch(b)}
+                      />
+                    </section>
+                  )}
+
+                  {tab === 'coffin' && (
+                    <CoffinCard
+                      bridge={bridge}
                       onToast={showToast}
                       onOpenCard={handleOpenCard}
                     />

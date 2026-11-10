@@ -6,7 +6,7 @@
 
 import { logger } from './logger';
 
-export interface RenderParchmentOptions {
+interface RenderParchmentOptions {
   paperColor?: string;
   borderColor?: string;
   guideColor?: string;

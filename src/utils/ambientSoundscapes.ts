@@ -7,7 +7,7 @@
 
 export type SoundscapeType = 'none' | 'bamboo_chime' | 'temple_rain' | 'tibetan_bowl' | 'temple_bell';
 
-export interface SoundscapeInfo {
+interface SoundscapeInfo {
   id: SoundscapeType;
   title: string;
   subtitle: string;

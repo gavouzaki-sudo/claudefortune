@@ -1,4 +1,5 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import { getRandomArrayItem } from '../utils/formatters';
 
 export interface FireworksHandle {
   launch: (bursts?: number) => void;
@@ -44,7 +45,7 @@ export const Fireworks = forwardRef<FireworksHandle>((_, ref) => {
     const burst = () => {
       const cx = window.innerWidth * (0.15 + Math.random() * 0.7);
       const cy = window.innerHeight * (0.15 + Math.random() * 0.4);
-      const col = colors[Math.floor(Math.random() * colors.length)];
+      const col = getRandomArrayItem(colors, colors[0]);
       for (let i = 0; i < 70; i++) {
         const a = (i / 70) * Math.PI * 2;
         const v = 1.5 + Math.random() * 3.2;

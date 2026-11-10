@@ -4,7 +4,7 @@ import { safeStorage } from '../utils/storage';
 
 const STORAGE_KEY = 'shrine.lang';
 
-export interface LanguageContextType {
+interface LanguageContextType {
   lang: SupportedLang;
   setLang: (lang: SupportedLang) => void;
   cycleLang: () => void;
