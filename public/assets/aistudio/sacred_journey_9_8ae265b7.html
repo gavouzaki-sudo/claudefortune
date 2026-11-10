@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#190d0a">
+<title>มหามงคล 9 วัด — Sacred Journey</title>
+<style>
+:root{--bg:#190d0a;--panel:#2b1711;--panel2:#3b2118;--red:#842d20;--gold:#d5a64b;--gold2:#f1d58e;--cream:#f5e9cf;--muted:#c4ad8c;--green:#50734d;--pink:#d987a5;--line:#8d683b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#4a2518 0,#190d0a 58%);color:var(--cream);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+button,select{font:inherit}button{cursor:pointer;border:1px solid #c99a42;background:linear-gradient(#a64a2b,#722619);color:#fff4d9;border-radius:14px;padding:12px 16px;font-weight:750;box-shadow:0 3px 0 #43170f;touch-action:manipulation}button:disabled{opacity:.45;cursor:not-allowed}button.secondary{background:#382219;border-color:#80603b}button.gold{background:linear-gradient(#e6c16b,#aa7628);color:#2b170d;border-color:#f2d88d}
+.app{width:min(100%,900px);margin:auto;padding:14px 12px 28px}.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.brand{display:flex;align-items:center;gap:10px}.seal{width:44px;height:44px;border:2px solid var(--gold);border-radius:50%;display:grid;place-items:center;color:var(--gold2);font-size:25px;background:#391b12}.brand h1{font-size:clamp(18px,4vw,26px);margin:0;color:var(--gold2)}.brand small{color:var(--muted);display:block}.top-actions{display:flex;gap:7px}.top-actions button{padding:9px 11px}
+.panel{background:linear-gradient(145deg,rgba(63,34,24,.96),rgba(35,18,13,.96));border:1px solid #80603b;border-radius:18px;padding:13px;box-shadow:0 10px 30px #0005;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#1d100c;border:1px solid #69482d;border-radius:12px;padding:9px;text-align:center}.stat b{display:block;color:var(--gold2);font-size:21px}.stat span{font-size:11px;color:var(--muted)}
+.progress{height:8px;background:#180d09;border-radius:9px;overflow:hidden;margin-top:10px}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#a56c28,#f5d88d);transition:width .3s}
+.board-wrap{padding:10px;background:linear-gradient(135deg,#74452a,#29150e);border:2px solid var(--gold);border-radius:18px;box-shadow:inset 0 0 0 3px #2a160f,0 12px 35px #0006}
+.board{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;max-width:620px;margin:auto}
+.tile{position:relative;aspect-ratio:1/1;min-width:0;border-radius:9px;border:1px solid #987346;background:linear-gradient(145deg,#d8bc82,#a17b4e);color:#352015;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2px;overflow:hidden}
+.tile:nth-child(6n+1),.tile:nth-child(6n+2),.tile:nth-child(6n+3),.tile:nth-child(6n+4),.tile:nth-child(6n+5),.tile:nth-child(6n){background:linear-gradient(145deg,#e3cea0,#b38a57)}
+.tile .num{position:absolute;top:3px;left:5px;font-size:clamp(8px,2vw,11px);font-weight:900;opacity:.75}.tile .symbol{font-size:clamp(16px,4.7vw,27px);line-height:1.15}.tile .tile-label{font-size:clamp(7px,1.9vw,10px);font-weight:800;line-height:1.1;max-width:100%;overflow-wrap:anywhere}
+.tile.temple{background:linear-gradient(145deg,#f6e5a8,#c89a42);border:2px solid #fff0b4}.tile.obstacle{background:linear-gradient(145deg,#88818a,#4e4852);color:#fff}.tile.bonus{background:linear-gradient(145deg,#f3c2cf,#bd718e)}.tile.special{background:linear-gradient(145deg,#b5c89a,#668052)}.tile.start,.tile.finish{background:linear-gradient(145deg,#f3d88a,#a66c28);border:2px solid #fff0b4}
+.tile.current{outline:3px solid #fff;outline-offset:-3px;box-shadow:0 0 0 3px #b97922,0 0 18px #fff8;z-index:2}.tile.visited{filter:saturate(.75)}.tile .token{position:absolute;right:3px;bottom:2px;font-size:17px;filter:drop-shadow(0 1px 2px #000)}
+.legend{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:9px;color:var(--muted);font-size:11px}.legend span{white-space:nowrap}
+.controls{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.message{color:var(--gold2);font-weight:700;min-height:24px}.submessage{font-size:12px;color:var(--muted);margin-top:3px}.dicebox{display:flex;align-items:center;gap:10px}.dice{width:54px;height:54px;border-radius:13px;background:#fff5dd;color:#6a2b1a;display:grid;place-items:center;font-size:35px;box-shadow:inset 0 -4px #d2b98c,0 3px 8px #0005}.dice.rolling{animation:shake .12s infinite alternate}@keyframes shake{to{transform:rotate(12deg) scale(1.05)}}
+.action-row{display:flex;gap:8px;margin-top:12px}.action-row button{flex:1}.inventory{display:flex;gap:7px;flex-wrap:wrap}.item{background:#1c100c;border:1px solid #6e4c2e;border-radius:10px;padding:7px 9px;font-size:12px}
+.temple-list{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.temple-chip{background:#1d100c;border:1px solid #70502e;border-radius:10px;padding:8px;font-size:11px;min-width:0}.temple-chip.done{border-color:#d5a64b;background:#493017}.temple-chip b{display:block;color:var(--gold2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.section-title{font-weight:850;color:var(--gold2);margin:0 0 9px}.small{font-size:12px;color:var(--muted)}
+.overlay{position:fixed;inset:0;background:#090504d9;display:none;align-items:flex-end;justify-content:center;z-index:10;padding:12px}.overlay.show{display:flex}.modal{width:min(100%,520px);max-height:88dvh;overflow:auto;background:linear-gradient(145deg,#4b281b,#21110c);border:1px solid var(--gold);border-radius:22px;padding:18px;box-shadow:0 20px 60px #000b}.modal h2{color:var(--gold2);margin:0 0 7px}.modal p{line-height:1.55}.modal select{width:100%;padding:12px;border-radius:10px;background:#1b100c;color:var(--cream);border:1px solid #87633a;margin:8px 0 12px}.modal-actions{display:flex;gap:8px;margin-top:12px}.modal-actions button{flex:1}
+.toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#f1d58e;color:#2b170d;padding:10px 16px;border-radius:99px;font-weight:800;z-index:20;transition:.25s;max-width:90%;text-align:center}.toast.show{opacity:1;transform:translate(-50%,0)}
+.log{max-height:130px;overflow:auto;font-size:12px;color:var(--muted);line-height:1.7}.log div{border-bottom:1px solid #ffffff12;padding:3px 0}
+footer{text-align:center;color:#9d8365;font-size:10px;margin-top:14px}
+@media(min-width:700px){.game-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(260px,.7fr);gap:12px;align-items:start}.rightcol .panel{margin-bottom:12px}.tile .symbol{font-size:29px}.tile .tile-label{font-size:10px}}
+@media(max-width:360px){.app{padding:9px 7px}.panel{padding:10px}.board{gap:3px}.tile{border-radius:6px}.tile .symbol{font-size:15px}.tile .tile-label{font-size:7px}.dice{width:46px;height:46px;font-size:30px}.temple-list{grid-template-columns:repeat(3,1fr)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top">
+ <div class="brand"><div class="seal">๙</div><div><h1>มหามงคล 9 วัด</h1><small>SACRED JOURNEY · เส้นทางแห่งศรัทธา</small></div></div>
+ <div class="top-actions"><button class="secondary" id="soundBtn" aria-label="เปิดปิดเสียง">♫</button><button class="secondary" id="helpBtn">วิธีเล่น</button></div>
+</header>
+<section class="panel">
+ <div class="stats">
+  <div class="stat"><b id="templeCount">0/9</b><span>สักการะแล้ว</span></div>
+  <div class="stat"><b id="merit">0</b><span>แต้มบุญในเกม</span></div>
+  <div class="stat"><b id="turn">0</b><span>รอบการเดินทาง</span></div>
+ </div><div class="progress"><i id="progressBar"></i></div>
+</section>
+<div class="game-layout">
+ <main>
+  <section class="board-wrap"><div class="board" id="board" aria-label="กระดานเกม 36 ช่อง"></div>
+   <div class="legend"><span>🏯 วัด</span><span>🌸 โบนัส</span><span>⚠️ อุปสรรค</span><span>✨ พิเศษ</span><span>🧑 ผู้เดินทาง</span></div>
+  </section>
+  <section class="panel" style="margin-top:12px">
+   <div class="controls"><div><div class="message" id="status">เริ่มต้นการเดินทางได้เลย</div><div class="submessage" id="substatus">ทอยลูกเต๋าเพื่อออกเดินทาง</div></div><div class="dicebox"><div class="dice" id="dice">⚄</div></div></div>
+   <div class="action-row"><button class="gold" id="rollBtn">🎲 ทอยลูกเต๋า</button><button class="secondary" id="newBtn">เริ่มเกมใหม่</button></div>
+  </section>
+ </main>
+ <aside class="rightcol">
+  <section class="panel"><h3 class="section-title">🌼 วัดทั้ง 9 แห่งในการเดินทางนี้</h3><div class="temple-list" id="templeList"></div></section>
+  <section class="panel"><h3 class="section-title">🎒 ของมงคล</h3><div class="inventory" id="inventory"></div><div class="small" style="margin-top:7px">ยันต์คุ้มภัยป้องกันการถอยหลัง · ระฆังให้ทอยเพิ่ม · ดอกบัวลบการหยุดพัก</div></section>
+  <section class="panel"><h3 class="section-title">📜 บันทึกการเดินทาง</h3><div class="log" id="log">เริ่มต้นการเดินทางเพื่อบันทึกเหตุการณ์</div></section>
+ </aside>
+</div>
+<footer>เกมเพื่อความบันเทิงและส่งเสริมการเรียนรู้สถานที่ทางวัฒนธรรม · คะแนนบุญเป็นคะแนนสมมติในเกม</footer>
+</div>
+<div class="overlay" id="modalOverlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+/* Temple directory: curated illustrative game directory. Verify local details before public informational use. */
+const TEMPLES = [
+["วัดพระแก้ว","กรุงเทพมหานคร","กลาง"],["วัดอรุณราชวราราม","กรุงเทพมหานคร","กลาง"],["วัดโพธิ์","กรุงเทพมหานคร","กลาง"],["วัดสุทัศนเทพวราราม","กรุงเทพมหานคร","กลาง"],["วัดเบญจมบพิตร","กรุงเทพมหานคร","กลาง"],["วัดสระเกศ","กรุงเทพมหานคร","กลาง"],["วัดบวรนิเวศวิหาร","กรุงเทพมหานคร","กลาง"],["วัดราชบพิธสถิตมหาสีมาราม","กรุงเทพมหานคร","กลาง"],["วัดไตรมิตรวิทยาราม","กรุงเทพมหานคร","กลาง"],["วัดระฆังโฆสิตาราม","กรุงเทพมหานคร","กลาง"],
+["วัดพระปฐมเจดีย์","นครปฐม","กลาง"],["วัดไร่ขิง","นครปฐม","กลาง"],["วัดกลางบางแก้ว","นครปฐม","กลาง"],["วัดพระศรีรัตนมหาธาตุ","พิษณุโลก","กลาง"],["วัดจันทร์ตะวันตก","พิษณุโลก","กลาง"],["วัดมหาธาตุ","สุโขทัย","กลาง"],["วัดศรีชุม","สุโขทัย","กลาง"],["วัดช้างล้อม","สุโขทัย","กลาง"],["วัดไชยวัฒนาราม","พระนครศรีอยุธยา","กลาง"],["วัดมหาธาตุ อยุธยา","พระนครศรีอยุธยา","กลาง"],
+["วัดใหญ่ชัยมงคล","พระนครศรีอยุธยา","กลาง"],["วัดพนัญเชิงวรวิหาร","พระนครศรีอยุธยา","กลาง"],["วัดหน้าพระเมรุ","พระนครศรีอยุธยา","กลาง"],["วัดท่าหลวง","พิจิตร","กลาง"],["วัดพระนอนจักรสีห์","สิงห์บุรี","กลาง"],["วัดขุนอินทประมูล","อ่างทอง","กลาง"],["วัดม่วง","อ่างทอง","กลาง"],["วัดพระพุทธบาทราชวรมหาวิหาร","สระบุรี","กลาง"],["วัดถ้ำเสือ","กาญจนบุรี","ตะวันตก"],["วัดเทวสังฆาราม","กาญจนบุรี","ตะวันตก"],
+["วัดมหาธาตุวรวิหาร","เพชรบุรี","ตะวันตก"],["วัดใหญ่สุวรรณาราม","เพชรบุรี","ตะวันตก"],["วัดเขาตะเครา","เพชรบุรี","ตะวันตก"],["วัดเขาสุกิม","จันทบุรี","ตะวันออก"],["วัดโสธรวราราม","ฉะเชิงเทรา","ตะวันออก"],["วัดหลวงพ่อโต","ฉะเชิงเทรา","ตะวันออก"],["วัดญาณสังวราราม","ชลบุรี","ตะวันออก"],["วัดใหญ่อินทาราม","ชลบุรี","ตะวันออก"],["วัดป่าประดู่","ระยอง","ตะวันออก"],["วัดบ้านแลง","ระยอง","ตะวันออก"],
+["วัดพระธาตุดอยสุเทพ","เชียงใหม่","เหนือ"],["วัดพระสิงห์วรมหาวิหาร","เชียงใหม่","เหนือ"],["วัดเจดีย์หลวง","เชียงใหม่","เหนือ"],["วัดเชียงมั่น","เชียงใหม่","เหนือ"],["วัดอุโมงค์","เชียงใหม่","เหนือ"],["วัดสวนดอก","เชียงใหม่","เหนือ"],["วัดพระธาตุดอยคำ","เชียงใหม่","เหนือ"],["วัดพระธาตุลำปางหลวง","ลำปาง","เหนือ"],["วัดพระธาตุหริภุญชัย","ลำพูน","เหนือ"],["วัดจามเทวี","ลำพูน","เหนือ"],
+["วัดภูมินทร์","น่าน","เหนือ"],["วัดพระธาตุแช่แห้ง","น่าน","เหนือ"],["วัดพระธาตุช่อแฮ","แพร่","เหนือ"],["วัดพระธาตุดอยตุง","เชียงราย","เหนือ"],["วัดร่องขุ่น","เชียงราย","เหนือ"],["วัดร่องเสือเต้น","เชียงราย","เหนือ"],["วัดพระแก้วเชียงราย","เชียงราย","เหนือ"],["วัดพระเจ้าตนหลวง","พะเยา","เหนือ"],["วัดศรีโคมคำ","พะเยา","เหนือ"],["วัดพระธาตุผาซ่อนแก้ว","เพชรบูรณ์","เหนือ"],
+["วัดป่าภูก้อน","อุดรธานี","อีสาน"],["วัดโพธิสมภรณ์","อุดรธานี","อีสาน"],["วัดพระธาตุพนม","นครพนม","อีสาน"],["วัดพระธาตุเชิงชุม","สกลนคร","อีสาน"],["วัดป่าสุทธาวาส","สกลนคร","อีสาน"],["วัดหนองแวง","ขอนแก่น","อีสาน"],["วัดทุ่งเศรษฐี","ขอนแก่น","อีสาน"],["วัดพระธาตุนาดูน","มหาสารคาม","อีสาน"],["วัดบูรพาราม","สุรินทร์","อีสาน"],["วัดกลางสุรินทร์","สุรินทร์","อีสาน"],
+["วัดเขาศาลาอตุลฐานะจาโร","สุรินทร์","อีสาน"],["วัดป่าแสงอรุณ","ขอนแก่น","อีสาน"],["วัดพระธาตุหนองบัว","อุบลราชธานี","อีสาน"],["วัดทุ่งศรีเมือง","อุบลราชธานี","อีสาน"],["วัดมหาวนาราม","อุบลราชธานี","อีสาน"],["วัดสิรินธรวรารามภูพร้าว","อุบลราชธานี","อีสาน"],["วัดป่าสาลวัน","นครราชสีมา","อีสาน"],["วัดศาลาลอย","นครราชสีมา","อีสาน"],["วัดบ้านไร่","นครราชสีมา","อีสาน"],["วัดพระนารายณ์มหาราช","นครราชสีมา","อีสาน"],
+["วัดถ้ำกลองเพล","หนองบัวลำภู","อีสาน"],["วัดเนรมิตวิปัสสนา","เลย","อีสาน"],["วัดศรีคุณเมือง","เลย","อีสาน"],["วัดพระธาตุขามแก่น","ขอนแก่น","อีสาน"],["วัดพระธาตุยาคู","กาฬสินธุ์","อีสาน"],["วัดกลาง","บุรีรัมย์","อีสาน"],["วัดป่าเลไลยก์","ร้อยเอ็ด","อีสาน"],["วัดบูรพาภิราม","ร้อยเอ็ด","อีสาน"],["วัดพระธาตุเรืองรอง","ศรีสะเกษ","อีสาน"],["วัดไพรพัฒนา","ศรีสะเกษ","อีสาน"],
+["วัดฉลอง","ภูเก็ต","ใต้"],["วัดพระทอง","ภูเก็ต","ใต้"],["วัดพระมหาธาตุวรมหาวิหาร","นครศรีธรรมราช","ใต้"],["วัดเจดีย์ (ไอ้ไข่)","นครศรีธรรมราช","ใต้"],["วัดเขาบางทราย","ชลบุรี","ตะวันออก"],["วัดแหลมสุวรรณาราม","สมุทรสาคร","กลาง"],["วัดทางสาย","ประจวบคีรีขันธ์","ตะวันตก"],["วัดห้วยมงคล","ประจวบคีรีขันธ์","ตะวันตก"],["วัดพระบรมธาตุไชยา","สุราษฎร์ธานี","ใต้"],["วัดสวนโมกขพลาราม","สุราษฎร์ธานี","ใต้"]
+].map((x,i)=>({id:i+1,name:x[0],province:x[1],region:x[2],theme:["เมตตา","ความสำเร็จ","ความสงบ","ปัญญา","ความมั่นคง"][i%5],wish:"ขอให้มีสติ ปัญญา และกำลังใจในการดำเนินชีวิต",blessing:"ขอให้พบสิ่งที่ดีงาม และมีกำลังใจผ่านทุกอุปสรรค"}));
+const EVENTS={
+3:{type:"bonus",icon:"🌸",name:"ดอกบัวมงคล",desc:"ได้รับกำลังใจ เดินหน้าอีก 2 ช่อง พร้อม 10 แต้ม",move:2,merit:10},
+6:{type:"obstacle",icon:"🌧️",name:"ฝนตกหนัก",desc:"พักรอฝน 1 รอบ",skip:1},
+9:{type:"bonus",icon:"✨",name:"แสงบุญนำทาง",desc:"เดินหน้าอีก 1 ช่อง และรับ 10 แต้ม",move:1,merit:10},
+11:{type:"special",icon:"🧙",name:"ผู้เฒ่าใจบุญ",desc:"ได้รับยันต์คุ้มภัย 1 ชิ้น",item:"yantra"},
+13:{type:"obstacle",icon:"⛰️",name:"ทางลาดชัน",desc:"ต้องถอยหลัง 1 ช่อง",move:-1},
+15:{type:"bonus",icon:"🌺",name:"ดอกไม้สวรรค์",desc:"รับ 15 แต้มกำลังใจ",merit:15},
+18:{type:"special",icon:"🔔",name:"ระฆังมงคล",desc:"ได้รับสิทธิ์ทอยเพิ่ม 1 ครั้ง",item:"bell"},
+19:{type:"obstacle",icon:"🌉",name:"สะพานชำรุด",desc:"ต้องถอยหลัง 2 ช่อง",move:-2},
+22:{type:"bonus",icon:"🤝",name:"น้ำใจจากผู้เดินทาง",desc:"รับ 10 แต้ม",merit:10},
+25:{type:"obstacle",icon:"🧭",name:"หลงทาง",desc:"ต้องถอยหลัง 3 ช่อง",move:-3},
+27:{type:"special",icon:"🏡",name:"ศาลาพักใจ",desc:"รับ 10 แต้มและล้างสถานะหยุดพัก",merit:10,clearSkip:true},
+29:{type:"bonus",icon:"🪷",name:"พรแห่งเมตตา",desc:"รับ 15 แต้ม",merit:15},
+31:{type:"obstacle",icon:"🌪️",name:"ลมพายุ",desc:"ต้องถอยหลัง 2 ช่อง",move:-2},
+34:{type:"special",icon:"🧿",name:"เครื่องรางคุ้มภัย",desc:"ได้รับยันต์คุ้มภัย 1 ชิ้น",item:"yantra"}
+};
+const WISHES=["การงาน","การเงิน","ความรัก","สุขภาพ","ครอบครัว","ความสงบและความเป็นสิริมงคล"];
+const SAVE_KEY="sacredJourney9.single.v1";
+let state, soundOn=false, busy=false, extraRoll=false;
+const $=id=>document.getElementById(id);
+const icons={start:"🚩",normal:"🌿",temple:"🏯",bonus:"🌸",obstacle:"⚠️",special:"✨",finish:"🏆"};
+function rand(n){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function shuffle(a){let b=a.slice();for(let i=b.length-1;i>0;i--){let j=rand(i+1);[b[i],b[j]]=[b[j],b[i]]}return b}
+function freshGame(){const selected=shuffle(TEMPLES).slice(0,9);selected.forEach((t,i)=>t.tileId=[4,8,12,16,20,24,28,32,35][i]);return {version:1,selected,position:1,turn:0,merit:0,visited:[],triggered:[],inventory:{yantra:0,bell:0,lotus:0},skipTurns:0,status:"ready",history:["เริ่มต้นการเดินทาง สุ่มวัดใหม่ 9 แห่งจากฐานข้อมูล 100 วัด"],wishes:{},lastDice:0,completed:false}}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(state))}catch(e){toast("บันทึกไม่ได้ พื้นที่จัดเก็บอาจเต็ม")}}
+function load(){try{let s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.version===1&&Array.isArray(s.selected)&&s.selected.length===9&&Number.isInteger(s.position)){state=s;return}}catch(e){}state=freshGame();save()}
+function addLog(t){state.history.unshift(t);state.history=state.history.slice(0,35)}
+function toast(t){let el=$("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1900)}
+function tileTemple(id){return state.selected.find(t=>t.tileId===id)}
+function templeTileIds(){return [4,8,12,16,20,24,28,32,35]}
+function renderBoard(){
+ const board=$("board");board.innerHTML="";
+ // Row-major DOM order; snake path alternates direction on each row.
+ const path=Array.from({length:36},(_,i)=>i+1);
+ const visual=[];for(let r=0;r<6;r++){let row=path.slice(r*6,r*6+6);if(r%2===1)row.reverse();visual.push(...row)}
+ visual.forEach(id=>{
+  let t=tileTemple(id),ev=EVENTS[id],type=id===1?"start":id===36?"finish":t?"temple":ev?.type||"normal";
+  let el=document.createElement("div");el.className="tile "+type+(id===state.position?" current":"")+(state.visited.includes(id)?" visited":"");
+  let label=t?(t.name.length>15?t.name.slice(0,14)+"…":t.name):id===1?"เริ่ม":id===36?"เส้นชัย":ev?ev.name: "ทางบุญ";
+  let symbol=t?"🏯":ev?ev.icon:icons[type];
+  el.innerHTML=`<span class="num">${id}</span><span class="symbol">${symbol}</span><span class="tile-label"></span>`;
+  el.querySelector(".tile-label").textContent=label;
+  if(id===state.position){let tok=document.createElement("span");tok.className="token";tok.textContent="🧑";el.append(tok)}
+  board.append(el);
+ });
+}
+function render(){
+ renderBoard();
+ $("templeCount").textContent=state.visited.length+"/9";$("merit").textContent=state.merit;$("turn").textContent=state.turn;
+ $("progressBar").style.width=(state.visited.length/9*100)+"%";
+ $("templeList").innerHTML="";
+ state.selected.forEach((t,i)=>{let d=document.createElement("div");d.className="temple-chip"+(state.visited.includes(t.id)?" done":"");d.innerHTML=`<span>${state.visited.includes(t.id)?"✅":"🏯"} ${i+1}</span><b></b><span>${t.province}</span>`;d.querySelector("b").textContent=t.name;$("templeList").append(d)});
+ $("inventory").innerHTML="";
+ [["yantra","🧿 ยันต์"],["bell","🔔 ระฆัง"],["lotus","🪷 ดอกบัว"]].forEach(([k,n])=>{let d=document.createElement("button");d.className="item secondary";d.textContent=n+" × "+state.inventory[k];d.disabled=state.inventory[k]===0||busy||state.completed;d.addEventListener("click",()=>useItem(k));$("inventory").append(d)});
+ $("log").innerHTML="";state.history.slice(0,12).forEach(x=>{let d=document.createElement("div");d.textContent="• "+x;$("log").append(d)});
+ $("rollBtn").disabled=busy||state.completed||state.status==="worship"||state.status==="temple"||state.status==="event"||state.status==="finished";
+ $("status").textContent=state.completed?"🎉 เดินทางครบ 9 วัดแล้ว!":state.skipTurns>0?"⏸️ ต้องพักอีก "+state.skipTurns+" รอบ":state.status==="temple"?"ถึงจุดสักการะ":`ตำแหน่งปัจจุบัน: ช่อง ${state.position}`;
+ $("substatus").textContent=state.completed?"ขอให้ทุกท่านมีความสุขและความเจริญ":state.status==="temple"?"สักการะวัดเพื่อเดินทางต่อ":state.skipTurns>0?"กดปุ่มเพื่อจบรอบพัก":"ทอยลูกเต๋าเพื่อเดินทางต่อ";
+ $("dice").textContent=state.lastDice?["","⚀","⚁","⚂","⚃","⚄","⚅"][state.lastDice]:"⚄";
+}
+function showModal(title,body,buttons){$("modal").innerHTML=`<h2>${title}</h2>${body}<div class="modal-actions" id="modalActions"></div>`;let a=$("modalActions");buttons.forEach(b=>{let x=document.createElement("button");x.textContent=b.label;x.className=b.class||"";x.onclick=b.fn;a.append(x)});$("modalOverlay").classList.add("show")}
+function closeModal(){$("modalOverlay").classList.remove("show")}
+function arriveTemple(t){state.status="temple";save();render();let wishOptions=WISHES.map(w=>`<option>${w}</option>`).join("");showModal("🏯 ถึงวัดแล้ว",`<p style="color:var(--gold2);font-weight:800;font-size:18px">${t.name}</p><p class="small">จังหวัด${t.province} · ${t.region}</p><p>${t.wish}</p><p>${t.blessing}</p><label for="wishSelect">เลือกคำอธิษฐานในใจ</label><select id="wishSelect">${wishOptions}</select><p class="small">การเลือกคำอธิษฐานเป็นส่วนหนึ่งของเกม ไม่ใช่การรับประกันผลลัพธ์</p>`,[{label:"สักการะและรับพร",class:"gold",fn:()=>{let wish=$("wishSelect").value;state.wishes[t.id]=wish;state.visited.push(t.id);state.merit+=20;state.status="ready";addLog("สักการะ"+t.name+" · ตั้งจิตเรื่อง"+wish);closeModal();if(state.visited.length===9){state.position=36;state.completed=true;state.status="finished";state.merit+=150;addLog("เดินทางครบ 9 วัด รับโบนัสปิดท้าย 150 แต้ม");save();render();finishModal()}else{save();render();toast("สักการะสำเร็จ +20 แต้ม")}}}])}
+function finishModal(){showModal("🌟 มหามงคล 9 วัด",`<p>ยินดีด้วย! คุณเดินทางสักการะครบทั้ง 9 วัดแล้ว</p><p>คะแนนบุญในเกม <strong style="color:var(--gold2)">${state.merit}</strong> แต้ม</p><p>ใช้เวลาเดินทาง ${state.turn} รอบ</p><p class="small">ขอให้การเดินทางในชีวิตจริงเต็มไปด้วยสติ ความเมตตา และความสุข</p>`,[{label:"เล่นชุดวัดใหม่",class:"gold",fn:()=>{closeModal();newGame()}}])}
+function nearestUnvisited(from,to,dir){let ids=templeTileIds();if(dir>0){for(let n=from+1;n<=to;n++){let t=tileTemple(n);if(t&&!state.visited.includes(t.id))return n}}else{for(let n=from-1;n>=to;n--){let t=tileTemple(n);if(t&&!state.visited.includes(t.id))return n}}return null}
+async function moveSteps(steps,trigger=true){
+ let from=state.position,target=Math.max(1,Math.min(36,from+steps)),dir=Math.sign(target-from);
+ if(dir){let checkpoint=nearestUnvisited(from,target,dir);if(checkpoint!==null)target=checkpoint}
+ for(let n=from+dir;n!==target+dir&&dir!==0;n+=dir){state.position=n;render();await delay(matchReduce()?20:115)}
+ state.position=target;state.visited.includes(tileTemple(target)?.id)&&null;
+ render();
+ if(tileTemple(target)){let t=tileTemple(target);if(!state.visited.includes(t.id)){arriveTemple(t);return}}
+ if(trigger&&EVENTS[target]&&!state.triggered.includes(target)){await triggerEvent(target);return}
+ if(target===36){state.completed=state.visited.length===9; if(state.completed){state.status="finished";finishModal()}else state.position=35}
+ state.status="ready";save();render();
+}
+function matchReduce(){return window.matchMedia("(prefers-reduced-motion: reduce)").matches}
+function delay(ms){return new Promise(r=>setTimeout(r,ms))}
+async function triggerEvent(id){
+ let e=EVENTS[id];state.triggered.push(id);state.status="event";save();render();
+ showModal(e.icon+" "+e.name,`<p>${e.desc}</p><p class="small">ผลของเหตุการณ์จะทำงานหนึ่งครั้งต่อเกม</p>`,[{label:"รับทราบ",class:"gold",fn:async()=>{closeModal();if(e.merit)state.merit+=e.merit;if(e.clearSkip)state.skipTurns=0;if(e.item){let max=e.item==="bell"?2:3;if(state.inventory[e.item]<max)state.inventory[e.item]++;else state.merit+=10}
+ if(e.skip)state.skipTurns+=e.skip;
+ if(e.move){let delta=e.move;if(delta<0&&state.inventory.yantra>0){showModal("🧿 ใช้ยันต์คุ้มภัยหรือไม่?",`<p>มีผลให้ถอยหลัง ${Math.abs(delta)} ช่อง ต้องการใช้ยันต์ป้องกันหรือไม่?</p>`,[{label:"ใช้ยันต์",class:"gold",fn:()=>{state.inventory.yantra--;closeModal();finishEventMove(0)}},{label:"ยอมรับผล",fn:()=>{closeModal();finishEventMove(delta)}}]);return}await finishEventMove(delta)}else{state.status="ready";addLog(e.name);save();render();toast(e.name)} } }])
+}
+async function finishEventMove(delta){if(delta!==0)await moveSteps(delta,false);state.status="ready";addLog("เหตุการณ์: "+(EVENTS[state.position]?.name||"เคลื่อนที่พิเศษ"));save();render()}
+async function roll(){
+ if(busy||state.completed)return;busy=true;$("rollBtn").disabled=true;
+ if(state.skipTurns>0){state.skipTurns--;state.turn++;addLog("พักการเดินทาง 1 รอบ");busy=false;save();render();toast("จบรอบพักแล้ว");return}
+ state.turn++;let d=rand(6)+1;state.lastDice=d;$("dice").classList.add("rolling");
+ for(let i=0;i<7;i++){ $("dice").textContent=["⚀","⚁","⚂","⚃","⚄","⚅"][rand(6)];await delay(65)}
+ $("dice").classList.remove("rolling");$("dice").textContent=["","⚀","⚁","⚂","⚃","⚄","⚅"][d];addLog("ทอยได้ "+d+" แต้ม");await moveSteps(d,true);
+ busy=false;render();save();
+}
+function useItem(k){
+ if(!state.inventory[k]||busy||state.completed)return;
+ if(k==="yantra"){toast("ยันต์จะถูกใช้เมื่อพบอุปสรรคถอยหลัง");return}
+ if(k==="bell"){state.inventory.bell--;state.turn=Math.max(0,state.turn-1);addLog("ใช้ระฆังมงคลเพื่อทอยเพิ่ม");save();render();roll();return}
+ if(k==="lotus"){if(state.skipTurns<=0){toast("ยังไม่มีสถานะหยุดพัก");return}state.inventory.lotus--;state.skipTurns=0;addLog("ใช้ดอกบัวลบสถานะหยุดพัก");save();render();toast("ยกเลิกการหยุดพักแล้ว")}
+}
+function newGame(){if(!confirm("เริ่มเกมใหม่และสุ่มวัดชุดใหม่ 9 แห่งใช่หรือไม่?"))return;state=freshGame();save();render();toast("สุ่มวัดใหม่เรียบร้อย")}
+function help(){showModal("📖 วิธีเล่น",`<ol style="line-height:1.8;padding-left:22px"><li>ระบบสุ่มวัด 9 แห่งจากฐานข้อมูล 100 วัดทุกครั้งที่เริ่มเกม</li><li>ทอยลูกเต๋า 1 ลูกเพื่อเดินบนกระดาน 36 ช่อง</li><li>ต้องหยุดสักการะวัดที่ยังไม่เคยไป ห้ามเดินข้าม</li><li>ช่องสีชมพูคือโบนัส สีเทาคืออุปสรรค สีเขียวคือเหตุการณ์พิเศษ</li><li>เก็บไอเทมเพื่อป้องกันอุปสรรคหรือรับสิทธิ์พิเศษ</li><li>สักการะครบ 9 วัด ระบบจะพาไปยังเส้นชัยโดยอัตโนมัติ</li></ol><p class="small">เกมนี้เป็นเกมจำลองเพื่อความบันเทิง ไม่ใช่คำทำนายหรือการรับประกันโชคลาภ</p>`,[{label:"เข้าใจแล้ว",class:"gold",fn:closeModal}])}
+$("rollBtn").addEventListener("click",roll);$("newBtn").addEventListener("click",newGame);$("helpBtn").addEventListener("click",help);$("soundBtn").addEventListener("click",()=>{soundOn=!soundOn;$("soundBtn").textContent=soundOn?"♫ เปิด":"♫ ปิด";toast(soundOn?"เปิดเสียง (เสียงประกอบจะเพิ่มในรุ่นถัดไป)":"ปิดเสียง")});
+load();render();
+</script>
+</body>
+</html>

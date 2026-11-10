@@ -40,7 +40,7 @@ export const App: React.FC = () => {
   const [bridge, setBridge] = useState<Bridge | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [session, setSession] = useState<UserSession | null>(null);
-  const [tab, setTab] = useState<DivinationTopic>('stick');
+  const [tab, setTab] = useState<DivinationTopic>('festival');
   const [tarotVariant, setTarotVariant] = useState<0 | 1>(0);
   const fireworksRef = useRef<FireworksHandle>(null);
 
@@ -86,7 +86,7 @@ export const App: React.FC = () => {
         b.setDate();
         setBridge(b);
 
-        // Restore saved session safely
+        // Restore saved session safely or initialize default auspicious session
         const savedSessionRaw = safeStorage.get<Record<string, unknown> | null>('session', 'shrine.session', null);
         if (savedSessionRaw && savedSessionRaw.year && (savedSessionRaw.symbolName || savedSessionRaw.name)) {
           const symName = String(savedSessionRaw.symbolName || savedSessionRaw.name);
@@ -108,6 +108,23 @@ export const App: React.FC = () => {
               info,
             });
           }
+        } else {
+          // Initialize default auspicious session so the user lands directly in the shrine
+          const defaultSym = 'มะเมีย (ม้าแก้ว)';
+          const z = b.initSession('มะเมีย', 2569, 6);
+          const info = b.zodiacInfo(z >= 0 ? z : 6);
+          setSession({
+            systemId: 'thai',
+            systemName: 'ไทย (12 นักษัตร)',
+            symbolName: defaultSym,
+            symbolIcon: '🐎',
+            element: 'ไฟ / ทองคำ',
+            aura: 'ทองคำเรืองรอง',
+            attribute: 'โชคลาภบารมี',
+            year: 2569,
+            zodiac: 6,
+            info,
+          });
         }
       } catch (err) {
         logger.error('Failed during initial bridge/session loading:', err);
@@ -209,7 +226,7 @@ export const App: React.FC = () => {
                   bridge={bridge}
                   onSessionStart={(s) => {
                     setSession(s);
-                    setTab('stick');
+                    setTab('festival');
                   }}
                 />
               </ErrorBoundary>
@@ -262,6 +279,11 @@ export const App: React.FC = () => {
                   }
                   if (selected !== 'meditation') {
                     ambientSoundEngine.setSoundscape('none');
+                  }
+                  try {
+                    sessionStorage.setItem('shrine.activeTab', selected);
+                  } catch {
+                    // Ignore
                   }
                   setTab(selected);
                 }}

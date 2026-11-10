@@ -422,4 +422,44 @@ test('safeStorage handles objects safely with fallback support', async () => {
   assert.equal(typeof langVal, 'string');
 });
 
+test('Sacred Journey 9 Temples (มหามงคล 9 วัด) data and mechanics integrity', async () => {
+  const { ALL_TEMPLES, GAME_EVENTS, TEMPLE_TILE_IDS, WISH_TOPICS } = await import(
+    '../src/data/sacredTemplesData'
+  );
+
+  // 1. 100 temples database
+  assert.equal(ALL_TEMPLES.length, 100, 'Must have exactly 100 temples across Thailand');
+  ALL_TEMPLES.forEach((t) => {
+    assert.ok(t.id >= 1 && t.id <= 100);
+    assert.ok(t.name.startsWith('วัด'), `Temple ${t.name} must start with วัด`);
+    assert.ok(t.province.length > 0);
+    assert.ok(['กลาง', 'เหนือ', 'อีสาน', 'ใต้', 'ตะวันออก', 'ตะวันตก'].includes(t.region));
+    assert.ok(t.theme.length > 0);
+    assert.ok(t.wish.length > 0);
+    assert.ok(t.blessing.length > 0);
+  });
+
+  // 2. Exactly 9 temple tiles along 36-tile board
+  assert.equal(TEMPLE_TILE_IDS.length, 9);
+  assert.deepEqual(TEMPLE_TILE_IDS, [4, 8, 12, 16, 20, 24, 28, 32, 35]);
+
+  // 3. Game events
+  const eventTileIds = Object.keys(GAME_EVENTS).map(Number);
+  assert.ok(eventTileIds.length >= 10);
+  // Ensure no overlap between temple tiles and event tiles
+  for (const tid of TEMPLE_TILE_IDS) {
+    assert.ok(!GAME_EVENTS[tid], `Temple tile ${tid} must not conflict with an event`);
+  }
+
+  // 4. Wish topics
+  assert.equal(WISH_TOPICS.length, 6);
+  assert.ok(WISH_TOPICS.includes('การงาน'));
+  assert.ok(WISH_TOPICS.includes('การเงิน'));
+  assert.ok(WISH_TOPICS.includes('ความรัก'));
+  assert.ok(WISH_TOPICS.includes('สุขภาพ'));
+  assert.ok(WISH_TOPICS.includes('ครอบครัว'));
+  assert.ok(WISH_TOPICS.includes('ความสงบและความเป็นสิริมงคล'));
+});
+
+
 
