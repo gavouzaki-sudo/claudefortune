@@ -284,7 +284,12 @@ export const App: React.FC = () => {
                   bridge={bridge}
                   onSessionStart={(s) => {
                     setSession(s);
-                    setTab('festival');
+                    setTab('stick');
+                    try {
+                      sessionStorage.setItem('shrine.activeTab', 'stick');
+                    } catch {
+                      // Ignore
+                    }
                   }}
                 />
               </ErrorBoundary>
