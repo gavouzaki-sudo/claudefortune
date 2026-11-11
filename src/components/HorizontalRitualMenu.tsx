@@ -48,6 +48,14 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
   const baseRituals: RitualMenuItem[] = useMemo(
     () => [
       {
+        id: 'festival',
+        title: t.topicFestival,
+      },
+      {
+        id: 'auspicious',
+        title: t.topicAuspicious,
+      },
+      {
         id: 'stick',
         title: t.topicStick,
       },
@@ -76,20 +84,12 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
         title: t.topicMeditation,
       },
       {
-        id: 'auspicious',
-        title: t.topicAuspicious,
-      },
-      {
         id: 'krathong',
         title: t.topicKrathong,
       },
       {
         id: 'coffin',
         title: t.topicCoffin,
-      },
-      {
-        id: 'festival',
-        title: t.topicFestival,
       },
     ],
     [t]
@@ -171,6 +171,7 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     activeCopyRef.current = 2;
 
     const centerInit = () => {
+      isNavigatingRef.current = true;
       const target = el.querySelector<HTMLElement>(
         `[data-topic="${initTopic}"][data-copy="2"]`
       );
@@ -178,10 +179,13 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
         const targetPos = getCardCenterPos(el, target);
         el.scrollTo({ left: targetPos, behavior: 'auto' });
       }
+      setTimeout(() => {
+        isNavigatingRef.current = false;
+      }, 300);
     };
 
     centerInit();
-    const timer = setTimeout(centerInit, 60);
+    const timer = setTimeout(centerInit, 80);
     return () => clearTimeout(timer);
   }, [baseRituals]);
 
@@ -218,6 +222,7 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     if (!isNavigatingRef.current) {
       const el = scrollContainerRef.current;
       if (el) {
+        isNavigatingRef.current = true;
         const target = el.querySelector<HTMLElement>(
           `[data-topic="${activeTopic}"][data-copy="2"]`
         );
@@ -226,6 +231,9 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
           el.scrollTo({ left: targetPos, behavior: 'smooth' });
           activeCopyRef.current = 2;
         }
+        setTimeout(() => {
+          isNavigatingRef.current = false;
+        }, 400);
       }
     }
   }, [activeTopic, baseRituals]);

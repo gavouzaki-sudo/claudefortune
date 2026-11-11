@@ -98,3 +98,22 @@ export function buildAuspiciousCardData(
     },
   };
 }
+
+export function buildSacredJourneyCardData(
+  visitedTemples: Array<{ name: string; province: string }>,
+  merit: number,
+  wish: string
+): CardData {
+  return {
+    type: 'remedy',
+    title: 'มหามงคล 9 วัด · บารมีมงคลทั่วทิศ',
+    subtitle: `สำเร็จการสักการะ 9 วัดมงคล · แต้มบุญสะสม ${merit} แต้ม`,
+    details: {
+      remedyInfo: {
+        clashType: `คำอธิษฐานจิต: ${wish}`,
+        yearName: 'เส้นทางแสวงบุญ 9 วัดทั่วไทย',
+        advice: `สักการะครบ 9 วัด: ${visitedTemples.map((t) => t.name).slice(0, 4).join(', ')} ฯลฯ มั่งมีศรีสุข ร่มเย็นเป็นสุข`,
+      },
+    },
+  };
+}

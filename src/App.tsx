@@ -40,7 +40,32 @@ export const App: React.FC = () => {
   const [bridge, setBridge] = useState<Bridge | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [session, setSession] = useState<UserSession | null>(null);
-  const [tab, setTab] = useState<DivinationTopic>('festival');
+  const [tab, setTab] = useState<DivinationTopic>(() => {
+    try {
+      const saved = sessionStorage.getItem('shrine.activeTab');
+      if (
+        saved &&
+        [
+          'festival',
+          'auspicious',
+          'stick',
+          'tarot',
+          'number',
+          'ritual',
+          'love',
+          'scan',
+          'meditation',
+          'krathong',
+          'coffin',
+        ].includes(saved)
+      ) {
+        return saved as DivinationTopic;
+      }
+    } catch {
+      // Ignore
+    }
+    return 'festival';
+  });
   const [tarotVariant, setTarotVariant] = useState<0 | 1>(0);
   const fireworksRef = useRef<FireworksHandle>(null);
 
@@ -149,6 +174,34 @@ export const App: React.FC = () => {
     setSession(null);
   }, []);
 
+  const handleOpenFestival = useCallback(() => {
+    spiritualSpeechEngine.stop();
+    stopChant();
+    if (!session && bridge) {
+      const symName = 'มะเมีย (ม้าแก้ว)';
+      const z = bridge.initSession('มะเมีย', 2569, 6);
+      const info = bridge.zodiacInfo(z >= 0 ? z : 6);
+      setSession({
+        systemId: 'thai',
+        systemName: 'ไทย (12 นักษัตร)',
+        symbolName: symName,
+        symbolIcon: '🐎',
+        element: 'ไฟ / ทองคำ',
+        aura: 'ทองคำเรืองรอง',
+        attribute: 'โชคลาภบารมี',
+        year: 2569,
+        zodiac: 6,
+        info,
+      });
+    }
+    setTab('festival');
+    try {
+      sessionStorage.setItem('shrine.activeTab', 'festival');
+    } catch {
+      // Ignore
+    }
+  }, [bridge, session]);
+
   const handleOpenAuspicious = useCallback(() => {
     spiritualSpeechEngine.stop();
     stopChant();
@@ -170,6 +223,11 @@ export const App: React.FC = () => {
       });
     }
     setTab('auspicious');
+    try {
+      sessionStorage.setItem('shrine.activeTab', 'auspicious');
+    } catch {
+      // Ignore
+    }
   }, [bridge, session]);
 
   return (
@@ -231,6 +289,15 @@ export const App: React.FC = () => {
                 />
               </ErrorBoundary>
               <div className="gate-bottom-journal-row">
+                <button
+                  type="button"
+                  className="btn gold btn-bottom-journal btn-gate-festival"
+                  onClick={handleOpenFestival}
+                  title="ไหว้พระขอพร มหามงคล 9 วัด ทั่วไทย"
+                >
+                  <span>ไหว้พระขอพร</span>
+                </button>
+
                 <button
                   type="button"
                   className="btn gold btn-bottom-journal btn-gate-calendar"
@@ -370,6 +437,7 @@ export const App: React.FC = () => {
                       festivalId={festivalId}
                       onToast={showToast}
                       onLaunchFireworks={(b) => fireworksRef.current?.launch(b)}
+                      onOpenCard={handleOpenCard}
                     />
                   )}
                 </ErrorBoundary>

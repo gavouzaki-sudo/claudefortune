@@ -777,60 +777,127 @@ input:focus, select:focus, textarea:focus, button:focus-visible, .candle-wrap:fo
   max-width: 1280px !important;
   width: 100% !important;
   margin: 0 auto !important;
-  padding: 0 0.35rem 2rem !important;
+  padding: 0 0.35rem 1.5rem !important;
   box-sizing: border-box !important;
+  color: var(--ink);
 }
-.sacred-journey-app {
-  width: 100% !important;
-  max-width: 1200px !important;
-  margin: 0 auto !important;
-  color: var(--cream, #f5e9cf);
+
+/* Sacred Journey Outer Frame: Method matching "ฤกษ์มงคล" (.auspicious-calendar-grid-view) */
+.sacred-journey-frame {
+  background: var(--panel) !important;
+  border: 1.5px solid #ef4444 !important;
+  border-radius: var(--radius) !important;
+  padding: 0.45rem 0.85rem 1.25rem !important;
+  margin-top: 0 !important;
+  box-shadow: 0 10px 32px rgba(239, 68, 68, 0.18), 0 0 18px rgba(213, 166, 75, 0.22) !important;
+  color: var(--cream, #f5e9cf) !important;
 }
-.sacred-journey-top {
+
+/* Sacred Journey Compact Toolbar: Method matching "ฤกษ์มงคล" (.auspicious-compact-toolbar-row) */
+.sacred-journey-toolbar-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
+  justify-content: flex-start;
+  gap: 0.35rem 0.5rem;
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.55rem;
+  border-bottom: 1.5px solid rgba(239, 68, 68, 0.4);
 }
-.sacred-journey-brand {
-  display: flex;
+
+.btn-toolbar-compact {
+  appearance: none;
+  background: linear-gradient(180deg, #381f14 0%, #20100a 100%) !important;
+  border: 1.5px solid #eab308 !important;
+  border-radius: 8px;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  font-family: var(--font-body);
+  padding: 0.45rem 0.85rem !important;
+  cursor: pointer;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 0.35rem;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45);
+  transition: all 0.18s ease;
+  white-space: nowrap;
 }
-.sacred-journey-seal {
-  width: 44px;
-  height: 44px;
-  border: 2px solid var(--gold, #d5a64b);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: var(--gold2, #f1d58e);
-  font-size: 24px;
-  font-weight: 800;
-  background: #391b12;
-  box-shadow: 0 0 12px rgba(213, 166, 75, 0.3);
-  flex-shrink: 0;
+
+.btn-toolbar-compact:hover {
+  border-color: #ffd700 !important;
+  background: linear-gradient(180deg, #4d2b1c 0%, #2e160e 100%) !important;
+  box-shadow: 0 0 10px rgba(232, 185, 74, 0.4);
+  transform: translateY(-1px);
 }
-.sacred-journey-title {
-  font-size: clamp(1.2rem, 3.5vw, 1.65rem);
-  margin: 0;
-  color: var(--gold2, #f1d58e);
-  font-weight: 850;
-  line-height: 1.2;
+
+.btn-toolbar-compact.btn-toolbar-help {
+  background: linear-gradient(180deg, #442614 0%, #261309 100%) !important;
+  border: 2px solid #ffd700 !important;
+  color: #ffd875 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 0 6px rgba(255, 215, 0, 0.2) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
-.sacred-journey-subtitle {
-  color: var(--muted, #c4ad8c);
-  font-size: 0.76rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 2px;
+
+.btn-toolbar-compact.btn-toolbar-help:hover {
+  background: linear-gradient(180deg, #57311a 0%, #351a0d 100%) !important;
+  border-color: #fff275 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(255, 215, 0, 0.45) !important;
+  transform: translateY(-1px);
 }
-.sacred-journey-top-actions {
-  display: flex;
-  gap: 8px;
+
+.btn-toolbar-compact.btn-toolbar-reset {
+  background: linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%) !important;
+  border: 2px solid #f87171 !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 0 6px rgba(255, 100, 100, 0.25) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
+
+.btn-toolbar-compact.btn-toolbar-reset:hover {
+  background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%) !important;
+  border-color: #fca5a5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+.sj-toolbar-badge {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .sj-toolbar-badge {
+    margin-left: 0;
+  }
+}
+
+.wish-select-compact {
+  min-width: 175px;
+}
+
+.region-select-compact {
+  min-width: 155px;
+}
+
+.sj-temple-chip.highlight-region {
+  border-color: #ffd700;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.35);
+}
+
+.sj-temple-region-tag {
+  font-size: 0.68rem;
+  color: #ffd875;
+  background: rgba(213, 166, 75, 0.2);
+  border: 1px solid rgba(213, 166, 75, 0.4);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
 .sj-btn {
   cursor: pointer;
   border: 1px solid #c99a42;
@@ -1259,6 +1326,17 @@ input:focus, select:focus, textarea:focus, button:focus-visible, .candle-wrap:fo
   flex-direction: column;
   gap: 12px;
 }
+.sj-top-temples-panel {
+  position: relative !important;
+  z-index: 10 !important;
+  background: linear-gradient(145deg, #321910 0%, #190c07 100%) !important;
+  border: 2px solid #d5a64b !important;
+  border-radius: 16px !important;
+  padding: 14px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), inset 0 0 14px rgba(213, 166, 75, 0.16) !important;
+  margin-bottom: 14px !important;
+}
+
 .sj-right-temple-panel,
 .sj-right-inventory-panel,
 .sj-right-log-panel {
@@ -1272,30 +1350,38 @@ input:focus, select:focus, textarea:focus, button:focus-visible, .candle-wrap:fo
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .sj-section-title {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 850;
   color: #ffd875;
   margin: 0;
   display: flex;
   align-items: center;
   gap: 6px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
 }
 .sj-temple-count-badge {
-  background: rgba(213, 166, 75, 0.2);
-  border: 1px solid #d5a64b;
+  background: rgba(213, 166, 75, 0.22);
+  border: 1.5px solid #d5a64b;
   border-radius: 999px;
-  padding: 2px 8px;
+  padding: 3px 10px;
   color: #ffd875;
-  font-size: 0.7rem;
+  font-size: 0.74rem;
   font-weight: 750;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 .sj-temple-list {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 8px;
+}
+@media (max-width: 680px) {
+  .sj-temple-list {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
 }
 .sj-temple-chip {
   background: #140905;
@@ -11866,3 +11952,417 @@ select.input-select:focus,
   }
 }
 
+/* =========================================================================
+   SACRED JOURNEY 9 (ไหว้พระขอพร มหามงคล 9 วัด)
+   Display & Visibility Enforcement Block
+   Applied at end of style.css to guarantee all frames, panels, toolbars,
+   buttons ("ปุ่มเสียง", "วิธีเล่น", "สุ่ม 9 วัด"), and dice ("ลูกเต๋า")
+   are 100% visible, non-clipped, and immune to frameless ritual resets.
+   ========================================================================= */
+
+/* 1. Main Containers */
+#app .ritual-active-wrapper #sj9-stage-root.sacred-journey-container,
+#app .ritual-active-wrapper #tab-festival.sacred-journey-container,
+.sacred-journey-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background: transparent !important;
+  padding: 0 0.35rem 1.5rem !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  z-index: 20 !important;
+  isolation: isolate !important;
+  transform: translateZ(0) !important;
+}
+
+#app .ritual-active-wrapper #sj9-game-frame.sacred-journey-frame,
+#app .ritual-active-wrapper #festival-results-section.sacred-journey-frame,
+.sacred-journey-frame {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background-color: #1c0e0a !important;
+  background-image: linear-gradient(180deg, #24120e 0%, #150906 100%) !important;
+  border: 1.5px solid #d5a64b !important;
+  border-radius: 18px !important;
+  padding: 0.6rem 0.85rem 1.25rem !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65), 0 0 20px rgba(213, 166, 75, 0.15) !important;
+  position: relative !important;
+  z-index: 25 !important;
+  isolation: isolate !important;
+  transform: translateZ(0) !important;
+}
+
+/* 2. Toolbar & Buttons - Always Visible Without Hover */
+#app .ritual-active-wrapper .sacred-journey-toolbar-row,
+.sacred-journey-toolbar-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.4rem 0.6rem !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 30 !important;
+  transform: translateZ(0) !important;
+  padding-bottom: 0.5rem !important;
+  margin-bottom: 0.8rem !important;
+  border-bottom: 1.5px solid rgba(213, 166, 75, 0.3) !important;
+}
+
+#app .ritual-active-wrapper .sacred-journey-toolbar-row button.btn-toolbar-help,
+button.btn-toolbar-compact.btn-toolbar-help {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 35 !important;
+  transform: translateZ(0) !important;
+  pointer-events: auto !important;
+  background-color: #442614 !important;
+  background-image: linear-gradient(180deg, #442614 0%, #261309 100%) !important;
+  border: 2px solid #ffd700 !important;
+  border-radius: 8px !important;
+  color: #ffd875 !important;
+  -webkit-text-fill-color: #ffd875 !important;
+  font-weight: 800 !important;
+  font-size: 0.85rem !important;
+  padding: 0.45rem 0.85rem !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 0 6px rgba(255, 215, 0, 0.2) !important;
+  filter: none !important;
+  clip-path: none !important;
+  mix-blend-mode: normal !important;
+}
+
+#app .ritual-active-wrapper .sacred-journey-toolbar-row button.btn-toolbar-help:hover,
+button.btn-toolbar-compact.btn-toolbar-help:hover {
+  background-color: #57311a !important;
+  background-image: linear-gradient(180deg, #57311a 0%, #351a0d 100%) !important;
+  border-color: #fff275 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(255, 215, 0, 0.45) !important;
+  transform: translateY(-1px) translateZ(0) !important;
+}
+
+#app .ritual-active-wrapper .sacred-journey-toolbar-row button.btn-toolbar-reset,
+button.btn-toolbar-compact.btn-toolbar-reset {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 35 !important;
+  transform: translateZ(0) !important;
+  pointer-events: auto !important;
+  background-color: #b91c1c !important;
+  background-image: linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%) !important;
+  border: 2px solid #f87171 !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 0.85rem !important;
+  padding: 0.45rem 0.85rem !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 0 6px rgba(255, 100, 100, 0.25) !important;
+  filter: none !important;
+  clip-path: none !important;
+  mix-blend-mode: normal !important;
+}
+
+#app .ritual-active-wrapper .sacred-journey-toolbar-row button.btn-toolbar-reset:hover,
+button.btn-toolbar-compact.btn-toolbar-reset:hover {
+  background-color: #dc2626 !important;
+  background-image: linear-gradient(180deg, #dc2626 0%, #991b1b 100%) !important;
+  border-color: #fca5a5 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.5) !important;
+  transform: translateY(-1px) translateZ(0) !important;
+}
+
+#app .ritual-active-wrapper .sacred-journey-toolbar-row .btn-toolbar-compact,
+.btn-toolbar-compact {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 35 !important;
+  transform: translateZ(0) !important;
+  background: linear-gradient(180deg, #381f14 0%, #20100a 100%) !important;
+  border: 1.5px solid #eab308 !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  padding: 0.45rem 0.85rem !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45) !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+}
+
+#app .ritual-active-wrapper .sacred-journey-toolbar-row .sj-toolbar-badge,
+.sj-toolbar-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 35 !important;
+  transform: translateZ(0) !important;
+}
+
+#app .ritual-active-wrapper .sacred-journey-toolbar-row .dropdown-compact-select,
+.dropdown-compact-select.wish-select-compact,
+.dropdown-compact-select.region-select-compact {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 35 !important;
+  transform: translateZ(0) !important;
+  background-color: #24120e !important;
+  border: 1.5px solid #d5a64b !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  padding: 0.45rem 0.75rem !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* 4. Panels & Boxes */
+#app .ritual-active-wrapper .sj-panel,
+.sj-panel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 26 !important;
+  transform: translateZ(0) !important;
+  background: #24120e !important;
+  background: linear-gradient(145deg, #321910 0%, #190c07 100%) !important;
+  border: 1.5px solid #d5a64b !important;
+  border-radius: 16px !important;
+  padding: 12px 14px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), inset 0 0 12px rgba(213, 166, 75, 0.12) !important;
+  margin-bottom: 12px !important;
+}
+
+/* กล่อง 9 วัด: วัดทั้ง 9 แห่งในการเดินทางนี้ (ย่อให้เท่ากับกล่องกระดาน 6x6 ด้านล่างพอดี) */
+#sj-temples-section,
+.sj-top-temples-panel,
+.sj-right-temple-panel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  margin: 0 auto 12px !important;
+  box-sizing: border-box !important;
+  background: linear-gradient(145deg, #321910 0%, #190c07 100%) !important;
+  border: 2px solid #d5a64b !important;
+  border-radius: 16px !important;
+  padding: 10px 12px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55), inset 0 0 10px rgba(213, 166, 75, 0.12) !important;
+}
+
+.sj-temple-list {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 6px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.sj-temple-chip {
+  display: flex !important;
+  flex-direction: column !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #140905 !important;
+  border: 1.5px solid #6b4728 !important;
+  border-radius: 8px !important;
+  padding: 6px 6px !important;
+  cursor: pointer !important;
+  min-width: 0 !important;
+}
+
+.sj-temple-chip.done {
+  background: linear-gradient(145deg, #4f3319 0%, #2b180d 100%) !important;
+  border-color: #ffd875 !important;
+  box-shadow: 0 0 10px rgba(213, 166, 75, 0.4) !important;
+}
+
+.sj-temple-chip-name {
+  color: #ffd875 !important;
+  font-size: 0.8rem !important;
+  font-weight: 800 !important;
+}
+
+.sj-temple-chip-prov {
+  color: #c4ad8c !important;
+  font-size: 0.72rem !important;
+}
+
+/* กล่องควบคุมและลูกเต๋า */
+.sj-controls-panel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: linear-gradient(145deg, #2c160e 0%, #170b07 100%) !important;
+  border: 2px solid #d5a64b !important;
+  border-radius: 16px !important;
+  padding: 14px !important;
+}
+
+.sj-controls-row {
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* "ลูกเต๋า" */
+.sj-dicebox {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.sj-dice {
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 14px !important;
+  background: #fff5dd !important;
+  color: #6a2b1a !important;
+  place-items: center !important;
+  font-size: 36px !important;
+  line-height: 1 !important;
+  border: 2px solid #ecd094 !important;
+  box-shadow: inset 0 -4px #d2b98c, 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Action Buttons (ทอยลูกเต๋า & สุ่ม 9 วัดใหม่) */
+.sj-action-row {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  gap: 10px !important;
+}
+
+.sj-roll-btn {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: linear-gradient(180deg, #f7d57f 0%, #b87d22 100%) !important;
+  color: #1a0d05 !important;
+  border: 2px solid #fff0a8 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 0 #5f3a09, 0 6px 16px rgba(0, 0, 0, 0.5) !important;
+  font-size: 1.05rem !important;
+  font-weight: 900 !important;
+  padding: 12px 16px !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.sj-reset-btn {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: linear-gradient(180deg, #382017 0%, #1d0f0a 100%) !important;
+  color: #ffdca3 !important;
+  border: 1.5px solid #8c6439 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 3px 0 #180c07 !important;
+  font-size: 0.88rem !important;
+  font-weight: 750 !important;
+  padding: 12px 14px !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+/* กล่องของมงคลในย่าม */
+.sj-right-inventory-panel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: linear-gradient(145deg, #321910 0%, #190c07 100%) !important;
+  border: 1.5px solid #a8793b !important;
+}
+
+.sj-inventory-grid {
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.sj-item-btn {
+  display: flex !important;
+  flex-direction: column !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #160a06 !important;
+  border: 1px solid #6e4c2e !important;
+  border-radius: 10px !important;
+  padding: 8px 6px !important;
+  color: #e5d5be !important;
+}
+
+.sj-item-btn.has-item {
+  border-color: #ffd700 !important;
+  background: linear-gradient(145deg, #3d2315 0%, #1e0f09 100%) !important;
+  box-shadow: 0 0 8px rgba(213, 166, 75, 0.3) !important;
+}
+
+/* กล่องบันทึกการเดินทาง */
+.sj-right-log-panel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: linear-gradient(145deg, #321910 0%, #190c07 100%) !important;
+  border: 1.5px solid #a8793b !important;
+}
+
+.sj-log-box {
+  display: flex !important;
+  flex-direction: column !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #120704 !important;
+  border: 1px solid #54371f !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  max-height: 160px !important;
+  overflow-y: auto !important;
+}
+
+.sj-log-entry {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: #d6bf9e !important;
+  font-size: 0.74rem !important;
+  padding: 3px 0 !important;
+}

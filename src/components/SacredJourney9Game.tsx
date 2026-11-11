@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   ALL_TEMPLES,
   GAME_EVENTS,
@@ -7,6 +7,10 @@ import {
   type TempleItem,
   type GameEvent,
 } from '../data/sacredTemplesData';
+import { saveJournalEntry } from '../utils/fortuneJournal';
+import { buildSacredJourneyCardData } from '../utils/cardDataBuilder';
+import type { CardData } from '../utils/luckyCardCanvas';
+import { useChantAudioState } from '../hooks/useChantAudioState';
 
 interface GameState {
   version: number;
@@ -28,6 +32,16 @@ interface GameState {
 const SAVE_KEY = 'sacredJourney9.single.v1';
 const DICE_FACES = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
+const REGION_OPTIONS = [
+  { id: 'all', label: '🗺️ ทุกภูมิภาคทั่วไทย' },
+  { id: 'กลาง', label: '🏛️ ภาคกลาง' },
+  { id: 'เหนือ', label: '⛰️ ภาคเหนือ' },
+  { id: 'อีสาน', label: '🌾 ภาคอีสาน' },
+  { id: 'ใต้', label: '🌊 ภาคใต้' },
+  { id: 'ตะวันออก', label: '🌅 ภาคตะวันออก' },
+  { id: 'ตะวันตก', label: '🌲 ภาคตะวันตก' },
+];
+
 function secureRandomInt(max: number): number {
   const arr = new Uint32Array(1);
   if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
@@ -47,10 +61,12 @@ function shuffleArray<T>(items: T[]): T[] {
 }
 
 function createFreshGame(): GameState {
-  const randomized = shuffleArray(ALL_TEMPLES).slice(0, 9);
-  randomized.forEach((temple, idx) => {
-    temple.tileId = TEMPLE_TILE_IDS[idx];
-  });
+  const randomized = shuffleArray(ALL_TEMPLES)
+    .slice(0, 9)
+    .map((temple, idx) => ({
+      ...temple,
+      tileId: TEMPLE_TILE_IDS[idx],
+    }));
 
   return {
     version: 1,
@@ -73,11 +89,13 @@ function createFreshGame(): GameState {
 interface SacredJourney9GameProps {
   onToast: (msg: string) => void;
   onLaunchFireworks?: (bursts?: number) => void;
+  onOpenCard?: (card: CardData) => void;
 }
 
 export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
   onToast,
   onLaunchFireworks,
+  onOpenCard,
 }) => {
   const [state, setState] = useState<GameState>(() => {
     try {
@@ -91,6 +109,9 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
           parsed.selected.length === 9 &&
           typeof parsed.position === 'number'
         ) {
+          if (parsed.status === 'moving') {
+            parsed.status = 'ready';
+          }
           return parsed;
         }
       }
@@ -100,14 +121,8 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
     return createFreshGame();
   });
 
-  const [soundOn, setSoundOn] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('shrine.sj_sound') !== '0';
-    } catch {
-      return true;
-    }
-  });
-
+  const { isMuted } = useChantAudioState();
+  const [regionFilter, setRegionFilter] = useState<string>('all');
   const [isRolling, setIsRolling] = useState(false);
   const [displayDice, setDisplayDice] = useState<number>(state.lastDice || 5);
 
@@ -117,11 +132,42 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
     | { type: 'yantra_choice'; delta: number }
     | { type: 'finish' }
     | { type: 'help' }
+    | { type: 'temple_detail'; temple: TempleItem }
     | null
   >(null);
 
   const [selectedWish, setSelectedWish] = useState<string>(WISH_TOPICS[0]);
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const getTempleAtTile = useCallback(
+    (tileNum: number) => {
+      return state.selected.find((t) => t.tileId === tileNum);
+    },
+    [state.selected]
+  );
+
+  // Safely restore state & modal recovery: if activeModal is null but status is temple/event, recover cleanly
+  useEffect(() => {
+    if (activeModal === null) {
+      if (state.status === 'temple') {
+        const t = getTempleAtTile(state.position);
+        if (t && !state.visited.includes(t.id)) {
+          setActiveModal({ type: 'temple', temple: t });
+        } else {
+          setState((prev) => ({ ...prev, status: 'ready' }));
+        }
+      } else if (state.status === 'event') {
+        const ev = GAME_EVENTS[state.position];
+        if (ev && !state.triggered.includes(state.position)) {
+          setActiveModal({ type: 'event', event: ev, id: state.position });
+        } else {
+          setState((prev) => ({ ...prev, status: 'ready' }));
+        }
+      } else if (state.status === 'moving') {
+        setState((prev) => ({ ...prev, status: 'ready' }));
+      }
+    }
+  }, [activeModal, getTempleAtTile, state.position, state.status, state.triggered, state.visited]);
 
   // Sync state to localStorage
   useEffect(() => {
@@ -135,7 +181,7 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
   // Audio synthesizer
   const playSound = useCallback(
     (type: 'dice' | 'step' | 'bell' | 'gong' | 'item') => {
-      if (!soundOn) return;
+      if (isMuted) return;
       try {
         const AudioCtx =
           window.AudioContext ||
@@ -223,25 +269,7 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
         // Audio error ignored
       }
     },
-    [soundOn]
-  );
-
-  const toggleSound = () => {
-    const next = !soundOn;
-    setSoundOn(next);
-    try {
-      localStorage.setItem('shrine.sj_sound', next ? '1' : '0');
-    } catch {
-      // Ignore
-    }
-    onToast(next ? '🔊 เปิดเสียงมงคล' : '🔇 ปิดเสียง');
-  };
-
-  const getTempleAtTile = useCallback(
-    (tileNum: number) => {
-      return state.selected.find((t) => t.tileId === tileNum);
-    },
-    [state.selected]
+    [isMuted]
   );
 
   // Check if there is an unvisited temple between from and to in direction dir
@@ -392,6 +420,46 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
     }));
 
     await movePlayerSteps(diceResult, true);
+  };
+
+  // Smart Primary Action (Handles Ready, Temple, Event, or Finished without getting stuck)
+  const handlePrimaryAction = () => {
+    if (isRolling) return;
+
+    if (state.completed) {
+      setActiveModal({ type: 'finish' });
+      return;
+    }
+
+    if (state.status === 'temple') {
+      const currentTemple = getTempleAtTile(state.position);
+      if (currentTemple && !state.visited.includes(currentTemple.id)) {
+        setActiveModal({ type: 'temple', temple: currentTemple });
+      } else {
+        setState((prev) => ({ ...prev, status: 'ready' }));
+      }
+      return;
+    }
+
+    if (state.status === 'event') {
+      const ev = GAME_EVENTS[state.position];
+      if (ev) {
+        setActiveModal({ type: 'event', event: ev, id: state.position });
+      } else {
+        setState((prev) => ({ ...prev, status: 'ready' }));
+      }
+      return;
+    }
+
+    const currentTemple = getTempleAtTile(state.position);
+    if (currentTemple && !state.visited.includes(currentTemple.id)) {
+      setActiveModal({ type: 'temple', temple: currentTemple });
+      return;
+    }
+
+    if (state.status === 'ready' || state.skipTurns > 0) {
+      handleRollDice();
+    }
   };
 
   // Complete Temple Blessing
@@ -579,7 +647,34 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
     onToast('🌟 สุ่มวัดมงคลชุดใหม่ 9 แห่งเรียบร้อย');
   };
 
-  const boardTiles = React.useMemo(() => {
+  // Save to Fortune Journal
+  const handleSaveToFortuneJournal = () => {
+    saveJournalEntry({
+      type: 'remedy',
+      title: 'มหามงคล 9 วัด (ไหว้พระขอพร)',
+      summary: `เดินทางสักการะครบ 9 วัดมงคลทั่วไทย ได้รับแต้มบุญ ${state.merit} แต้ม อธิษฐานเรื่อง: ${selectedWish}`,
+      details: {
+        temples: state.selected.map((t) => `${t.name} (${t.province})`),
+        merit: state.merit,
+        turns: state.turn,
+        wish: selectedWish,
+      },
+    });
+    onToast('📖 บันทึกผลบุญลงใน "สมุดดวง" เรียบร้อยแล้ว ✨');
+  };
+
+  // Generate Lucky Card
+  const handleOpenLuckyCard = () => {
+    if (!onOpenCard) return;
+    const cardData = buildSacredJourneyCardData(
+      state.selected.map((t) => ({ name: t.name, province: t.province })),
+      state.merit,
+      selectedWish
+    );
+    onOpenCard(cardData);
+  };
+
+  const boardTiles = useMemo(() => {
     const tiles: number[] = [];
     for (let r = 0; r < 6; r++) {
       const row = Array.from({ length: 6 }, (_, i) => r * 6 + i + 1);
@@ -591,84 +686,200 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
     return tiles;
   }, []);
 
+  const currentTempleOnTarget = getTempleAtTile(state.position);
+
+  // Filtered temples on right column
+  const filteredTemples = useMemo(() => {
+    if (regionFilter === 'all') return state.selected;
+    return state.selected.filter((t) => t.region.includes(regionFilter));
+  }, [state.selected, regionFilter]);
+
   return (
-    <div className="sacred-journey-app">
-      {/* 1. TOP HEADER & BRAND */}
-      <header className="sacred-journey-top">
-        <div className="sacred-journey-brand">
-          <div className="sacred-journey-seal" aria-hidden="true">
-            ๙
-          </div>
-          <div>
-            <h2 className="sacred-journey-title">มหามงคล 9 วัด</h2>
-            <div className="sacred-journey-subtitle">
-              <span>SACRED JOURNEY</span>
-              <span aria-hidden="true">·</span>
-              <span>เส้นทางแห่งศรัทธา</span>
+    <div
+      id="sj9-game-frame"
+      className="sacred-journey-frame"
+    >
+      {/* COMPACT TOOLBAR MENU ROW */}
+      <div className="sacred-journey-toolbar-row">
+        {/* 1. เลือกคำขอพร / ตั้งจิตอธิษฐาน */}
+        <div className="dropdown-compact-item" title="เลือกหัวข้อคำอธิษฐานจิต">
+          <select
+            id="festival-wish-select"
+            className="dropdown-compact-select wish-select-compact"
+            value={selectedWish}
+            onChange={(e) => {
+              setSelectedWish(e.target.value);
+              onToast(`🙏 ตั้งจิตอธิษฐานขอพรเรื่อง: ${e.target.value}`);
+            }}
+            aria-label="เลือกหัวข้อคำอธิษฐานจิต"
+          >
+            {WISH_TOPICS.map((topic) => (
+              <option key={topic} value={topic}>
+                🙏 ขอพร: {topic}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 2. กรองภูมิภาคของวัด */}
+        <div className="dropdown-compact-item" title="กรองภูมิภาคของวัด">
+          <select
+            id="festival-region-select"
+            className="dropdown-compact-select region-select-compact"
+            value={regionFilter}
+            onChange={(e) => {
+              setRegionFilter(e.target.value);
+              onToast(
+                e.target.value === 'all'
+                  ? '🗺️ แสดงวัดทุกภูมิภาค'
+                  : `🗺️ กรองเฉพาะวัดภาค${e.target.value}`
+              );
+            }}
+            aria-label="กรองภูมิภาคของวัด"
+          >
+            {REGION_OPTIONS.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          {regionFilter !== 'all' && (
+            <button
+              type="button"
+              className="btn-clear-compact-select"
+              onClick={() => setRegionFilter('all')}
+              title="รีเซ็ตเป็นแสดงทุกภูมิภาค"
+              aria-label="รีเซ็ตเป็นแสดงทุกภูมิภาค"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {/* 3. ปุ่มวิธีเล่น (มองเห็นเด่นชัด ขอบทองสว่าง) */}
+        <button
+          type="button"
+          className="btn-toolbar-compact btn-toolbar-help"
+          onClick={() => setActiveModal({ type: 'help' })}
+          title="วิธีเล่นและเคล็ดลับการเดินทาง"
+        >
+          📖 วิธีเล่น
+        </button>
+
+        {/* 4. ปุ่มสุ่ม 9 วัดใหม่ (มองเห็นเด่นชัด สีชาดมงคล) */}
+        <button
+          type="button"
+          className="btn-toolbar-compact btn-toolbar-reset"
+          onClick={handleStartNewGame}
+          title="สุ่มชุดวัดใหม่ 9 แห่งจาก 100 วัดทั่วไทย"
+        >
+          🔄 สุ่ม 9 วัดใหม่
+        </button>
+
+        {/* 5. สรุปความคืบหน้า (Auspicious Pill Tag) */}
+        <div
+          className="kala-mini-pill thongchai sj-toolbar-badge"
+          title="ความคืบหน้าการสักการะมหามงคล"
+        >
+          ⭐ สักการะ {state.visited.length}/9 วัด · {state.merit} แต้มบุญ
+        </div>
+      </div>
+
+      {/* MAIN GAME LAYOUT (Left: 9 Temples Box & 36-Tile Board & Dice; Right: Inventory & Log) */}
+      <div className="sj-game-layout">
+        {/* LEFT COLUMN: 9 TEMPLES LIST & 36-TILE BOARD & ACTION BUTTONS */}
+        <div className="sj-main-col">
+          {/* 9 TEMPLES LIST PANEL (FLUSH TO TOP OF BOARD COLUMN, MATCHING 6X6 BOARD WIDTH) */}
+          <div id="sj-temples-section" className="sj-panel sj-right-temple-panel sj-top-temples-panel" aria-label="วัดทั้ง 9 แห่งในการเดินทางนี้">
+            <div className="sj-right-panel-header">
+              <h3 className="sj-section-title">
+                <span>🌼 วัดทั้ง 9 แห่งในการเดินทางนี้</span>
+              </h3>
+              <div className="sj-temple-header-badges" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="sj-temple-count-badge">
+                  {state.visited.length} / 9 สักการะแล้ว
+                </span>
+                {regionFilter !== 'all' && (
+                  <button
+                    type="button"
+                    className="btn-clear-compact-select"
+                    style={{ fontSize: '0.72rem', padding: '2px 8px' }}
+                    onClick={() => setRegionFilter('all')}
+                    title="แสดงวัดทุกภาค"
+                  >
+                    แสดงครบ 9 วัด ✕
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Progress Bar */}
+            <div
+              className="sj-progress-track"
+              role="progressbar"
+              aria-valuenow={state.visited.length}
+              aria-valuemin={0}
+              aria-valuemax={9}
+              style={{ marginBottom: '10px' }}
+            >
+              <div
+                className="sj-progress-fill"
+                style={{ width: `${(state.visited.length / 9) * 100}%` }}
+              />
+            </div>
+
+            <div className="sj-temple-list">
+              {filteredTemples.map((temple) => {
+                const isVisited = state.visited.includes(temple.id);
+                const isMatchRegion = regionFilter === 'all' || temple.region.includes(regionFilter);
+                return (
+                  <div
+                    key={temple.id}
+                    className={`sj-temple-chip ${isVisited ? 'done' : ''} ${
+                      isMatchRegion ? 'highlight-region' : ''
+                    }`}
+                    onClick={() => setActiveModal({ type: 'temple_detail', temple })}
+                    title={`แตะเพื่อดูข้อมูล ${temple.name} (จ.${temple.province})`}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className="sj-temple-chip-header">
+                      <span>{isVisited ? '✅' : '🏯'} ช่อง {temple.tileId}</span>
+                      <span className="sj-temple-region-tag">ภาค{temple.region}</span>
+                    </div>
+                    <b className="sj-temple-chip-name">{temple.name}</b>
+                    <span className="sj-temple-chip-prov">จ.{temple.province}</span>
+                  </div>
+                );
+              })}
+              {filteredTemples.length === 0 && (
+                <div
+                  className="sj-temple-empty-notice"
+                  style={{
+                    gridColumn: '1 / -1',
+                    padding: '12px',
+                    textAlign: 'center',
+                    color: '#ffd875',
+                    background: 'rgba(213, 166, 75, 0.1)',
+                    borderRadius: '8px',
+                    border: '1px dashed #d5a64b',
+                  }}
+                >
+                  ไม่มีวัดในภาค{regionFilter} ใน 9 วัดรอบนี้
+                  <button
+                    type="button"
+                    className="btn gold"
+                    style={{ marginLeft: '10px', fontSize: '0.75rem', padding: '3px 10px' }}
+                    onClick={() => setRegionFilter('all')}
+                  >
+                    แสดงวัดครบทั้ง 9 วัด
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        </div>
 
-        <div className="sacred-journey-top-actions">
-          <button
-            type="button"
-            className="sj-btn secondary sj-top-btn"
-            onClick={toggleSound}
-            aria-label="เปิดปิดเสียง"
-            title={soundOn ? 'ปิดเสียง' : 'เปิดเสียง'}
-          >
-            {soundOn ? '🔊 เปิด' : '🔇 ปิด'}
-          </button>
-          <button
-            type="button"
-            className="sj-btn secondary sj-top-btn"
-            onClick={() => setActiveModal({ type: 'help' })}
-          >
-            📖 วิธีเล่น
-          </button>
-        </div>
-      </header>
-
-      {/* 2. TOP BOX (กล่องบน): STATS & PROGRESS PANEL */}
-      <section className="sj-panel sj-stats-panel" aria-label="สถิติการเดินทางมหามงคล">
-        <div className="sj-stats-panel-header">
-          <span className="sj-stats-panel-title">🏆 ข้อมูลการเดินทางมหามงคล 9 วัด</span>
-          <span className="sj-stats-panel-status">
-            {state.completed ? '🎉 ครบ 9 วัดแล้ว' : `กำลังสักการะวัดที่ ${state.visited.length + 1}`}
-          </span>
-        </div>
-        <div className="sj-stats-grid">
-          <div className="sj-stat-card">
-            <span className="sj-stat-val">{state.visited.length}/9</span>
-            <span className="sj-stat-label">สักการะแล้ว</span>
-          </div>
-          <div className="sj-stat-card">
-            <span className="sj-stat-val">{state.merit}</span>
-            <span className="sj-stat-label">แต้มบุญในเกม</span>
-          </div>
-          <div className="sj-stat-card">
-            <span className="sj-stat-val">{state.turn}</span>
-            <span className="sj-stat-label">รอบการเดินทาง</span>
-          </div>
-        </div>
-        <div
-          className="sj-progress-track"
-          role="progressbar"
-          aria-valuenow={state.visited.length}
-          aria-valuemin={0}
-          aria-valuemax={9}
-        >
-          <div
-            className="sj-progress-fill"
-            style={{ width: `${(state.visited.length / 9) * 100}%` }}
-          />
-        </div>
-      </section>
-
-      {/* 3. MAIN GAME LAYOUT (Left: Board + Controls; Right: 9 Temples + Inventory + Log) */}
-      <div className="sj-game-layout">
-        {/* LEFT COLUMN: 36-TILE BOARD & DICE CONTROLS */}
-        <div className="sj-main-col">
+          {/* 36-TILE BOARD (6x6) */}
           <div className="sj-board-wrap">
             <div className="sj-board" aria-label="กระดานเกม 36 ช่อง">
               {boardTiles.map((tileId) => {
@@ -708,6 +919,11 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
                       isVisited ? 'visited' : ''
                     }`}
                     title={`ช่องที่ ${tileId}: ${label}`}
+                    onClick={() => {
+                      if (temple) {
+                        setActiveModal({ type: 'temple_detail', temple });
+                      }
+                    }}
                   >
                     <span className="sj-tile-num">{tileId}</span>
                     <span className="sj-tile-symbol">{symbol}</span>
@@ -732,27 +948,28 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
             </div>
           </div>
 
-          {/* CONTROLS & DICE PANEL (BUTTONS ARE CLEAR & PROMINENT) */}
-          <section className="sj-panel sj-controls-panel">
+
+          {/* CONTROLS & PRIMARY ACTION PANEL (HIGH CONTRAST & CLEARLY VISIBLE) */}
+          <div className="sj-panel sj-controls-panel">
             <div className="sj-controls-row">
               <div className="sj-status-text-wrap">
                 <div className="sj-message">
                   {state.completed
-                    ? '🎉 เดินทางครบ 9 วัดแล้ว!'
+                    ? '🎉 เดินทางครบ 9 วัดสำเร็จแล้ว!'
                     : state.skipTurns > 0
                     ? `⏸️ ต้องหยุดพักอีก ${state.skipTurns} รอบ`
                     : state.status === 'temple'
-                    ? '🏯 ถึงจุดสักการะมงคล'
+                    ? `🏯 ถึงจุดสักการะ ${currentTempleOnTarget?.name || 'วัดมงคล'}`
                     : `ตำแหน่งปัจจุบัน: ช่อง ${state.position}`}
                 </div>
                 <div className="sj-submessage">
                   {state.completed
                     ? 'ขออานิสงส์ผลบุญดลบันดาลให้ท่านพบเจอแต่ความสุขสิริมงคล'
                     : state.status === 'temple'
-                    ? 'กดสักการะวัดเพื่อรับพรแล้วเดินทางต่อ'
+                    ? 'กดปุ่มด้านล่างเพื่อสักการะวัดและรับพร'
                     : state.skipTurns > 0
-                    ? 'กดปุ่มเพื่อจบรอบพัก หรือใช้ดอกบัวเพื่อออกเดินทางทันที'
-                    : 'ทอยลูกเต๋าเพื่อเดินทางต่อ'}
+                    ? 'กดปุ่มเพื่อจบรอบพัก หรือใช้ดอกบัวในย่ามเพื่อเดินทางต่อทันที'
+                    : 'ทอยลูกเต๋าเพื่อก้าวสู่จุดหมายถัดไป'}
                 </div>
               </div>
 
@@ -763,71 +980,43 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
               </div>
             </div>
 
-            {/* ACTION BUTTONS (ปุ่มทอยเต๋า & ปุ่มเริ่มใหม่) */}
+            {/* ACTION BUTTONS (HIGH-CONTRAST GOLD GRADIENT - NEVER STUCK) */}
             <div className="sj-action-row">
               <button
                 type="button"
-                className="sj-btn gold sj-roll-btn"
-                onClick={handleRollDice}
-                disabled={
-                  isRolling ||
-                  state.completed ||
-                  state.status === 'temple' ||
-                  state.status === 'event' ||
-                  state.status === 'moving'
-                }
+                className="btn gold sj-btn sj-roll-btn"
+                onClick={handlePrimaryAction}
+                disabled={isRolling}
               >
                 {isRolling
-                  ? '🎲 กำลังทอย...'
+                  ? '🎲 กำลังทอยลูกเต๋า...'
+                  : state.completed
+                  ? '🎉 สำเร็จครบ 9 วัด (เปิดดูสรุป & การ์ด)'
+                  : state.status === 'temple'
+                  ? `🙏 สักการะ ${currentTempleOnTarget?.name || 'วัดมงคล'} (+20 แต้มบุญ)`
+                  : state.status === 'event'
+                  ? '✨ ตรวจดูเหตุการณ์มงคล'
                   : state.skipTurns > 0
-                  ? '⏸️ จบรอบพัก'
-                  : '🎲 ทอยลูกเต๋าเพื่อเดินทาง'}
+                  ? `⏸️ จบรอบพัก (เหลืออีก ${state.skipTurns} รอบ)`
+                  : `🎲 ทอยลูกเต๋าเพื่อเดินทาง (ก้าวที่ ${state.turn + 1})`}
               </button>
               <button
                 type="button"
-                className="sj-btn secondary sj-reset-btn"
+                className="btn sj-btn secondary sj-reset-btn"
                 onClick={handleStartNewGame}
                 disabled={isRolling}
               >
-                🔄 เริ่มเกมใหม่
+                🔄 สุ่ม 9 วัดใหม่
               </button>
             </div>
-          </section>
+          </div>
         </div>
 
-        {/* 4. RIGHT COLUMN (กล่องขวา): 9 TEMPLES LIST, INVENTORY & JOURNEY LOG */}
-        <aside className="sj-aside-col">
-          {/* 9 TEMPLES LIST PANEL */}
-          <section className="sj-panel sj-right-temple-panel">
-            <div className="sj-right-panel-header">
-              <h3 className="sj-section-title">
-                <span>🌼 วัดทั้ง 9 แห่งในการเดินทางนี้</span>
-              </h3>
-              <span className="sj-temple-count-badge">{state.visited.length} / 9 สักการะแล้ว</span>
-            </div>
-            <div className="sj-temple-list">
-              {state.selected.map((temple, idx) => {
-                const isVisited = state.visited.includes(temple.id);
-                return (
-                  <div
-                    key={temple.id}
-                    className={`sj-temple-chip ${isVisited ? 'done' : ''}`}
-                    title={`${temple.name} (จ.${temple.province})`}
-                  >
-                    <div className="sj-temple-chip-header">
-                      <span>{isVisited ? '✅' : '🏯'} {idx + 1}</span>
-                      <span className="sj-temple-tile-badge">ช่อง {temple.tileId}</span>
-                    </div>
-                    <b className="sj-temple-chip-name">{temple.name}</b>
-                    <span className="sj-temple-chip-prov">จ.{temple.province}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+        {/* RIGHT COLUMN: INVENTORY & LOG */}
+        <div className="sj-aside-col">
 
           {/* INVENTORY PANEL */}
-          <section className="sj-panel sj-right-inventory-panel">
+          <div className="sj-panel sj-right-inventory-panel">
             <h3 className="sj-section-title">🎒 ของมงคลในย่าม</h3>
             <div className="sj-inventory-grid">
               <button
@@ -835,6 +1024,7 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
                 className={`sj-item-btn secondary ${state.inventory.yantra > 0 ? 'has-item' : ''}`}
                 onClick={() => handleUseInventory('yantra')}
                 disabled={state.inventory.yantra === 0}
+                title="ยันต์คุ้มภัย: ป้องกันการถอยหลังอัตโนมัติ"
               >
                 <span className="sj-item-icon">🧿</span>
                 <span className="sj-item-title">ยันต์คุ้มภัย</span>
@@ -846,6 +1036,7 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
                 className={`sj-item-btn secondary ${state.inventory.bell > 0 ? 'has-item' : ''}`}
                 onClick={() => handleUseInventory('bell')}
                 disabled={state.inventory.bell === 0 || state.completed || isRolling}
+                title="ระฆังมงคล: กดเพื่อทอยลูกเต๋าเพิ่มทันที 1 ครั้ง"
               >
                 <span className="sj-item-icon">🔔</span>
                 <span className="sj-item-title">ระฆังมงคล</span>
@@ -857,6 +1048,7 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
                 className={`sj-item-btn secondary ${state.inventory.lotus > 0 ? 'has-item' : ''}`}
                 onClick={() => handleUseInventory('lotus')}
                 disabled={state.inventory.lotus === 0 || state.skipTurns <= 0}
+                title="ดอกบัวมงคล: ถวายเพื่อยกเลิกการหยุดพักทั้งหมด"
               >
                 <span className="sj-item-icon">🪷</span>
                 <span className="sj-item-title">ดอกบัวมงคล</span>
@@ -866,10 +1058,10 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
             <div className="sj-item-desc">
               ยันต์คุ้มภัยป้องกันการถอยหลัง · ระฆังให้ทอยเพิ่ม · ดอกบัวล้างสถานะหยุดพัก
             </div>
-          </section>
+          </div>
 
           {/* TRAVEL LOG PANEL */}
-          <section className="sj-panel sj-right-log-panel">
+          <div className="sj-panel sj-right-log-panel">
             <h3 className="sj-section-title">📜 บันทึกการเดินทาง</h3>
             <div className="sj-log-box" role="log" aria-live="polite">
               {state.history.slice(0, 15).map((logItem, index) => (
@@ -878,73 +1070,98 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
                 </div>
               ))}
             </div>
-          </section>
+          </div>
 
-          {/* Quick Return Button on Mobile */}
-          <div className="sj-quick-switch-row sj-mobile-only">
+          {/* Quick Scroll To Top Button */}
+          <div className="sj-quick-switch-row">
             <button
               type="button"
               className="sj-quick-switch-btn"
-              onClick={() => setMobileTab('board')}
+              onClick={() => {
+                document.getElementById('sj9-game-frame')?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'start',
+                });
+              }}
             >
-              👈 กลับไปที่กระดาน & ทอยลูกเต๋า
+              ⬆️ เลื่อนขึ้นด้านบนกระดาน & ทอยลูกเต๋า
             </button>
           </div>
-        </aside>
+        </div>
       </div>
 
-      <footer className="sj-footer-note">
-        เกมเพื่อความบันเทิงและส่งเสริมการเรียนรู้สถานที่ทางวัฒนธรรม · คะแนนบุญเป็นคะแนนสมมติในเกม
-      </footer>
+      <div className="sj-footer-note">
+        เกมเพื่อความบันเทิงและส่งเสริมการเรียนรู้สถานที่ทางวัฒนธรรมไทย · คะแนนบุญเป็นคะแนนสมมติในเกม
+      </div>
 
-      {/* POPUP MODALS */}
+      {/* POPUP MODALS - Using Auspicious Modal Sheet Pattern */}
       {/* 1. Temple Worship Modal */}
       {activeModal?.type === 'temple' && (
         <div
-          className="sj-overlay show"
+          className="auspicious-modal-overlay sj-overlay show"
           role="dialog"
           aria-modal="true"
           aria-label="สักการะวัด"
+          onClick={() => setActiveModal(null)}
         >
-          <div className="sj-modal">
-            <div className="sj-modal-emblem" aria-hidden="true">
-              🏯
-            </div>
-            <h2 className="sj-modal-title">ถึงจุดสักการะ</h2>
-            <div className="sj-modal-temple-name">{activeModal.temple.name}</div>
-            <div className="sj-modal-sub">
-              จังหวัด{activeModal.temple.province} · ภาค{activeModal.temple.region}
-            </div>
-
-            <div className="sj-modal-blessing-box">
-              <p className="sj-modal-wish">{activeModal.temple.wish}</p>
-              <p className="sj-modal-blessing">{activeModal.temple.blessing}</p>
-            </div>
-
-            <label htmlFor="sj-wish-select" className="sj-modal-label">
-              เลือกคำอธิษฐานในใจ
-            </label>
-            <select
-              id="sj-wish-select"
-              className="sj-modal-select"
-              value={selectedWish}
-              onChange={(e) => setSelectedWish(e.target.value)}
+          <div className="auspicious-modal-sheet sj-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="modal-close-btn"
+              onClick={() => setActiveModal(null)}
+              aria-label="ปิดหน้าต่าง"
             >
-              {WISH_TOPICS.map((topic) => (
-                <option key={topic} value={topic}>
-                  {topic}
-                </option>
-              ))}
-            </select>
+              ✕
+            </button>
 
-            <p className="sj-modal-disclaimer">
-              การเลือกคำอธิษฐานเป็นส่วนหนึ่งของเกม เพื่อความเจริญทางปัญญาและกำลังใจ
-            </p>
+            <div className="modal-sheet-header">
+              <div className="sj-modal-emblem" aria-hidden="true">
+                🏯
+              </div>
+              <h3 className="modal-title sj-modal-title">ถึงจุดสักการะมหามงคล</h3>
+              <p className="modal-subtitle sj-modal-temple-name" style={{ fontSize: '1.25rem', color: '#ffd700', fontWeight: 800 }}>
+                {activeModal.temple.name}
+              </p>
+              <div className="sj-modal-sub" style={{ color: '#e5d5be', fontSize: '0.9rem' }}>
+                จังหวัด{activeModal.temple.province} · ภาค{activeModal.temple.region}
+              </div>
+            </div>
 
-            <div className="sj-modal-actions">
+            <div className="modal-body-content">
+              <div className="modal-info-card sj-modal-blessing-box">
+                <h4 className="info-card-title">✨ คติมงคลและคำอำนวยพร</h4>
+                <p className="sj-modal-wish" style={{ margin: '0.4rem 0' }}><strong>คติมงคล:</strong> {activeModal.temple.wish}</p>
+                <p className="sj-modal-blessing" style={{ margin: '0.4rem 0' }}><strong>คำอำนวยพร:</strong> {activeModal.temple.blessing}</p>
+              </div>
+
+              <div className="modal-info-card" style={{ marginTop: '0.8rem' }}>
+                <label htmlFor="sj-wish-select-modal" className="sj-modal-label" style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 700 }}>
+                  เลือกคำอธิษฐานจิตในใจ
+                </label>
+                <select
+                  id="sj-wish-select-modal"
+                  className="dropdown-compact-select sj-modal-select"
+                  style={{ width: '100%', padding: '0.6rem', fontSize: '0.95rem' }}
+                  value={selectedWish}
+                  onChange={(e) => setSelectedWish(e.target.value)}
+                >
+                  {WISH_TOPICS.map((topic) => (
+                    <option key={topic} value={topic}>
+                      🙏 ขอพร: {topic}
+                    </option>
+                  ))}
+                </select>
+                <p className="sj-modal-disclaimer" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.4rem' }}>
+                  การเลือกคำอธิษฐานเป็นส่วนหนึ่งของเกม เพื่อความเจริญทางปัญญาและกำลังใจ
+                </p>
+              </div>
+            </div>
+
+            <div className="modal-sheet-footer sj-modal-actions" style={{ marginTop: '1rem' }}>
               <button
                 type="button"
-                className="sj-btn gold full-width"
+                className="btn gold full-width"
+                style={{ width: '100%', padding: '0.8rem', fontSize: '1rem', fontWeight: 700 }}
                 onClick={() => handleConfirmTempleBlessing(activeModal.temple)}
               >
                 🙏 สักการะและรับพร (+20 แต้มบุญ)
@@ -957,25 +1174,43 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
       {/* 2. Event Modal */}
       {activeModal?.type === 'event' && (
         <div
-          className="sj-overlay show"
+          className="auspicious-modal-overlay sj-overlay show"
           role="dialog"
           aria-modal="true"
           aria-label="เหตุการณ์ระหว่างทาง"
+          onClick={() => setActiveModal(null)}
         >
-          <div className="sj-modal">
-            <div className="sj-modal-emblem" aria-hidden="true">
-              {activeModal.event.icon}
-            </div>
-            <h2 className="sj-modal-title">{activeModal.event.name}</h2>
-            <p className="sj-modal-event-desc">{activeModal.event.desc}</p>
-            <p className="sj-modal-disclaimer">
-              ผลของเหตุการณ์บนช่องนี้จะทำงาน 1 ครั้งในแต่ละรอบการเดินทาง
-            </p>
+          <div className="auspicious-modal-sheet sj-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="modal-close-btn"
+              onClick={() => setActiveModal(null)}
+              aria-label="ปิดหน้าต่าง"
+            >
+              ✕
+            </button>
 
-            <div className="sj-modal-actions">
+            <div className="modal-sheet-header">
+              <div className="sj-modal-emblem" aria-hidden="true" style={{ fontSize: '2.5rem' }}>
+                {activeModal.event.icon}
+              </div>
+              <h3 className="modal-title sj-modal-title">{activeModal.event.name}</h3>
+            </div>
+
+            <div className="modal-body-content">
+              <div className="modal-info-card">
+                <p className="sj-modal-event-desc" style={{ fontSize: '1rem', lineHeight: 1.6 }}>{activeModal.event.desc}</p>
+                <p className="sj-modal-disclaimer" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.6rem' }}>
+                  ผลของเหตุการณ์บนช่องนี้จะทำงาน 1 ครั้งในแต่ละรอบการเดินทาง
+                </p>
+              </div>
+            </div>
+
+            <div className="modal-sheet-footer sj-modal-actions" style={{ marginTop: '1rem' }}>
               <button
                 type="button"
-                className="sj-btn gold full-width"
+                className="btn gold full-width"
+                style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}
                 onClick={() => handleAcknowledgeEvent(activeModal.event)}
               >
                 รับทราบ
@@ -988,33 +1223,42 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
       {/* 3. Yantra Protection Choice Modal */}
       {activeModal?.type === 'yantra_choice' && (
         <div
-          className="sj-overlay show"
+          className="auspicious-modal-overlay sj-overlay show"
           role="dialog"
           aria-modal="true"
           aria-label="ใช้ยันต์คุ้มภัย"
         >
-          <div className="sj-modal">
-            <div className="sj-modal-emblem" aria-hidden="true">
-              🧿
+          <div className="auspicious-modal-sheet sj-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-sheet-header">
+              <div className="sj-modal-emblem" aria-hidden="true" style={{ fontSize: '2.5rem' }}>
+                🧿
+              </div>
+              <h3 className="modal-title sj-modal-title">ใช้ยันต์คุ้มภัยหรือไม่?</h3>
             </div>
-            <h2 className="sj-modal-title">ใช้ยันต์คุ้มภัยหรือไม่?</h2>
-            <p className="sj-modal-event-desc">
-              อุปสรรคนี้ส่งผลให้ต้องถอยหลัง {Math.abs(activeModal.delta)} ช่อง
-              <br />
-              คุณมียันต์คุ้มภัย ต้องการใช้เพื่อป้องกันการถอยหลังหรือไม่?
-            </p>
 
-            <div className="sj-modal-actions">
+            <div className="modal-body-content">
+              <div className="modal-info-card">
+                <p className="sj-modal-event-desc" style={{ fontSize: '1rem', lineHeight: 1.6 }}>
+                  อุปสรรคนี้ส่งผลให้ต้องถอยหลัง {Math.abs(activeModal.delta)} ช่อง
+                  <br />
+                  คุณมียันต์คุ้มภัย ต้องการใช้เพื่อป้องกันการถอยหลังหรือไม่?
+                </p>
+              </div>
+            </div>
+
+            <div className="modal-sheet-footer sj-modal-actions" style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
               <button
                 type="button"
-                className="sj-btn gold"
+                className="btn gold"
+                style={{ flex: 1, padding: '0.7rem' }}
                 onClick={() => handleUseYantraChoice(true, activeModal.delta)}
               >
                 🧿 ใช้ยันต์คุ้มภัย
               </button>
               <button
                 type="button"
-                className="sj-btn secondary"
+                className="btn secondary"
+                style={{ flex: 1, padding: '0.7rem' }}
                 onClick={() => handleUseYantraChoice(false, activeModal.delta)}
               >
                 ยอมรับผล (ถอยหลัง)
@@ -1027,39 +1271,79 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
       {/* 4. Grand Finish Modal */}
       {activeModal?.type === 'finish' && (
         <div
-          className="sj-overlay show"
+          className="auspicious-modal-overlay sj-overlay show"
           role="dialog"
           aria-modal="true"
           aria-label="มหามงคล 9 วัด สำเร็จ"
+          onClick={() => setActiveModal(null)}
         >
-          <div className="sj-modal finish-modal">
-            <div className="sj-modal-emblem" aria-hidden="true">
-              🌟
-            </div>
-            <h2 className="sj-modal-title">มหามงคล 9 วัด</h2>
-            <p style={{ fontSize: '1.05rem', margin: '0.4rem 0 0.8rem' }}>
-              ยินดีด้วย! คุณเดินทางสักการะครบทั้ง 9 วัดมงคลสำเร็จแล้ว!
-            </p>
+          <div className="auspicious-modal-sheet sj-modal finish-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="modal-close-btn"
+              onClick={() => setActiveModal(null)}
+              aria-label="ปิดหน้าต่าง"
+            >
+              ✕
+            </button>
 
-            <div className="sj-finish-stats-box">
-              <div className="sj-finish-stat-row">
-                <span>คะแนนบุญสะสมในเกม:</span>
-                <strong className="sj-gold-text">{state.merit} แต้ม</strong>
+            <div className="modal-sheet-header">
+              <div className="sj-modal-emblem" aria-hidden="true" style={{ fontSize: '2.5rem' }}>
+                🌟
               </div>
-              <div className="sj-finish-stat-row">
-                <span>จำนวนรอบที่ใช้เดินทาง:</span>
-                <strong>{state.turn} รอบ</strong>
-              </div>
+              <h3 className="modal-title sj-modal-title" style={{ color: '#ffd700' }}>มหามงคล 9 วัด สำเร็จบริบูรณ์</h3>
+              <p style={{ fontSize: '1.05rem', margin: '0.4rem 0 0.8rem', color: '#fff' }}>
+                ยินดีด้วย! คุณเดินทางสักการะครบทั้ง 9 วัดมงคลสำเร็จแล้ว!
+              </p>
             </div>
 
-            <p className="sj-modal-disclaimer" style={{ marginTop: '0.75rem' }}>
-              ขอให้ทุกก้าวเดินในชีวิตจริงเต็มไปด้วยสติ ปัญญา ความเมตตา และความร่มเย็นเป็นสุข
-            </p>
+            <div className="modal-body-content">
+              <div className="modal-info-card sj-finish-stats-box">
+                <div className="sj-finish-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0' }}>
+                  <span>คะแนนบุญสะสมในเกม:</span>
+                  <strong className="sj-gold-text" style={{ color: '#ffd700', fontSize: '1.2rem' }}>{state.merit} แต้ม</strong>
+                </div>
+                <div className="sj-finish-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0' }}>
+                  <span>จำนวนรอบที่ใช้เดินทาง:</span>
+                  <strong>{state.turn} รอบ</strong>
+                </div>
+                <div className="sj-finish-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0' }}>
+                  <span>คำอธิษฐานจิต:</span>
+                  <strong style={{ color: '#f59e0b' }}>{selectedWish}</strong>
+                </div>
+              </div>
 
-            <div className="sj-modal-actions">
+              <p className="sj-modal-disclaimer" style={{ marginTop: '0.75rem', fontSize: '0.82rem', textAlign: 'center', color: '#cbaf8c' }}>
+                ขอให้ทุกก้าวเดินในชีวิตจริงเต็มไปด้วยสติ ปัญญา ความเมตตา และความร่มเย็นเป็นสุข
+              </p>
+            </div>
+
+            <div className="modal-sheet-footer sj-modal-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '1rem' }}>
               <button
                 type="button"
-                className="sj-btn gold full-width"
+                className="btn secondary"
+                style={{ flex: '1 1 45%', padding: '0.7rem' }}
+                onClick={handleSaveToFortuneJournal}
+              >
+                📖 บันทึกลงสมุดดวง
+              </button>
+              {onOpenCard && (
+                <button
+                  type="button"
+                  className="btn gold"
+                  style={{ flex: '1 1 45%', padding: '0.7rem' }}
+                  onClick={() => {
+                    handleOpenLuckyCard();
+                    setActiveModal(null);
+                  }}
+                >
+                  🎴 การ์ดมงคล 9 วัด
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn secondary full-width"
+                style={{ width: '100%', marginTop: '0.3rem', padding: '0.7rem' }}
                 onClick={() => {
                   setActiveModal(null);
                   handleStartNewGame();
@@ -1075,35 +1359,110 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
       {/* 5. Help Modal */}
       {activeModal?.type === 'help' && (
         <div
-          className="sj-overlay show"
+          className="auspicious-modal-overlay sj-overlay show"
           role="dialog"
           aria-modal="true"
           aria-label="วิธีเล่นเกมมหามงคล 9 วัด"
+          onClick={() => setActiveModal(null)}
         >
-          <div className="sj-modal">
-            <div className="sj-modal-emblem" aria-hidden="true">
-              📖
-            </div>
-            <h2 className="sj-modal-title">วิธีเล่นมหามงคล 9 วัด</h2>
-            <ol className="sj-help-list">
-              <li>ระบบสุ่มวัด 9 แห่งจากฐานข้อมูล 100 วัดทั่วไทยในทุกการเริ่มเกมใหม่</li>
-              <li>ทอยลูกเต๋า 1 ลูก เพื่อก้าวเดินบนกระดานทางบุญ 36 ช่อง</li>
-              <li>ต้องหยุดสักการะวัดที่ยังไม่เคยไป ห้ามเดินข้าม เพื่อรับแต้มบุญ +20</li>
-              <li>ช่องสีชมพูคือโบนัส สีเทาคืออุปสรรค สีเขียวคือเหตุการณ์พิเศษ</li>
-              <li>เก็บของมงคล: ยันต์ป้องกันถอยหลัง, ระฆังทอยเพิ่ม, ดอกบัวล้างรอบพัก</li>
-              <li>เมื่อสักการะครบ 9 วัด จะได้รับโบนัสปิดท้าย 150 แต้ม พร้อมฉลองสู่เส้นชัย!</li>
-            </ol>
-            <p className="sj-modal-disclaimer">
-              เกมนี้เป็นเกมจำลองทางวัฒนธรรมเพื่อความบันเทิงและสิริมงคล
-            </p>
+          <div className="auspicious-modal-sheet sj-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="modal-close-btn"
+              onClick={() => setActiveModal(null)}
+              aria-label="ปิดหน้าต่าง"
+            >
+              ✕
+            </button>
 
-            <div className="sj-modal-actions">
+            <div className="modal-sheet-header">
+              <div className="sj-modal-emblem" aria-hidden="true" style={{ fontSize: '2.5rem' }}>
+                📖
+              </div>
+              <h3 className="modal-title sj-modal-title">วิธีเล่นมหามงคล 9 วัด</h3>
+            </div>
+
+            <div className="modal-body-content">
+              <div className="modal-info-card">
+                <ol className="sj-help-list" style={{ paddingLeft: '1.2rem', lineHeight: 1.8, fontSize: '0.92rem' }}>
+                  <li>ระบบสุ่มวัด 9 แห่งจากฐานข้อมูล 100 วัดทั่วไทยในทุกการเริ่มเกมใหม่</li>
+                  <li>ทอยลูกเต๋า 1 ลูก เพื่อก้าวเดินบนกระดานทางบุญ 36 ช่อง</li>
+                  <li>ต้องหยุดสักการะวัดที่ยังไม่เคยไป ห้ามเดินข้าม เพื่อรับแต้มบุญ +20</li>
+                  <li>ช่องสีชมพูคือโบนัส สีเทาคืออุปสรรค สีเขียวคือเหตุการณ์พิเศษ</li>
+                  <li>เก็บของมงคล: ยันต์ป้องกันถอยหลัง, ระฆังทอยเพิ่ม, ดอกบัวล้างรอบพัก</li>
+                  <li>เมื่อสักการะครบ 9 วัด จะได้รับโบนัสปิดท้าย 150 แต้ม พร้อมฉลองสู่เส้นชัย!</li>
+                </ol>
+                <p className="sj-modal-disclaimer" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.6rem' }}>
+                  เกมนี้เป็นเกมจำลองทางวัฒนธรรมเพื่อความบันเทิงและสิริมงคล
+                </p>
+              </div>
+            </div>
+
+            <div className="modal-sheet-footer sj-modal-actions" style={{ marginTop: '1rem' }}>
               <button
                 type="button"
-                className="sj-btn gold full-width"
+                className="btn gold full-width"
+                style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}
                 onClick={() => setActiveModal(null)}
               >
                 เข้าใจแล้ว
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. Temple Details Inspection Modal */}
+      {activeModal?.type === 'temple_detail' && (
+        <div
+          className="auspicious-modal-overlay sj-overlay show"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`ข้อมูล ${activeModal.temple.name}`}
+          onClick={() => setActiveModal(null)}
+        >
+          <div className="auspicious-modal-sheet sj-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="modal-close-btn"
+              onClick={() => setActiveModal(null)}
+              aria-label="ปิดหน้าต่าง"
+            >
+              ✕
+            </button>
+
+            <div className="modal-sheet-header">
+              <div className="sj-modal-emblem" aria-hidden="true" style={{ fontSize: '2.5rem' }}>
+                🏯
+              </div>
+              <h3 className="modal-title sj-modal-title" style={{ color: '#ffd700' }}>{activeModal.temple.name}</h3>
+              <div className="sj-modal-sub" style={{ color: '#e5d5be', fontSize: '0.9rem', marginTop: '0.2rem' }}>
+                จังหวัด{activeModal.temple.province} · ภาค{activeModal.temple.region} · ช่องที่ {activeModal.temple.tileId}
+              </div>
+            </div>
+
+            <div className="modal-body-content">
+              <div className="modal-info-card sj-modal-blessing-box">
+                <p className="sj-modal-wish" style={{ margin: '0.4rem 0' }}><strong>คติมงคล:</strong> {activeModal.temple.wish}</p>
+                <p className="sj-modal-blessing" style={{ margin: '0.4rem 0' }}><strong>คำอำนวยพร:</strong> {activeModal.temple.blessing}</p>
+              </div>
+
+              <div className="modal-info-card" style={{ marginTop: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>สถานะการสักการะ:</span>
+                <strong className={state.visited.includes(activeModal.temple.id) ? 'sj-gold-text' : ''} style={{ color: state.visited.includes(activeModal.temple.id) ? '#ffd700' : '#f59e0b' }}>
+                  {state.visited.includes(activeModal.temple.id) ? '✅ สักการะแล้ว' : '⏳ รอการเดินทางไปถึง'}
+                </strong>
+              </div>
+            </div>
+
+            <div className="modal-sheet-footer sj-modal-actions" style={{ marginTop: '1rem' }}>
+              <button
+                type="button"
+                className="btn gold full-width"
+                style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}
+                onClick={() => setActiveModal(null)}
+              >
+                ปิดหน้าต่าง
               </button>
             </div>
           </div>
