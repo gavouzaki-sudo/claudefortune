@@ -1,0 +1,986 @@
+/* ==========================================================================
+   MODULE 3: SACRED JOURNEY 9 (src/styles/sacred-journey.css)
+   - ไหว้พระขอพร มหามงคล 9 วัด (#tab-festival, #sj9-stage-root)
+   - High-contrast lacquer frame & compact toolbar (.sacred-journey-toolbar-row)
+   - 9 Temples Panel (#sj-temples-section, .sj-top-temples-panel, .sj-temple-chip)
+   - 36-Tile (6x6) Game Board (.sj-board-wrap, .sj-board, .sj-tile)
+   - Controls & Live Dice (.sj-controls-panel, .sj-dicebox, .sj-dice)
+   - Action Buttons (.sj-action-row, .sj-roll-btn, .sj-reset-btn)
+   - Inventory & Journey Log (.sj-right-inventory-panel, .sj-right-log-panel)
+   - Temple worship, event, finish & help modals (.sj-overlay, .sj-modal)
+   - 100% visible default state (immune to hover delays & frameless resets)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. MAIN CONTAINERS & LACQUER GAME FRAME
+   -------------------------------------------------------------------------- */
+#tab-festival,
+#sj9-stage-root,
+.sacred-journey-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  width: 100% !important;
+  max-width: 980px;
+  box-sizing: border-box !important;
+  background: transparent !important;
+  padding: 0 0.35rem 1.5rem !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  z-index: 20 !important;
+  isolation: isolate !important;
+  transform: translateZ(0) !important;
+}
+
+#sj9-game-frame,
+#festival-results-section,
+.sacred-journey-frame {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background-color: #1c0e0a !important;
+  background-image: linear-gradient(180deg, #24120e 0%, #150906 100%) !important;
+  border: 1.5px solid #d5a64b !important;
+  border-radius: 18px !important;
+  padding: 0.65rem 0.85rem 1.25rem !important;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65), 0 0 20px rgba(213, 166, 75, 0.15) !important;
+  position: relative !important;
+  z-index: 22 !important;
+  isolation: isolate !important;
+  transform: translateZ(0) !important;
+  color: var(--cream, #f5e9cf) !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. COMPACT TOOLBAR MENU ROW
+   -------------------------------------------------------------------------- */
+.sacred-journey-toolbar-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.4rem 0.6rem !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 25 !important;
+  transform: translateZ(0) !important;
+  padding-bottom: 0.55rem !important;
+  margin-bottom: 0.85rem !important;
+  border-bottom: 1.5px solid rgba(213, 166, 75, 0.3) !important;
+}
+
+/* Dropdown Selects inside Toolbar */
+.wish-select-compact {
+  min-width: 175px;
+}
+.region-select-compact {
+  min-width: 155px;
+}
+
+.btn-clear-compact-select {
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 2px 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-left: 4px;
+  transition: all 0.15s ease;
+}
+.btn-clear-compact-select:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+/* Toolbar Buttons - Permanent Default Illumination */
+.btn-toolbar-compact {
+  appearance: none;
+  background: linear-gradient(180deg, #381f14 0%, #20100a 100%) !important;
+  border: 1.5px solid #eab308 !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  font-family: var(--font-body);
+  padding: 0.45rem 0.85rem !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45) !important;
+  transition: all 0.18s ease;
+  white-space: nowrap !important;
+  position: relative !important;
+  z-index: 26 !important;
+  transform: translateZ(0) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+.btn-toolbar-compact:hover {
+  border-color: #ffd700 !important;
+  background: linear-gradient(180deg, #4d2b1c 0%, #2e160e 100%) !important;
+  box-shadow: 0 0 10px rgba(232, 185, 74, 0.4) !important;
+  transform: translateY(-1px) translateZ(0) !important;
+}
+
+/* Help Button (วิธีเล่น) */
+button.btn-toolbar-compact.btn-toolbar-help {
+  background: linear-gradient(180deg, #442614 0%, #261309 100%) !important;
+  border: 2px solid #ffd700 !important;
+  border-radius: 8px !important;
+  color: #ffd875 !important;
+  -webkit-text-fill-color: #ffd875 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 0 6px rgba(255, 215, 0, 0.2) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+button.btn-toolbar-compact.btn-toolbar-help:hover {
+  background: linear-gradient(180deg, #57311a 0%, #351a0d 100%) !important;
+  border-color: #fff275 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(255, 215, 0, 0.45) !important;
+  transform: translateY(-1px) translateZ(0) !important;
+}
+
+/* Reset / Reroll 9 Temples Button (สุ่ม 9 วัดใหม่) */
+button.btn-toolbar-compact.btn-toolbar-reset {
+  background: linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%) !important;
+  border: 2px solid #f87171 !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 0 6px rgba(255, 100, 100, 0.25) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+button.btn-toolbar-compact.btn-toolbar-reset:hover {
+  background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%) !important;
+  border-color: #fca5a5 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.5) !important;
+  transform: translateY(-1px) translateZ(0) !important;
+}
+
+/* Toolbar Progress Badge */
+.sj-toolbar-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin-left: auto;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(232, 185, 74, 0.18);
+  border: 1px solid #d5a64b;
+  color: #ffd875;
+  font-weight: 750;
+  font-size: 0.82rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+@media (max-width: 640px) {
+  .sj-toolbar-badge {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. MAIN GAME 2-COLUMN RESPONSIVE LAYOUT
+   -------------------------------------------------------------------------- */
+.sj-game-layout {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  width: 100% !important;
+  position: relative !important;
+  z-index: 22 !important;
+}
+
+@media (min-width: 768px) {
+  .sj-game-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr) !important;
+    gap: 16px !important;
+    align-items: start !important;
+  }
+}
+
+.sj-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.sj-aside-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Generic Sacred Journey Panel */
+.sj-panel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 23 !important;
+  transform: translateZ(0) !important;
+  background: linear-gradient(145deg, #321910 0%, #190c07 100%) !important;
+  border: 1.5px solid #d5a64b !important;
+  border-radius: 16px !important;
+  padding: 12px 14px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), inset 0 0 12px rgba(213, 166, 75, 0.12) !important;
+  margin-bottom: 12px !important;
+}
+
+/* Section Header Titles */
+.sj-section-title {
+  font-size: 0.92rem;
+  font-weight: 850;
+  color: #ffd875;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   4. 9 TEMPLES LIST PANEL (#sj-temples-section)
+   -------------------------------------------------------------------------- */
+#sj-temples-section,
+.sj-top-temples-panel,
+.sj-right-temple-panel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  margin: 0 auto 12px !important;
+  box-sizing: border-box !important;
+  background: linear-gradient(145deg, #321910 0%, #190c07 100%) !important;
+  border: 2px solid #d5a64b !important;
+  border-radius: 16px !important;
+  padding: 10px 12px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55), inset 0 0 10px rgba(213, 166, 75, 0.12) !important;
+}
+
+.sj-right-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.sj-temple-count-badge {
+  background: rgba(213, 166, 75, 0.22);
+  border: 1.5px solid #d5a64b;
+  border-radius: 999px;
+  padding: 3px 10px;
+  color: #ffd875;
+  font-size: 0.74rem;
+  font-weight: 750;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.sj-progress-track {
+  height: 8px;
+  background: #100604;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  border: 1px solid #5a381f;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.sj-progress-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #c47c22 0%, #ffd976 100%);
+  transition: width 0.35s ease;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(255, 217, 118, 0.6);
+}
+
+.sj-temple-list {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 6px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.sj-temple-chip {
+  display: flex !important;
+  flex-direction: column !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #140905 !important;
+  border: 1.5px solid #6b4728 !important;
+  border-radius: 8px !important;
+  padding: 6px 6px !important;
+  cursor: pointer !important;
+  min-width: 0 !important;
+  gap: 2px !important;
+  transition: all 0.2s ease !important;
+}
+.sj-temple-chip:hover {
+  border-color: #eab308 !important;
+  background: #24130a !important;
+  transform: translateY(-1px) translateZ(0) !important;
+}
+.sj-temple-chip.done {
+  background: linear-gradient(145deg, #4f3319 0%, #2b180d 100%) !important;
+  border-color: #ffd875 !important;
+  box-shadow: 0 0 10px rgba(213, 166, 75, 0.4) !important;
+}
+.sj-temple-chip.highlight-region {
+  border-color: #ffd700 !important;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.35) !important;
+}
+
+.sj-temple-chip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: #c4ad8c;
+}
+.sj-temple-region-tag {
+  font-size: 0.65rem;
+  color: #ffd875;
+  background: rgba(213, 166, 75, 0.2);
+  border: 1px solid rgba(213, 166, 75, 0.4);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+.sj-temple-chip-name {
+  color: #ffd875 !important;
+  font-size: 0.8rem !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.sj-temple-chip-prov {
+  color: #c4ad8c !important;
+  font-size: 0.72rem !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. 36-TILE (6x6) GAME BOARD (.sj-board-wrap, .sj-board)
+   -------------------------------------------------------------------------- */
+.sj-board-wrap {
+  padding: 8px 6px;
+  background: linear-gradient(135deg, #5b331f 0%, #24120b 100%);
+  border: 2px solid var(--gold, #d5a64b);
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 2px #2a160f, 0 10px 30px rgba(0, 0, 0, 0.6);
+  max-width: 520px;
+  margin: 0 auto;
+}
+.sj-board {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.sj-tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  max-height: 54px;
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid #987346;
+  background: linear-gradient(145deg, #d8bc82, #a17b4e);
+  color: #352015;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2px 1px;
+  overflow: hidden;
+  user-select: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.sj-tile:hover {
+  transform: scale(1.05);
+  z-index: 5;
+}
+.sj-tile-num {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: clamp(8px, 1.8vw, 10px);
+  font-weight: 900;
+  opacity: 0.85;
+  color: #2b170d;
+}
+.sj-tile-symbol {
+  font-size: clamp(16px, 4.2vw, 24px);
+  line-height: 1.1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+.sj-tile-label {
+  font-size: clamp(7px, 1.7vw, 9px);
+  font-weight: 800;
+  line-height: 1.1;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 2px;
+  color: #2b170d;
+}
+
+/* Tile Variations */
+.sj-tile.temple {
+  background: linear-gradient(145deg, #fff2be, #c89a42);
+  border: 2px solid #fff5cc;
+  box-shadow: inset 0 0 8px rgba(255, 240, 180, 0.4);
+}
+.sj-tile.temple .sj-tile-label {
+  font-weight: 900;
+  color: #220f06;
+}
+.sj-tile.obstacle {
+  background: linear-gradient(145deg, #7d7782, #47414c);
+  color: #fff;
+  border-color: #6a6470;
+}
+.sj-tile.obstacle .sj-tile-num,
+.sj-tile.obstacle .sj-tile-label {
+  color: #f0e6f5;
+}
+.sj-tile.bonus {
+  background: linear-gradient(145deg, #f5c7d3, #bd6a88);
+  border-color: #f7d2dc;
+}
+.sj-tile.bonus .sj-tile-num,
+.sj-tile.bonus .sj-tile-label {
+  color: #3b1020;
+}
+.sj-tile.special {
+  background: linear-gradient(145deg, #c4d7ab, #627c4f);
+  border-color: #d8e5c5;
+}
+.sj-tile.special .sj-tile-num,
+.sj-tile.special .sj-tile-label {
+  color: #172b0e;
+}
+.sj-tile.start,
+.sj-tile.finish {
+  background: linear-gradient(145deg, #fce498, #a66c28);
+  border: 2px solid #fff0b4;
+  box-shadow: 0 0 10px rgba(240, 200, 100, 0.35);
+}
+
+.sj-tile.current {
+  outline: 3px solid #ffffff;
+  outline-offset: -3px;
+  box-shadow: 0 0 0 3px #d5a64b, 0 0 20px rgba(255, 255, 255, 0.85);
+  z-index: 4;
+  transform: scale(1.04);
+}
+.sj-tile.visited {
+  filter: saturate(0.85);
+}
+.sj-tile.visited.temple {
+  border-color: #81c784;
+}
+
+.sj-tile-token {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  font-size: clamp(13px, 3vw, 17px);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+  animation: sj-bounce 0.8s infinite alternate;
+}
+@keyframes sj-bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
+}
+
+.sj-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--muted, #c4ad8c);
+  font-size: 0.72rem;
+}
+
+/* --------------------------------------------------------------------------
+   6. CONTROLS, DICE & PRIMARY ACTIONS
+   -------------------------------------------------------------------------- */
+.sj-controls-panel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: linear-gradient(145deg, #2c160e 0%, #170b07 100%) !important;
+  border: 2px solid #d5a64b !important;
+  border-radius: 16px !important;
+  padding: 14px !important;
+  max-width: 520px;
+  margin: 10px auto 0;
+}
+.sj-controls-row {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  gap: 12px !important;
+  align-items: center !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.sj-status-text-wrap {
+  min-width: 0;
+}
+.sj-message {
+  color: #ffd76a;
+  font-weight: 850;
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+.sj-submessage {
+  font-size: 0.78rem;
+  color: #d0bba0;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.sj-dicebox {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.sj-dice {
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 14px !important;
+  background: #fff5dd !important;
+  color: #6a2b1a !important;
+  place-items: center !important;
+  font-size: 36px !important;
+  line-height: 1 !important;
+  border: 2px solid #ecd094 !important;
+  box-shadow: inset 0 -4px #d2b98c, 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  user-select: none;
+}
+.sj-dice.rolling {
+  animation: sj-shake 0.12s infinite alternate;
+}
+@keyframes sj-shake {
+  0% { transform: rotate(-10deg) scale(0.95); }
+  100% { transform: rotate(12deg) scale(1.08); }
+}
+
+.sj-action-row {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  gap: 10px !important;
+  margin-top: 12px !important;
+}
+
+/* Roll Dice Button (ทอยลูกเต๋า) */
+.sj-roll-btn {
+  flex: 2;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: linear-gradient(180deg, #f7d57f 0%, #b87d22 100%) !important;
+  color: #1a0d05 !important;
+  border: 2px solid #fff0a8 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 0 #5f3a09, 0 6px 16px rgba(0, 0, 0, 0.5) !important;
+  font-size: 1.05rem !important;
+  font-weight: 900 !important;
+  padding: 12px 16px !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  min-height: 48px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.sj-roll-btn:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #5f3a09, 0 8px 20px rgba(213, 166, 75, 0.4) !important;
+}
+.sj-roll-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #5f3a09 !important;
+}
+.sj-roll-btn:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+  box-shadow: none !important;
+}
+
+/* Reset / Reroll Button (สุ่ม 9 วัดใหม่) */
+.sj-reset-btn {
+  flex: 1;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: linear-gradient(180deg, #382017 0%, #1d0f0a 100%) !important;
+  color: #ffdca3 !important;
+  border: 1.5px solid #8c6439 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 3px 0 #180c07 !important;
+  font-size: 0.88rem !important;
+  font-weight: 750 !important;
+  padding: 12px 14px !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  min-height: 48px;
+}
+.sj-reset-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.sj-quick-switch-row {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+.sj-quick-switch-btn {
+  font-size: 0.78rem;
+  color: #ffd875;
+  background: rgba(213, 166, 75, 0.15);
+  border: 1px dashed #d5a64b;
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sj-quick-switch-btn:hover {
+  background: rgba(213, 166, 75, 0.28);
+}
+
+/* --------------------------------------------------------------------------
+   7. RIGHT COLUMN: INVENTORY & TRAVEL LOG
+   -------------------------------------------------------------------------- */
+.sj-right-inventory-panel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: linear-gradient(145deg, #321910 0%, #190c07 100%) !important;
+  border: 1.5px solid #a8793b !important;
+}
+
+.sj-inventory-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 6px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.sj-item-btn {
+  display: flex !important;
+  flex-direction: column !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #160a06 !important;
+  border: 1px solid #6e4c2e !important;
+  border-radius: 10px !important;
+  padding: 8px 6px !important;
+  color: #e5d5be !important;
+  font-size: 0.74rem;
+  font-weight: 700;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sj-item-btn.has-item {
+  border-color: #ffd700 !important;
+  background: linear-gradient(145deg, #3d2315 0%, #1e0f09 100%) !important;
+  box-shadow: 0 0 8px rgba(213, 166, 75, 0.3) !important;
+}
+.sj-item-btn:hover:not(:disabled) {
+  border-color: #ffd875;
+  background: #382219;
+}
+.sj-item-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.sj-item-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.sj-item-title {
+  font-size: 0.72rem;
+  color: #f7df9e;
+}
+.sj-item-count {
+  color: #ffd875;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+.sj-item-desc {
+  font-size: 0.72rem;
+  color: #c4ad8c;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+/* Travel Log Panel */
+.sj-right-log-panel {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: linear-gradient(145deg, #321910 0%, #190c07 100%) !important;
+  border: 1.5px solid #a8793b !important;
+}
+
+.sj-log-box {
+  display: flex !important;
+  flex-direction: column !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: #120704 !important;
+  border: 1px solid #54371f !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  max-height: 160px !important;
+  overflow-y: auto !important;
+}
+
+.sj-log-entry {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: #d6bf9e !important;
+  font-size: 0.74rem !important;
+  padding: 3px 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sj-footer-note {
+  text-align: center;
+  color: #9d8365;
+  font-size: 0.72rem;
+  margin-top: 14px;
+}
+
+/* --------------------------------------------------------------------------
+   8. SACRED JOURNEY POPUP MODALS (.sj-overlay, .sj-modal)
+   -------------------------------------------------------------------------- */
+.sj-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 5, 4, 0.85);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+.sj-overlay.show {
+  display: flex;
+}
+
+.sj-modal {
+  width: min(100%, 480px);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(145deg, #442217, #1d0f0a);
+  border: 1.5px solid var(--gold, #d5a64b);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 25px rgba(213, 166, 75, 0.3);
+  text-align: center;
+  color: var(--cream, #f5e9cf);
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.sj-modal-emblem {
+  font-size: 2.4rem;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.sj-modal-title {
+  color: var(--gold2, #f1d58e);
+  margin: 0 0 6px;
+  font-size: 1.25rem;
+  font-weight: 850;
+  font-family: var(--font-display);
+}
+.sj-modal-temple-name {
+  color: #fff4d9;
+  font-weight: 800;
+  font-size: 1.15rem;
+  margin-bottom: 2px;
+}
+.sj-modal-sub {
+  font-size: 0.8rem;
+  color: var(--muted, #c4ad8c);
+  margin-bottom: 12px;
+}
+.sj-modal-blessing-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(213, 166, 75, 0.35);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 10px 0 14px;
+  text-align: left;
+}
+.sj-modal-wish {
+  font-size: 0.86rem;
+  color: #fff8e7;
+  margin: 0 0 4px;
+  line-height: 1.45;
+}
+.sj-modal-blessing {
+  font-size: 0.8rem;
+  color: var(--gold2, #f1d58e);
+  margin: 0;
+  line-height: 1.4;
+}
+.sj-modal-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 750;
+  color: var(--gold2, #f1d58e);
+  margin-bottom: 6px;
+  text-align: left;
+}
+.sj-modal-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #140b08;
+  color: var(--cream, #f5e9cf);
+  border: 1px solid #87633a;
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  outline: none;
+}
+.sj-modal-actions {
+  display: flex;
+  gap: 8px;
+}
+.sj-modal-actions button {
+  flex: 1;
+}
+
+.sj-finish-stats-box {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid #8d683b;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sj-finish-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.92rem;
+}
+.sj-gold-text {
+  color: var(--gold2, #f1d58e);
+  font-size: 1.15rem;
+}
+.sj-help-list {
+  text-align: left;
+  line-height: 1.7;
+  padding-left: 20px;
+  font-size: 0.84rem;
+  color: #fff4d9;
+  margin: 10px 0 14px;
+}
+.sj-help-list li {
+  margin-bottom: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   9. MOBILE REFINEMENTS
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .sacred-journey-frame {
+    padding: 0.5rem 0.65rem 1rem !important;
+    border-radius: 14px !important;
+  }
+  .sacred-journey-toolbar-row {
+    gap: 0.35rem 0.45rem !important;
+  }
+  .btn-toolbar-compact {
+    font-size: 0.8rem !important;
+    padding: 0.38rem 0.65rem !important;
+  }
+  .sj-board-wrap {
+    padding: 6px 4px;
+    border-radius: 14px;
+  }
+  .sj-tile {
+    max-height: 48px;
+  }
+  .sj-controls-panel {
+    padding: 10px !important;
+  }
+  .sj-dice {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 30px !important;
+  }
+  .sj-roll-btn {
+    font-size: 0.95rem !important;
+    padding: 10px 12px !important;
+    min-height: 44px;
+  }
+  .sj-reset-btn {
+    font-size: 0.82rem !important;
+    padding: 10px 10px !important;
+    min-height: 44px;
+  }
+  .sj-inventory-grid {
+    gap: 4px !important;
+  }
+  .sj-item-btn {
+    padding: 6px 4px !important;
+    font-size: 0.68rem;
+  }
+}

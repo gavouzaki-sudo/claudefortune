@@ -1,0 +1,24 @@
+/* ==========================================================================
+   SHRINE MASTER STYLESHEET (ศาลเจ้าแห่งโชคลาภ — LUCKY SHRINE)
+   Modular CSS Architecture: 6 Clean, Scoped Subsystems
+   Deduplicated from monolithic 12,369 lines down to clean, maintainable modules.
+   Guarantees 100% permanent default-state illumination across all 11+ views.
+   ========================================================================== */
+
+/* Module 1: Base Variables, Resets, Themes, Layout, Navigation & Safeguards */
+@import "./styles/base-and-layout.css";
+
+/* Module 2: Gate Altar, Radial Wheel, Shrine Loader & Core Modals */
+@import "./styles/gate-and-modals.css";
+
+/* Module 3: Sacred Journey 9 Temples & Festival Stage */
+@import "./styles/sacred-journey.css";
+
+/* Module 4: Auspicious Calendar & Astrology Engine */
+@import "./styles/auspicious-calendar.css";
+
+/* Module 5: Divination Tabs (Siamese Sticks, Tarot, Lucky Numbers, Mini-Games, Rituals, Love, Meditation, TTS) */
+@import "./styles/divination-tabs.css";
+
+/* Module 6: Immersive Rituals (Loy Krathong 3D, Coffin Card Rebirth, Pond, Angpao) */
+@import "./styles/immersive-rituals.css";
