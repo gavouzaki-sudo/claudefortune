@@ -176,6 +176,13 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
               <button
                 type="button"
                 className="btn-quick-date"
+                onClick={() => handleSearchByDate('01', '02', '2569')}
+              >
+                1 ก.พ. 69
+              </button>
+              <button
+                type="button"
+                className="btn-quick-date"
                 onClick={() => handleSearchByDate('16', '10', '2569')}
               >
                 16 ต.ค. 69

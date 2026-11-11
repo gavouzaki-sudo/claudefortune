@@ -1655,12 +1655,18 @@
   align-items: center;
 }
 .compact-date-select {
+  color-scheme: dark !important;
   background: #051a0d;
   border: 1px solid rgba(255, 204, 0, 0.4);
   border-radius: 4px;
   color: #fff;
   font-size: 0.75rem;
   padding: 0.22rem 0.35rem;
+}
+.compact-date-select option {
+  color-scheme: dark !important;
+  background: #0a2414 !important;
+  color: #ffffff !important;
 }
 .compact-year-field {
   display: inline-flex;

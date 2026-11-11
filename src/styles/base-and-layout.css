@@ -14,6 +14,7 @@
    1. ROOT VARIABLES & PALETTES
    -------------------------------------------------------------------------- */
 :root {
+  color-scheme: dark;
   --bg: #120a08;
   --bg2: #1d0f0b;
   --panel: rgba(36, 18, 13, 0.82);
@@ -247,27 +248,44 @@ label {
 
 input[type="text"],
 input[type="number"],
-select,
+select {
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  color: #ffffff;
+  color-scheme: dark;
+  background: rgba(24, 12, 10, 0.9);
+  border: 1px solid var(--panel-line);
+  border-radius: 10px;
+}
+
 textarea {
   width: 100%;
   margin-top: 0.3rem;
   padding: 0.7rem 0.85rem;
   font: inherit;
   color: var(--ink);
+  color-scheme: dark;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid var(--panel-line);
   border-radius: 10px;
+  resize: vertical;
 }
 
-select option {
+select option,
+select optgroup {
+  color-scheme: dark !important;
   color: #ffffff !important;
   background-color: #241410 !important;
   font-weight: 500;
   padding: 0.6rem 0.85rem;
 }
 
-textarea {
-  resize: vertical;
+select option:checked {
+  background-color: #e8b94a !important;
+  color: #120a08 !important;
+  font-weight: 800;
 }
 
 input:focus,
@@ -1115,6 +1133,13 @@ button:focus-visible,
 /* SAFEGUARD: Force all interactive controls, buttons, toolbars, and inputs
    inside .ritual-active-wrapper to ALWAYS render in their default state
    above <FortuneCanvasBackground /> WITHOUT requiring a hover event! */
+.ritual-active-wrapper .auspicious-container,
+.ritual-active-wrapper .auspicious-calendar-grid-view,
+.ritual-active-wrapper .calendar-weekdays-row,
+.ritual-active-wrapper .weekday-col-header,
+.ritual-active-wrapper .calendar-cells-grid,
+.ritual-active-wrapper .calendar-cell,
+.ritual-active-wrapper .astrological-search-card,
 .ritual-active-wrapper button,
 .ritual-active-wrapper select,
 .ritual-active-wrapper input,

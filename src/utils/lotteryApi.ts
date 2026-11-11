@@ -53,20 +53,50 @@ export function parseDateString(dateStr: string): { day: number; month: number; 
 }
 
 // Fallback data in case of offline or network interruption
-const BACKUP_LATEST_DRAW: LotteryDisplayData = {
-  first: '423224',
-  firstPrice: '6,000,000',
-  last3f: ['300', '950'],
-  last3fPrice: '4,000',
-  last3b: ['393', '804'],
-  last3bPrice: '4,000',
-  last2: '85',
-  last2Price: '2,000',
-  rawDate: '2026-11-01',
-  formattedThaiDate: '1 พฤศจิกายน 2569',
-  period: [41, 42],
-  isFallback: true,
+export const KNOWN_BACKUP_DRAWS: Record<string, LotteryDisplayData> = {
+  '2026-11-01': {
+    first: '423224',
+    firstPrice: '6,000,000',
+    last3f: ['300', '950'],
+    last3fPrice: '4,000',
+    last3b: ['393', '804'],
+    last3bPrice: '4,000',
+    last2: '85',
+    last2Price: '2,000',
+    rawDate: '2026-11-01',
+    formattedThaiDate: '1 พฤศจิกายน 2569',
+    period: [41, 42],
+    isFallback: true,
+  },
+  '2026-02-01': {
+    first: '174629',
+    firstPrice: '6,000,000',
+    last3f: ['917', '195'],
+    last3fPrice: '4,000',
+    last3b: ['408', '041'],
+    last3bPrice: '4,000',
+    last2: '48',
+    last2Price: '2,000',
+    rawDate: '2026-02-01',
+    formattedThaiDate: '1 กุมภาพันธ์ 2569',
+    isFallback: true,
+  },
+  '2024-03-01': {
+    first: '253603',
+    firstPrice: '6,000,000',
+    last3f: ['900', '975'],
+    last3fPrice: '4,000',
+    last3b: ['382', '703'],
+    last3bPrice: '4,000',
+    last2: '79',
+    last2Price: '2,000',
+    rawDate: '2024-03-01',
+    formattedThaiDate: '1 มีนาคม 2567',
+    isFallback: true,
+  },
 };
+
+const BACKUP_LATEST_DRAW: LotteryDisplayData = KNOWN_BACKUP_DRAWS['2026-11-01'];
 
 function formatPrice(priceStr?: string, defaultPrice = ''): string {
   if (!priceStr) return defaultPrice;
@@ -189,11 +219,6 @@ export async function getLotteryResultByDate(
     year: String(yearCe),
   };
 
-  const isBackupDrawDate =
-    payload.date === '01' &&
-    payload.month === '11' &&
-    (yearCe === 2026 || yearBe === 2569);
-
   const isBrowser = typeof window !== 'undefined';
   const endpoints = isBrowser
     ? ['/api/glo/checking/getLotteryResult']
@@ -233,8 +258,9 @@ export async function getLotteryResultByDate(
     }
   }
 
-  if (isBackupDrawDate) {
-    return { ...BACKUP_LATEST_DRAW };
+  const lookupKey = `${yearCe}-${payload.month}-${payload.date}`;
+  if (KNOWN_BACKUP_DRAWS[lookupKey]) {
+    return { ...KNOWN_BACKUP_DRAWS[lookupKey] };
   }
 
   throw new Error(`ไม่พบข้อมูลผลการออกรางวัลของงวดวันที่ ${payload.date}/${payload.month}/${yearBe} (โปรดตรวจสอบการเชื่อมต่อเครือข่าย หรือเซิร์ฟเวอร์กองสลากฯ)`);
