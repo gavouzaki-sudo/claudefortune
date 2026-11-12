@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ALL_TEMPLES,
   GAME_EVENTS,
@@ -158,6 +159,18 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
       }
     }
   }, [activeModal, getTempleAtTile, state.position, state.status, state.triggered, state.visited]);
+
+  // Handle Escape key to dismiss modal
+  useEffect(() => {
+    if (!activeModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveModal(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeModal]);
 
   // Sync state to localStorage
   useEffect(() => {
@@ -1001,11 +1014,21 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
         เกมเพื่อความบันเทิงและส่งเสริมการเรียนรู้สถานที่ทางวัฒนธรรมไทย · คะแนนบุญเป็นคะแนนสมมติในเกม
       </div>
 
-      {/* POPUP MODALS - Using Auspicious Modal Sheet Pattern */}
-      {/* 1. Temple Worship Modal */}
-      {activeModal?.type === 'temple' && (
-        <div
-          className="sj-overlay show"
+      {/* 
+        Comment before update:
+        Fix: Render all modals via createPortal to document.body.
+        Previously, modals were rendered inside the game frame (#sj9-game-frame).
+        When clicking buttons in "วัดทั้ง 9 แห่งในการเดินทางนี้", the modal was trapped inside
+        the outer framed box, causing two nested/stacked window frames to appear (outer game frame + inner modal frame).
+        By portaling to document.body, the overlay covers the entire viewport with a full-screen backdrop,
+        ensuring that only a single, clean framed window appears on screen.
+      */}
+      {activeModal && typeof document !== 'undefined' && createPortal(
+        <>
+          {/* 1. Temple Worship Modal */}
+          {activeModal.type === 'temple' && (
+            <div
+              className="sj-overlay show"
           role="dialog"
           aria-modal="true"
           aria-label="สักการะวัด"
@@ -1379,6 +1402,9 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
           </div>
         </div>
       )}
+    </>,
+    document.body
+  )}
     </div>
   );
 };

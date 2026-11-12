@@ -94,6 +94,15 @@ export default defineConfig(({ command }) => ({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/glo/, '/api'),
+        configure: (proxy) => {
+          proxy.on('error', (err, _req, res) => {
+            console.warn('[Vite Proxy] /api/glo error:', err?.message || err);
+            if (res && 'writeHead' in res && !res.headersSent) {
+              res.writeHead(502, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Proxy upstream unavailable' }));
+            }
+          });
+        },
       },
       '/api/tts': {
         target: 'https://translate.google.com',
@@ -101,6 +110,13 @@ export default defineConfig(({ command }) => ({
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/tts/, '/translate_tts'),
         configure: (proxy) => {
+          proxy.on('error', (err, _req, res) => {
+            console.warn('[Vite Proxy] /api/tts error:', err?.message || err);
+            if (res && 'writeHead' in res && !res.headersSent) {
+              res.writeHead(502, { 'Content-Type': 'text/plain' });
+              res.end('Proxy upstream unavailable');
+            }
+          });
           proxy.on('proxyReq', (proxyReq) => {
             proxyReq.removeHeader('referer');
             proxyReq.removeHeader('origin');
@@ -124,6 +140,15 @@ export default defineConfig(({ command }) => ({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/glo/, '/api'),
+        configure: (proxy) => {
+          proxy.on('error', (err, _req, res) => {
+            console.warn('[Vite Proxy] /api/glo error:', err?.message || err);
+            if (res && 'writeHead' in res && !res.headersSent) {
+              res.writeHead(502, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Proxy upstream unavailable' }));
+            }
+          });
+        },
       },
       '/api/tts': {
         target: 'https://translate.google.com',
@@ -131,6 +156,13 @@ export default defineConfig(({ command }) => ({
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/tts/, '/translate_tts'),
         configure: (proxy) => {
+          proxy.on('error', (err, _req, res) => {
+            console.warn('[Vite Proxy] /api/tts error:', err?.message || err);
+            if (res && 'writeHead' in res && !res.headersSent) {
+              res.writeHead(502, { 'Content-Type': 'text/plain' });
+              res.end('Proxy upstream unavailable');
+            }
+          });
           proxy.on('proxyReq', (proxyReq) => {
             proxyReq.removeHeader('referer');
             proxyReq.removeHeader('origin');
