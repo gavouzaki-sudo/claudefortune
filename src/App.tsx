@@ -295,6 +295,7 @@ export const App: React.FC = () => {
                   {journalCount > 0 && <span className="header-journal-badge">{journalCount}</span>}
                 </button>
               </div>
+              <Footer />
             </>
           )}
 
@@ -412,11 +413,11 @@ export const App: React.FC = () => {
                 </ErrorBoundary>
               </div>
 
+              <Footer />
             </div>
           )}
         </main>
 
-        <Footer />
         <Toast message={toastMsg} />
         <Fireworks ref={fireworksRef} />
 

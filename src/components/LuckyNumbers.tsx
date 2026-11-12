@@ -168,27 +168,25 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
       role="tabpanel"
     >
       {category === null ? (
-        /* Asking first before playing the game: 2 digits or 3 digits */
-        <div className="lucky-category-prompt-card" role="region" aria-label="เลือกประเภทเลขมงคล">
-          <div className="lucky-choice-grid">
-            <button
-              type="button"
-              className="lucky-choice-card choice-2-card"
-              onClick={() => handleSelectCategory(0)}
-              aria-label="เลือกขอเลข 2 หลัก"
-            >
-              <h4 className="choice-name">เลข 2 หลัก</h4>
-            </button>
+        /* Asking first before playing the game: 2 digits or 3 digits - Centered & Frameless */
+        <div className="lucky-category-choice-row" role="region" aria-label="เลือกประเภทเลขมงคล">
+          <button
+            type="button"
+            className="btn-lucky-choice choice-2-btn"
+            onClick={() => handleSelectCategory(0)}
+            aria-label="เลือกขอเลข 2 หลัก"
+          >
+            <span>เลข 2 หลัก</span>
+          </button>
 
-            <button
-              type="button"
-              className="lucky-choice-card choice-3-card"
-              onClick={() => handleSelectCategory(1)}
-              aria-label="เลือกขอเลข 3 หลัก"
-            >
-              <h4 className="choice-name">เลข 3 หลัก</h4>
-            </button>
-          </div>
+          <button
+            type="button"
+            className="btn-lucky-choice choice-3-btn"
+            onClick={() => handleSelectCategory(1)}
+            aria-label="เลือกขอเลข 3 หลัก"
+          >
+            <span>เลข 3 หลัก</span>
+          </button>
         </div>
       ) : (
         <>

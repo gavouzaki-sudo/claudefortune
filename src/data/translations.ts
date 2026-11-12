@@ -187,7 +187,7 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     pwaClose: 'ปิด',
 
     topicCivilization: 'อารยธรรม',
-    topicStick: 'เสี่ยงเซียมซี',
+    topicStick: 'เซียมซี',
     topicTarot: 'ไพ่ยิปซี',
     topicNumber: 'เลขมงคล',
     topicRitual: 'สะเดาะเคราะห์',

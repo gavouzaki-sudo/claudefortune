@@ -371,7 +371,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
               className="btn ghost btn-reshake-prophecy"
               onClick={handleResetToShake}
             >
-              <span>🔄 เสี่ยงเซียมซีใบใหม่</span>
+              <span>🔄 เซียมซีใบใหม่</span>
             </button>
             <button
               type="button"

@@ -174,47 +174,49 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
       </div>
 
       {/* ชุดไพ่ยิปซี (Tarot Cards Table) */}
-      <div id="tarot-table" className={`tarot-table spread-${spread}`} aria-live="polite">
-        {activeCards.map((card, idx) => {
-          const isFlipped = !!flipped[idx];
-          const label = positions[idx] || `ใบที่ ${idx + 1}`;
-          return (
-            <div key={idx} className={`tslot ${isFlipped ? 'revealed' : ''}`}>
-              <div className="pos">{label}</div>
-              <div
-                className={`tcard ${isFlipped ? 'flipped' : ''}`}
-                role="button"
-                tabIndex={0}
-                aria-label={`ไพ่ใบที่ ${idx + 1} (${label}) ${isFlipped ? 'เปิดแล้ว' : 'แตะเพื่อพลิก'}`}
-                style={{ '--i': idx } as React.CSSProperties}
-                onClick={() => handleFlip(idx)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleFlip(idx);
-                  }
-                }}
-              >
-                <div className="tcard-in">
-                  <div className="tface tback" />
-                  <div className={`tface tfront ${card.reversed ? 'rev' : ''}`}>
-                    <div className="num">{pad2(card.id)}</div>
-                    <div className="glyph">{GLYPHS[card.id] || '🎴'}</div>
-                    <div>
-                      <div className="nm">{card.name}</div>
-                      <div className="en">{card.en}</div>
+      {cards.length > 0 && (
+        <div id="tarot-table" className={`tarot-table spread-${spread}`} aria-live="polite">
+          {activeCards.map((card, idx) => {
+            const isFlipped = !!flipped[idx];
+            const label = positions[idx] || `ใบที่ ${idx + 1}`;
+            return (
+              <div key={idx} className={`tslot ${isFlipped ? 'revealed' : ''}`}>
+                <div className="pos">{label}</div>
+                <div
+                  className={`tcard ${isFlipped ? 'flipped' : ''}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`ไพ่ใบที่ ${idx + 1} (${label}) ${isFlipped ? 'เปิดแล้ว' : 'แตะเพื่อพลิก'}`}
+                  style={{ '--i': idx } as React.CSSProperties}
+                  onClick={() => handleFlip(idx)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleFlip(idx);
+                    }
+                  }}
+                >
+                  <div className="tcard-in">
+                    <div className="tface tback" />
+                    <div className={`tface tfront ${card.reversed ? 'rev' : ''}`}>
+                      <div className="num">{pad2(card.id)}</div>
+                      <div className="glyph">{GLYPHS[card.id] || '🎴'}</div>
+                      <div>
+                        <div className="nm">{card.name}</div>
+                        <div className="en">{card.en}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
+                <div className="tmean">
+                  {card.reversed && <span className="rv">ไพ่กลับหัว</span>}
+                  {card.meaning}
+                </div>
               </div>
-              <div className="tmean">
-                {card.reversed && <span className="rv">ไพ่กลับหัว</span>}
-                {card.meaning}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* กล่องเสียงซินแสอ่านคำทำนายไพ่ยิปซี อยู่ด้านล่างชุดไพ่และคำทำนาย */}
       {cards.length > 0 && flippedCount > 0 && (
