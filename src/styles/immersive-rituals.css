@@ -11,6 +11,19 @@
    1. 3D LOY KRATHONG EXPERIENCE (THREE.JS / WEBGL)
    -------------------------------------------------------------------------- */
 #tab-krathong,
+.krathong-ritual-stage {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 .loy-krathong-3d-wrapper {
   position: relative;
   width: 100%;
@@ -25,7 +38,6 @@
   background: #060914;
   margin: 0.2rem auto 1rem;
   z-index: 10;
-  transform: translateZ(0);
 }
 
 .loy-krathong-3d-canvas-container {
