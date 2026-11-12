@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   generateMonthAuspiciousDays,
   getKalaYogaForYear,
@@ -129,6 +130,18 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     setInspectedDay(null);
     onToast(`📅 เปลี่ยนเป็น พ.ศ. ${newYearBE}`);
   }, [onToast]);
+
+  // Handle Escape key to dismiss day inspection modal
+  useEffect(() => {
+    if (!inspectedDay) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setInspectedDay(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [inspectedDay]);
 
 
 
@@ -619,8 +632,8 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
           </div>
         </div>
 
-      {/* Day Inspection Modal (ป๊อปอัปเจาะลึกรายละเอียดวันมงคล) */}
-      {inspectedDay && (
+      {/* Day Inspection Modal (ป๊อปอัปเจาะลึกรายละเอียดวันมงคล) - Portaled to document.body to prevent double-frame nesting */}
+      {inspectedDay && typeof document !== 'undefined' && createPortal(
         <div
           className="auspicious-modal-overlay"
           onClick={() => setInspectedDay(null)}
@@ -811,7 +824,8 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

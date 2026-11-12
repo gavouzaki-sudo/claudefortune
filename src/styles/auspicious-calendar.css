@@ -40,7 +40,6 @@
   width: 100%;
   position: relative;
   z-index: 10;
-  transform: translateZ(0);
 }
 
 /* --------------------------------------------------------------------------
@@ -1726,13 +1725,17 @@ select.input-select:focus,
 .auspicious-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(6px);
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  background: rgba(9, 5, 4, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .auspicious-modal-sheet {
