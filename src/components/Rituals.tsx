@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Bridge } from '../bridge';
 import type { CandleResult, OfferingResult, RemedyResult } from '../types';
+import { isChantMuted } from '../utils/chantAudio';
 
 
 const WISH_PRESETS = [
@@ -100,7 +101,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   const [sweptParts, setSweptParts] = useState<number[]>([]);
   const [talismanPos, setTalismanPos] = useState<{ x: number; y: number } | null>(null);
   const [isSweepingAnimation, setIsSweepingAnimation] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
 
   const touchStartY = useRef<number | null>(null);
   const mouseStartY = useRef<number | null>(null);
@@ -301,7 +301,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
       window.setTimeout(() => setIsSweepingAnimation(false), 450);
 
       // Sound & Chanting
-      if (soundEnabled) {
+      if (!isChantMuted()) {
         playSweepAudio(next.length);
       }
 
@@ -333,7 +333,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
         onToast(`✨ ปัดเคราะห์ส่วนที่ ${partId} (${part.name}) — ${part.blessing}`);
       }
     },
-    [bridge, chongProblem, chongSpinning, chongZodiac, onToast, playSweepAudio, soundEnabled, sweptParts]
+    [bridge, chongProblem, chongSpinning, chongZodiac, onToast, playSweepAudio, sweptParts]
   );
 
   // Sweep the next unbrushed part from head to toe
@@ -478,7 +478,17 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
             {candleHint}
           </p>
 
-          <div className="candle-action-row">
+          <div
+            className="candle-action-row"
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: '100%',
+              margin: '0.8rem auto 0.4rem',
+              textAlign: 'center',
+            }}
+          >
             <button
               id="btn-candle-hold"
               className="btn primary btn-candle-press"
@@ -487,6 +497,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
               onPointerUp={releaseCandle}
               onPointerCancel={releaseCandle}
               aria-label="กดค้างเพื่อจุดเทียนต่อดวง"
+              style={{ margin: '0 auto', textAlign: 'center' }}
             >
               <span>🕯️ กดค้างที่นี่ (หรือที่ตัวเทียน) เพื่อต่อดวงชะตา</span>
               {candleLevel > 0 && <span className="candle-btn-pct">({candleLevel.toFixed(0)}%)</span>}
@@ -602,7 +613,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
             )}
           </div>
 
-          {/* Quick Wish Presets */}
+          {/* Quick Wish Presets (Without emoji on buttons) */}
           <div className="wish-presets-group" style={{ margin: '0.4rem auto 0.6rem' }}>
             <div className="wish-preset-chips">
               {WISH_PRESETS.map((p, idx) => (
@@ -612,7 +623,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                   className={`wish-preset-chip ${lanternText === p.text ? 'selected' : ''}`}
                   onClick={() => handleSelectPreset(p.text)}
                 >
-                  <span>{p.icon}</span>
                   <span>{p.title}</span>
                 </button>
               ))}
@@ -658,21 +668,12 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
       {/* 3. ปีชง: Interactive 13-Part Talisman Sweeping Ceremony */}
       {activeRit === 'chong' && (
         <div id="rit-chong" className="rit chong-interactive-stage">
-          {/* Progress Bar without instruction text */}
+          {/* Progress Bar without duplicate sound button */}
           <div className="chong-sweep-counter-bar">
-            <div className="chong-counter-header">
+            <div className="chong-counter-header" style={{ justifyContent: 'center', textAlign: 'center' }}>
               <span style={{ fontWeight: 600 }}>
                 📜 ปัดตัวด้วยกระดาษหงิ่งเตี๋ย ({sweptParts.length}/13)
               </span>
-              <button
-                type="button"
-                className="btn-sound-toggle"
-                onClick={() => setSoundEnabled((v) => !v)}
-                title={soundEnabled ? 'ปิดเสียงสวดมนต์และกระดิ่ง' : 'เปิดเสียงสวดมนต์และกระดิ่ง'}
-                aria-label={soundEnabled ? 'ปิดเสียง' : 'เปิดเสียง'}
-              >
-                {soundEnabled ? '🔊 เสียงเปิด' : '🔇 เสียงปิด'}
-              </button>
             </div>
             <div className="chong-progress-track">
               <div
@@ -682,9 +683,15 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
             </div>
           </div>
 
-          {/* Interactive Humanoid Figure (SVG 280x430) with 13 Clickable / Sweeping Zones */}
+          {/* Interactive Humanoid Figure (SVG 280x430, scaled down 20% to max-width: 224px, max-height: 344px) */}
           <div
             className="chong-figure-container"
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              margin: '0.4rem auto',
+            }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -696,6 +703,14 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
             <svg
               viewBox="0 0 280 430"
               className="chong-human-svg"
+              style={{
+                width: '100%',
+                maxWidth: '224px',
+                maxHeight: '344px',
+                height: 'auto',
+                display: 'block',
+                margin: '0 auto',
+              }}
               aria-label="หุ่นจำลองร่างกายมนุษย์สำหรับพิธีปัดตัวสะเดาะเคราะห์ 13 ส่วน"
             >
               <defs>

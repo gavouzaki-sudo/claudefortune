@@ -7,7 +7,6 @@ import {
   stopChant,
 } from '../utils/chantAudio';
 import { safeStorage } from '../utils/storage';
-
 interface GateProps {
   bridge: Bridge;
   onSessionStart: (session: UserSession) => void;
@@ -224,8 +223,6 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
 
   return (
     <section id="gate" className="panel gate cosmic-celestial-gate">
-      {/* Main Interactive Celestial Orrery Stage */}
-
       {/* Main Interactive Celestial Orrery Stage */}
       <div className="celestial-stage-wrapper">
         <div

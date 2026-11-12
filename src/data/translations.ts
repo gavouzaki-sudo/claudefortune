@@ -57,6 +57,7 @@ export interface Translations {
   pwaClose: string;
 
   // Topics / Navigation
+  topicCivilization: string;
   topicStick: string;
   topicTarot: string;
   topicNumber: string;
@@ -185,6 +186,7 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     pwaOfflineMsg: 'โหมดออฟไลน์ — ประมวลผลในเครื่อง 100% ปลอดภัย ไร้กังวล',
     pwaClose: 'ปิด',
 
+    topicCivilization: 'อารยธรรม',
     topicStick: 'เสี่ยงเซียมซี',
     topicTarot: 'ไพ่ยิปซี',
     topicNumber: 'เลขมงคล',
@@ -307,6 +309,7 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     pwaOfflineMsg: 'Offline Mode — 100% local processing, private & secure',
     pwaClose: 'Close',
 
+    topicCivilization: 'Civilizations',
     topicStick: 'Siamese Sticks',
     topicTarot: 'Tarot Cards',
     topicNumber: 'Lucky Numbers',
@@ -429,6 +432,7 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     pwaOfflineMsg: '离线模式 — 本地端 100% 独立运算，安全私密',
     pwaClose: '关闭',
 
+    topicCivilization: '古文明',
     topicStick: '神灵抽签',
     topicTarot: '塔罗灵占',
     topicNumber: '吉祥数字',

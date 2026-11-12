@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { clamp } from '../utils/formatters';
 
-type FortuneTopic = 'stick' | 'tarot' | 'number' | 'ritual' | 'scan' | 'festival' | 'love' | 'cosmic' | 'meditation' | 'auspicious' | 'krathong' | 'coffin';
+type FortuneTopic = 'civilization' | 'stick' | 'tarot' | 'number' | 'ritual' | 'scan' | 'festival' | 'love' | 'cosmic' | 'meditation' | 'auspicious' | 'krathong' | 'coffin';
 
 interface FortuneCanvasBackgroundProps {
   activeTopic: FortuneTopic;
@@ -1755,6 +1755,7 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       festival: new TempleScene(),
       cosmic: new CosmicScene(),
       meditation: new CosmicScene(),
+      civilization: new CosmicScene(),
       krathong: new TempleScene(),
       coffin: new CemeteryScene(),
     };

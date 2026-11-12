@@ -1756,6 +1756,23 @@
   transition: width 0.08s linear;
 }
 
+.candle-action-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 0.8rem auto 0.4rem;
+  text-align: center;
+}
+
+.btn-candle-press {
+  margin: 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
 /* Sky Lantern */
 .sky {
   position: relative;
@@ -1989,6 +2006,33 @@
   border-radius: 999px;
   transition: width 0.3s ease;
   box-shadow: 0 0 8px rgba(255, 215, 0, 0.75);
+}
+
+.chong-counter-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.chong-figure-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0.4rem auto;
+  user-select: none;
+  touch-action: none;
+  width: 100%;
+}
+
+.chong-human-svg {
+  width: 100%;
+  max-width: 224px;
+  max-height: 344px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
 }
 
 .btn-sweep-action {

@@ -4,7 +4,6 @@ import type { UserSession, DivinationTopic } from './types';
 import { useToast } from './hooks/useToast';
 import { useThemeManager } from './hooks/useThemeManager';
 import { useFortuneJournal } from './hooks/useFortuneJournal';
-import { safeStorage } from './utils/storage';
 import { logger } from './utils/logger';
 import { LanguageProvider } from './context/LanguageContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -111,46 +110,7 @@ export const App: React.FC = () => {
         b.setDate();
         setBridge(b);
 
-        // Restore saved session safely or initialize default auspicious session
-        const savedSessionRaw = safeStorage.get<Record<string, unknown> | null>('session', 'shrine.session', null);
-        if (savedSessionRaw && savedSessionRaw.year && (savedSessionRaw.symbolName || savedSessionRaw.name)) {
-          const symName = String(savedSessionRaw.symbolName || savedSessionRaw.name);
-          const yearNum = Number(savedSessionRaw.year);
-          const zodNum = Number(savedSessionRaw.zodiac ?? -1);
-          const z = b.initSession(symName, yearNum, zodNum);
-          if (z >= 0) {
-            const info = b.zodiacInfo(z);
-            setSession({
-              systemId: String(savedSessionRaw.systemId || 'thai'),
-              systemName: String(savedSessionRaw.systemName || 'ไทย (12 นักษัตร)'),
-              symbolName: symName,
-              symbolIcon: String(savedSessionRaw.symbolIcon || '✨'),
-              element: String(savedSessionRaw.element || info.element || 'มงคล'),
-              aura: String(savedSessionRaw.aura || info.color || 'ทองคำ'),
-              attribute: String(savedSessionRaw.attribute || 'โชคลาภบารมี'),
-              year: yearNum,
-              zodiac: z,
-              info,
-            });
-          }
-        } else {
-          // Initialize default auspicious session so the user lands directly in the shrine
-          const defaultSym = 'มะเมีย (ม้าแก้ว)';
-          const z = b.initSession('มะเมีย', 2569, 6);
-          const info = b.zodiacInfo(z >= 0 ? z : 6);
-          setSession({
-            systemId: 'thai',
-            systemName: 'ไทย (12 นักษัตร)',
-            symbolName: defaultSym,
-            symbolIcon: '🐎',
-            element: 'ไฟ / ทองคำ',
-            aura: 'ทองคำเรืองรอง',
-            attribute: 'โชคลาภบารมี',
-            year: 2569,
-            zodiac: 6,
-            info,
-          });
-        }
+        // Gate (Civilization) is the initial home page
       } catch (err) {
         logger.error('Failed during initial bridge/session loading:', err);
         if (isMounted) {
@@ -170,8 +130,12 @@ export const App: React.FC = () => {
     spiritualSpeechEngine.stop();
     stopChant();
     ambientSoundEngine.setSoundscape('none');
-    safeStorage.remove('session', 'shrine.session');
     setSession(null);
+    try {
+      sessionStorage.removeItem('shrine.activeTab');
+    } catch {
+      // Ignore
+    }
   }, []);
 
   const handleOpenFestival = useCallback(() => {
@@ -235,7 +199,7 @@ export const App: React.FC = () => {
       <ErrorBoundary fallbackMessage="เกิดข้อผิดพลาดในการโหลดองค์ประกอบศาลเจ้า">
         <Ambient themeKey={activeThemeId} />
         <Header
-          onGoHome={session ? handleSessionChange : undefined}
+          onGoHome={handleSessionChange}
           hasActiveSession={!!session}
         />
 
@@ -279,7 +243,7 @@ export const App: React.FC = () => {
 
           {!loadError && bridge && !session && (
             <>
-              <ErrorBoundary fallbackMessage="เกิดข้อผิดพลาดบริเวณหน้าซุ้มประตูศาลเจ้า">
+              <ErrorBoundary fallbackMessage="เกิดข้อผิดพลาดบริเวณหน้าอารยธรรม">
                 <Gate
                   bridge={bridge}
                   onSessionStart={(s) => {
