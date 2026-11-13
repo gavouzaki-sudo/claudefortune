@@ -91,6 +91,11 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   const [lanternFlying, setLanternFlying] = useState(false);
   const [lanternStyle, setLanternStyle] = useState<{ left: string; dx: string } | null>(null);
   const lanternTimerRef = useRef<number | null>(null);
+  const lanternModalTimerRef = useRef<number | null>(null);
+  const sweepAnimTimerRef = useRef<number | null>(null);
+  const chongTimerRef = useRef<number | null>(null);
+  const sweepAudioCtxRef = useRef<AudioContext | null>(null);
+  const isMountedRef = useRef(true);
 
   // Chong state (Interactive 13-Part Talisman Sweeping Ceremony)
   const chongZodiac = userZodiac >= 0 ? userZodiac : 0;
@@ -106,13 +111,31 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   const mouseStartY = useRef<number | null>(null);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (lanternTimerRef.current) {
         clearTimeout(lanternTimerRef.current);
         lanternTimerRef.current = null;
       }
+      if (lanternModalTimerRef.current) {
+        clearTimeout(lanternModalTimerRef.current);
+        lanternModalTimerRef.current = null;
+      }
+      if (sweepAnimTimerRef.current) {
+        clearTimeout(sweepAnimTimerRef.current);
+        sweepAnimTimerRef.current = null;
+      }
+      if (chongTimerRef.current) {
+        clearTimeout(chongTimerRef.current);
+        chongTimerRef.current = null;
+      }
       if (candleRafRef.current) {
         cancelAnimationFrame(candleRafRef.current);
+      }
+      if (sweepAudioCtxRef.current) {
+        sweepAudioCtxRef.current.close().catch(() => {});
+        sweepAudioCtxRef.current = null;
       }
     };
   }, []);
@@ -141,8 +164,11 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      if (ctx.state === 'suspended') ctx.resume();
+      if (!sweepAudioCtxRef.current) {
+        sweepAudioCtxRef.current = new AudioCtx();
+      }
+      const ctx = sweepAudioCtxRef.current;
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
 
       // 1. Paper rustle noise
       const duration = 0.28;
@@ -266,8 +292,12 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
       const res = bridge.offering(1, trimmed);
       setLanternResult(res);
       // Brief lift-off pause before opening popup modal
-      window.setTimeout(() => {
-        setActiveModal('lantern');
+      if (lanternModalTimerRef.current) clearTimeout(lanternModalTimerRef.current);
+      lanternModalTimerRef.current = window.setTimeout(() => {
+        lanternModalTimerRef.current = null;
+        if (isMountedRef.current) {
+          setActiveModal('lantern');
+        }
       }, 950);
     } catch {
       onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
@@ -275,7 +305,9 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
 
     if (lanternTimerRef.current) clearTimeout(lanternTimerRef.current);
     lanternTimerRef.current = window.setTimeout(() => {
-      setLanternFlying(false);
+      if (isMountedRef.current) {
+        setLanternFlying(false);
+      }
       lanternTimerRef.current = null;
     }, 6200);
   };
@@ -298,7 +330,13 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
       // Animate Nging-Tee paper talisman to target part
       setTalismanPos({ x: part.x, y: part.y });
       setIsSweepingAnimation(true);
-      window.setTimeout(() => setIsSweepingAnimation(false), 450);
+      if (sweepAnimTimerRef.current) clearTimeout(sweepAnimTimerRef.current);
+      sweepAnimTimerRef.current = window.setTimeout(() => {
+        sweepAnimTimerRef.current = null;
+        if (isMountedRef.current) {
+          setIsSweepingAnimation(false);
+        }
+      }, 450);
 
       // Sound & Chanting
       if (!isChantMuted()) {
@@ -318,7 +356,10 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
       if (next.length === 13) {
         onToast('🪓 ปัดเคราะห์ครบ 13 ส่วนแล้ว กำลังน้อมส่งดวงชะตาสู่ไท้ส่วยเอี๊ย...');
         setChongSpinning(true);
-        window.setTimeout(() => {
+        if (chongTimerRef.current) clearTimeout(chongTimerRef.current);
+        chongTimerRef.current = window.setTimeout(() => {
+          chongTimerRef.current = null;
+          if (!isMountedRef.current) return;
           try {
             const res = bridge.remedy(chongZodiac, chongProblem);
             setChongResult(res);

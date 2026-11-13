@@ -280,7 +280,7 @@ class SpiritualSpeechEngine {
       const text = this.state.currentText;
       const curLine = this.state.currentLineIndex;
       this.stop();
-      this.speak(text, { startLine: Math.max(0, curLine), withChime: false });
+      this.speak(text, { startLine: Math.max(0, curLine), withChime: false, preservePreset: true });
     }
   }
 
@@ -291,7 +291,7 @@ class SpiritualSpeechEngine {
       const text = this.state.currentText;
       const curLine = this.state.currentLineIndex;
       this.stop();
-      this.speak(text, { startLine: Math.max(0, curLine), withChime: false });
+      this.speak(text, { startLine: Math.max(0, curLine), withChime: false, preservePreset: true });
     }
   }
 
@@ -304,7 +304,7 @@ class SpiritualSpeechEngine {
       const text = this.state.currentText;
       const curLine = this.state.currentLineIndex;
       this.stop();
-      this.speak(text, { startLine: Math.max(0, curLine), withChime: false });
+      this.speak(text, { startLine: Math.max(0, curLine), withChime: false, preservePreset: true });
     }
   }
 
@@ -355,17 +355,38 @@ class SpiritualSpeechEngine {
   }
 
   private prepareLines(text: string): string[] {
-    return text
+    const rawLines = text
       .split('\n')
-      .map((line) => line.trim())
+      .map((line) => line.replace(/[#*_~`]/g, '').trim())
       .filter((line) => line.length > 0 && !line.startsWith('---'));
+
+    const chunks: string[] = [];
+    const MAX_LEN = 180;
+    for (const line of rawLines) {
+      let rest = line;
+      while (rest.length > MAX_LEN) {
+        let cut = rest.lastIndexOf(' ', MAX_LEN);
+        if (cut < 60) {
+          cut = MAX_LEN;
+        }
+        chunks.push(rest.slice(0, cut).trim());
+        rest = rest.slice(cut).trim();
+      }
+      if (rest.length > 0) {
+        chunks.push(rest);
+      }
+    }
+    return chunks;
   }
 
   /**
    * Main entry point to speak text.
    * Invoked synchronously inside user click/touch event to unlock mobile audio.
    */
-  speak(rawText: string, options: { startLine?: number; withChime?: boolean } = {}): void {
+  speak(
+    rawText: string,
+    options: { startLine?: number; withChime?: boolean; preservePreset?: boolean } = {}
+  ): void {
     if (typeof window === 'undefined') return;
 
     // Reset previous playback and audio tracks
@@ -383,14 +404,16 @@ class SpiritualSpeechEngine {
       this.playTempleChime();
     }
 
-    // 2. Select randomized persona automatically on every recitation (no manual menu selection)
-    const presetKeys: SpiritualVoicePresetId[] = ['sinsei', 'dharma', 'meditation'];
-    this.state.activePresetId = presetKeys[Math.floor(Math.random() * presetKeys.length)];
+    // 2. Select randomized persona only when starting fresh (preserve when user switches preset/speed/engine)
+    if (!options.preservePreset) {
+      const presetKeys: SpiritualVoicePresetId[] = ['sinsei', 'dharma', 'meditation'];
+      this.state.activePresetId = presetKeys[Math.floor(Math.random() * presetKeys.length)];
+    }
 
     this.textLines = this.prepareLines(rawText);
     this.state.currentText = rawText;
     this.state.totalLines = this.textLines.length;
-    const startIdx = options.startLine ?? 0;
+    const startIdx = Math.min(options.startLine ?? 0, Math.max(0, this.textLines.length - 1));
     this.state.currentLineIndex = startIdx;
     this.state.isSpeaking = true;
     this.state.isPaused = false;
@@ -571,13 +594,13 @@ class SpiritualSpeechEngine {
     this.notify();
 
     const lineText = this.textLines[index];
-    if (!lineText) {
+    const cleanText = (lineText || '').replace(/[#*_~`]/g, '').trim().slice(0, 180);
+    if (!cleanText) {
       this.speakWithAudioTTS(index + 1);
       return;
     }
 
     // Google Translate TTS stream: clear Thai articulation with tones and correct vowel lengths
-    const cleanText = lineText.replace(/[#*_~`]/g, '').trim().slice(0, 180);
     const query = encodeURIComponent(cleanText);
     const directUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q=${query}`;
     const proxyUrl = `/api/tts?ie=UTF-8&client=tw-ob&tl=th&q=${query}`;
@@ -775,6 +798,7 @@ class SpiritualSpeechEngine {
         this.speak(this.state.currentText, {
           startLine: Math.max(0, this.state.currentLineIndex),
           withChime: false,
+          preservePreset: true,
         });
       }
     } catch (err) {

@@ -5,6 +5,7 @@ import { useToast } from './hooks/useToast';
 import { useThemeManager } from './hooks/useThemeManager';
 import { useFortuneJournal } from './hooks/useFortuneJournal';
 import { logger } from './utils/logger';
+import { ZODIAC_SYSTEMS } from './data/zodiacSystems';
 import { LanguageProvider } from './context/LanguageContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/Header';
@@ -138,25 +139,36 @@ export const App: React.FC = () => {
     }
   }, []);
 
+  const createDefaultGuestSession = useCallback((): UserSession | null => {
+    if (!bridge) return null;
+    const nowCe = new Date().getFullYear();
+    const curBe = nowCe + 543;
+    const thaiSys = ZODIAC_SYSTEMS.find((s) => s.id === 'thai');
+    const defaultZ = thaiSys ? thaiSys.calculateFromYear(nowCe) : (((nowCe - 4) % 12) + 12) % 12;
+    const zodItem = thaiSys?.items[defaultZ];
+    const z = bridge.initSession(zodItem?.origName || 'มะเมีย', curBe, defaultZ);
+    const resolvedZ = z >= 0 ? z : defaultZ;
+    const info = bridge.zodiacInfo(resolvedZ);
+    return {
+      systemId: 'thai',
+      systemName: thaiSys?.name || 'ไทย (12 นักษัตร)',
+      symbolName: zodItem?.name || 'มะเมีย (ม้าแก้ว)',
+      symbolIcon: zodItem?.symbol || '🐎',
+      element: zodItem?.element || 'ไฟ / ทองคำ',
+      aura: zodItem?.aura || 'ทองคำเรืองรอง',
+      attribute: zodItem?.attribute || 'โชคลาภบารมี',
+      year: curBe,
+      zodiac: resolvedZ,
+      info,
+    };
+  }, [bridge]);
+
   const handleOpenFestival = useCallback(() => {
     spiritualSpeechEngine.stop();
     stopChant();
-    if (!session && bridge) {
-      const symName = 'มะเมีย (ม้าแก้ว)';
-      const z = bridge.initSession('มะเมีย', 2569, 6);
-      const info = bridge.zodiacInfo(z >= 0 ? z : 6);
-      setSession({
-        systemId: 'thai',
-        systemName: 'ไทย (12 นักษัตร)',
-        symbolName: symName,
-        symbolIcon: '🐎',
-        element: 'ไฟ / ทองคำ',
-        aura: 'ทองคำเรืองรอง',
-        attribute: 'โชคลาภบารมี',
-        year: 2569,
-        zodiac: 6,
-        info,
-      });
+    if (!session) {
+      const guestSession = createDefaultGuestSession();
+      if (guestSession) setSession(guestSession);
     }
     setTab('festival');
     try {
@@ -164,27 +176,14 @@ export const App: React.FC = () => {
     } catch {
       // Ignore
     }
-  }, [bridge, session]);
+  }, [createDefaultGuestSession, session]);
 
   const handleOpenAuspicious = useCallback(() => {
     spiritualSpeechEngine.stop();
     stopChant();
-    if (!session && bridge) {
-      const symName = 'มะเมีย (ม้าแก้ว)';
-      const z = bridge.initSession('มะเมีย', 2569, 6);
-      const info = bridge.zodiacInfo(z >= 0 ? z : 6);
-      setSession({
-        systemId: 'thai',
-        systemName: 'ไทย (12 นักษัตร)',
-        symbolName: symName,
-        symbolIcon: '🐎',
-        element: 'ไฟ / ทองคำ',
-        aura: 'ทองคำเรืองรอง',
-        attribute: 'โชคลาภบารมี',
-        year: 2569,
-        zodiac: 6,
-        info,
-      });
+    if (!session) {
+      const guestSession = createDefaultGuestSession();
+      if (guestSession) setSession(guestSession);
     }
     setTab('auspicious');
     try {
@@ -192,7 +191,7 @@ export const App: React.FC = () => {
     } catch {
       // Ignore
     }
-  }, [bridge, session]);
+  }, [createDefaultGuestSession, session]);
 
   return (
     <LanguageProvider>
@@ -220,6 +219,9 @@ export const App: React.FC = () => {
                     setBridge(b);
                   } catch (e) {
                     logger.error('Retry bridge load failed:', e);
+                    setLoadError(
+                      'ไม่สามารถโหลดแกนระบบ (WebAssembly) ได้ — โปรดใช้เบราว์เซอร์รุ่นใหม่และเปิดผ่านเว็บเซิร์ฟเวอร์'
+                    );
                   }
                 }}
               >

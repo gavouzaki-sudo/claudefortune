@@ -5,9 +5,23 @@ export interface FireworksHandle {
   launch: (bursts?: number) => void;
 }
 
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  col: string;
+}
+
 export const Fireworks = forwardRef<FireworksHandle>((_, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fwRunningRef = useRef(false);
+  const isMountedRef = useRef(true);
+  const partsRef = useRef<Particle[]>([]);
+  const endTimeRef = useRef(0);
+  const rafIdRef = useRef<number | null>(null);
+  const timersRef = useRef<number[]>([]);
   const [isActive, setIsActive] = useState(false);
 
   const launch = (bursts = 7) => {
@@ -34,24 +48,15 @@ export const Fireworks = forwardRef<FireworksHandle>((_, ref) => {
       '#ffffff',
     ].map((c) => c.trim() || '#ffd24a');
 
-    interface Particle {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      life: number;
-      col: string;
-    }
-
-    const parts: Particle[] = [];
     const burst = () => {
+      if (!isMountedRef.current) return;
       const cx = window.innerWidth * (0.15 + Math.random() * 0.7);
       const cy = window.innerHeight * (0.15 + Math.random() * 0.4);
       const col = getRandomArrayItem(colors, colors[0]);
       for (let i = 0; i < 70; i++) {
         const a = (i / 70) * Math.PI * 2;
         const v = 1.5 + Math.random() * 3.2;
-        parts.push({
+        partsRef.current.push({
           x: cx,
           y: cy,
           vx: Math.cos(a) * v,
@@ -62,15 +67,23 @@ export const Fireworks = forwardRef<FireworksHandle>((_, ref) => {
       }
     };
 
+    const now = performance.now();
+    endTimeRef.current = Math.max(endTimeRef.current, now + bursts * 380 + 200);
+
     for (let i = 0; i < bursts; i++) {
-      setTimeout(burst, i * 380);
+      const id = window.setTimeout(() => {
+        timersRef.current = timersRef.current.filter((t) => t !== id);
+        burst();
+      }, i * 380);
+      timersRef.current.push(id);
     }
 
     if (fwRunningRef.current) return;
     fwRunningRef.current = true;
-    const t0 = performance.now();
 
     const frame = (t: number) => {
+      if (!isMountedRef.current) return;
+      const parts = partsRef.current;
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       for (let i = parts.length - 1; i >= 0; i--) {
         const p = parts[i];
@@ -90,16 +103,19 @@ export const Fireworks = forwardRef<FireworksHandle>((_, ref) => {
         ctx.fill();
       }
       ctx.globalAlpha = 1;
-      if (parts.length || t - t0 < bursts * 380 + 200) {
-        requestAnimationFrame(frame);
+      if (parts.length || t < endTimeRef.current) {
+        rafIdRef.current = requestAnimationFrame(frame);
       } else {
         ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
         fwRunningRef.current = false;
-        setIsActive(false);
+        rafIdRef.current = null;
+        if (isMountedRef.current) {
+          setIsActive(false);
+        }
       }
     };
 
-    requestAnimationFrame(frame);
+    rafIdRef.current = requestAnimationFrame(frame);
   };
 
   useImperativeHandle(ref, () => ({
@@ -107,6 +123,7 @@ export const Fireworks = forwardRef<FireworksHandle>((_, ref) => {
   }));
 
   useEffect(() => {
+    isMountedRef.current = true;
     const handleResize = () => {
       const cv = canvasRef.current;
       if (!cv || fwRunningRef.current) return;
@@ -117,7 +134,18 @@ export const Fireworks = forwardRef<FireworksHandle>((_, ref) => {
       ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      isMountedRef.current = false;
+      window.removeEventListener('resize', handleResize);
+      timersRef.current.forEach((id) => clearTimeout(id));
+      timersRef.current = [];
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      partsRef.current = [];
+      fwRunningRef.current = false;
+    };
   }, []);
 
   return (

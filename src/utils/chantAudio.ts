@@ -450,10 +450,14 @@ class CulturalAudioEngine {
     return [...a, ...b];
   }
 
-  async play(civ: string, { seed = Date.now() }: { seed?: number } = {}): Promise<number> {
+  async play(
+    civ: string,
+    { seed = Date.now(), shouldAbort }: { seed?: number; shouldAbort?: () => boolean } = {}
+  ): Promise<number> {
     const p = PRESETS[civ];
     if (!p) throw new Error(`Unknown civilization: ${civ}`);
     await this.init();
+    if (shouldAbort?.()) return 0;
     if (!this.ctx || !this.out) return 0;
     this.stop();
     this.rand = mulberry32(seed);
@@ -730,6 +734,7 @@ class CulturalAudioEngine {
 const engine = new CulturalAudioEngine();
 let isMuted = false;
 let activeChantId: string | null = null;
+let playRequestSeq = 0;
 const listeners = new Set<(chantId: string | null) => void>();
 
 export function subscribeChantState(cb: (chantId: string | null) => void): () => void {
@@ -756,6 +761,7 @@ function notifyListeners(id: string | null) {
 }
 
 export function stopChant(): void {
+  playRequestSeq++;
   engine.stop();
   notifyListeners(null);
 }
@@ -778,10 +784,14 @@ export function getActiveChantId(): string | null {
 
 export function playChant(sysId: string): void {
   if (isMuted) return;
+  const reqId = ++playRequestSeq;
   const presetKey = CIV_TO_PRESET[sysId] || 'thai';
   engine
-    .play(presetKey)
-    .then(() => {
+    .play(presetKey, {
+      shouldAbort: () => isMuted || reqId !== playRequestSeq,
+    })
+    .then((dur) => {
+      if (isMuted || reqId !== playRequestSeq || dur === 0) return;
       notifyListeners(sysId);
     })
     .catch((err) => {
@@ -794,7 +804,7 @@ export function playWoodClatter(): void {
   engine
     .init()
     .then(() => {
-      if (!engine.ctx || !engine.out) return;
+      if (isMuted || !engine.ctx || !engine.out) return;
       const c = engine.ctx;
       const t0 = c.currentTime + 0.01;
       const bounces = [0, 0.08, 0.17];
@@ -830,7 +840,7 @@ export function playFireCrackle(): void {
   engine
     .init()
     .then(() => {
-      if (!engine.ctx || !engine.out) return;
+      if (isMuted || !engine.ctx || !engine.out) return;
       const c = engine.ctx;
       const t0 = c.currentTime + 0.01;
       const sparks = [0, 0.06, 0.12, 0.19, 0.27, 0.35];

@@ -96,14 +96,42 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
   const floatProgressRef = useRef<number>(0);
   const isFloatingRef = useRef<boolean>(false);
   isFloatingRef.current = isFloating;
+  const splashAudioCtxRef = useRef<AudioContext | null>(null);
+
+  const disposeGroupResources = useCallback((obj: THREE.Object3D) => {
+    const disposedGeos = new Set<THREE.BufferGeometry>();
+    const disposedMats = new Set<THREE.Material>();
+    obj.traverse((child) => {
+      const mesh = child as THREE.Mesh | THREE.Points;
+      if (mesh.geometry && !disposedGeos.has(mesh.geometry)) {
+        disposedGeos.add(mesh.geometry);
+        mesh.geometry.dispose();
+      }
+      const mat = (mesh as THREE.Mesh).material;
+      if (Array.isArray(mat)) {
+        mat.forEach((m) => {
+          if (m && !disposedMats.has(m)) {
+            disposedMats.add(m);
+            m.dispose();
+          }
+        });
+      } else if (mat && !disposedMats.has(mat)) {
+        disposedMats.add(mat);
+        mat.dispose();
+      }
+    });
+  }, []);
 
   // Sound generator using Web Audio API (Zero external mp3 files)
   const playWaterSplashSound = useCallback(() => {
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      if (ctx.state === 'suspended') ctx.resume();
+      if (!splashAudioCtxRef.current) {
+        splashAudioCtxRef.current = new AudioCtx();
+      }
+      const ctx = splashAudioCtxRef.current;
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
 
       // Soft water ripple sweep
       const osc = ctx.createOscillator();
@@ -624,13 +652,21 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
       } else {
         cancelAnimationFrame(animationFrameId);
       }
+      disposeGroupResources(scene);
+      if (scene.environment) {
+        scene.environment.dispose();
+      }
       controls.dispose();
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
+      if (splashAudioCtxRef.current) {
+        splashAudioCtxRef.current.close().catch(() => {});
+        splashAudioCtxRef.current = null;
+      }
     };
-  }, [buildKrathongModel]);
+  }, [buildKrathongModel, disposeGroupResources]);
 
   // Handle changing Krathong 3D Style
   const handleSelectStyle = (style: KrathongStyle) => {
@@ -638,9 +674,14 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
     if (!krathongGroupRef.current) return;
 
     // Replace hero krathong mesh in scene
-    const parent = krathongGroupRef.current.parent;
+    const oldGroup = krathongGroupRef.current;
+    const parent = oldGroup.parent;
     if (parent) {
-      parent.remove(krathongGroupRef.current);
+      if (smokeParticlesRef.current) {
+        oldGroup.remove(smokeParticlesRef.current);
+      }
+      parent.remove(oldGroup);
+      disposeGroupResources(oldGroup);
       const newModel = buildKrathongModel(style);
       newModel.position.set(0, 0, 0);
       if (smokeParticlesRef.current) {

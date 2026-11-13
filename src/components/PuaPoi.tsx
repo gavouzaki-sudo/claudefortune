@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { playWoodClatter } from '../utils/chantAudio';
 
 type PuaPoiResultType = 'sheng' | 'yin' | 'xiao';
@@ -32,6 +32,15 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
   const [tossCount, setTossCount] = useState<number>(0);
   const [showInfo, setShowInfo] = useState<boolean>(false);
   const animationTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (animationTimerRef.current) {
+        clearTimeout(animationTimerRef.current);
+        animationTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // SVG representation of a single wooden crescent moon block (ไม้ปัวปวย)
   const renderWoodenBlock = (isFlat: boolean, isLeft: boolean) => {

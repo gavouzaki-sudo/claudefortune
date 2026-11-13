@@ -126,12 +126,27 @@ t("festivals by date", () => {
   assert.ok([8, 18, 28, 66, 88, 168, 888].includes(w.blessing(4).angpao));
 });
 
-t("pure js fallback engine: input validations", async () => {
+t("pure js fallback engine: input validations & wasm schema parity", async () => {
   const jsBridge = await Bridge.fromBytes(new Uint8Array(0));
   assert.throws(() => jsBridge.signature([[1, 1, 0]]));
   assert.throws(() => jsBridge.imageScan(new Uint8Array(4), 0));
   assert.throws(() => jsBridge.offering(-1, "test"));
   assert.throws(() => jsBridge.offering(9, "test"));
+
+  const jsOffer = jsBridge.offering(1, "ทดสอบความรัก");
+  assert.ok(typeof jsOffer.offering === "string" && jsOffer.offering.length > 0);
+  assert.equal(jsOffer.care, false);
+  assert.match(jsOffer.lucky ?? "", /^\d{2}$/);
+  assert.ok(typeof jsOffer.color === "string" && jsOffer.color.length > 0);
+
+  const jsCare = jsBridge.offering(1, "ฉันอยากตาย");
+  assert.equal(jsCare.care, true);
+  assert.equal(jsCare.lucky, undefined);
+
+  const jsCandleLocked = jsBridge.candle(1000);
+  assert.equal(jsCandleLocked.unlocked, false);
+  assert.equal(typeof jsCandleLocked.level, "number");
+  assert.equal(typeof jsCandleLocked.remaining_ms, "number");
 });
 
 console.log(`\n${passed} test groups passed`);

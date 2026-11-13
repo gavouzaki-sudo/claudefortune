@@ -326,8 +326,8 @@ const BLESSINGS: [string, string][][] = [
 const ANGPAO_VALS = [8, 18, 28, 66, 88, 168, 888];
 
 class JsCoreEngine implements ICoreEngine {
-  private curY = 2026;
-  private curD = 31;
+  private curY = new Date().getFullYear();
+  private curD = new Date().getDate();
   private by = 2000;
   private z = 4;
   private valid = false;
@@ -498,6 +498,7 @@ class JsCoreEngine implements ICoreEngine {
 
   candleUnlock(holdMs: number): CandleResult {
     const h = clamp(holdMs, 0, 60000);
+    const level = Math.min(100, Math.floor(h / 50));
     const unlocked = h >= 4000;
     const DEDICATIONS = [
       "ขอให้ใจสงบ สว่างดั่งแสงเทียน",
@@ -505,8 +506,21 @@ class JsCoreEngine implements ICoreEngine {
       "ขอให้ปัญญานำทาง พ้นเคราะห์ภัยทั้งปวง",
     ];
 
+    if (!unlocked) {
+      return {
+        level,
+        unlocked: false,
+        remaining_ms: 4000 - Math.floor(h),
+        dedication: "",
+        mantra: [],
+        lucky2: "",
+        lucky3: "",
+      };
+    }
+
     return {
-      unlocked,
+      level,
+      unlocked: true,
       dedication: DEDICATIONS[Math.floor(Math.random() * DEDICATIONS.length)],
       mantra: [
         "นะโม ตัสสะ ภะคะวะโต อะระหะโต สัมมาสัมพุทธัสสะ (3 จบ)",
@@ -554,11 +568,14 @@ class JsCoreEngine implements ICoreEngine {
     if (type < 0 || type > 5) {
       throw new Error("Invalid offering type: must be between 0 and 5");
     }
+    const OFFER_NAMES = ["จุดเทียน", "ลอยโคม", "ถวายธูปดอกไม้", "สาดน้ำสงกรานต์", "ลอยกระทง", "อั่งเปา"];
+    const offering = OFFER_NAMES[type];
     const CARE_WORDS = ["ฆ่าตัวตาย", "อยากตาย", "ทำร้ายตัวเอง", "ไม่อยากมีชีวิต", "จบชีวิต"];
     const t = (text || "").slice(0, 4000);
     for (const w of CARE_WORDS) {
       if (t.includes(w)) {
         return {
+          offering,
           category: "ความปลอดภัย",
           message:
             "ขอบคุณที่ไว้ใจเล่าออกมา ความเจ็บปวดนี้เป็นเรื่องจริง และคุณไม่ต้องแบกมันอยู่คนเดียว " +
@@ -599,11 +616,16 @@ class JsCoreEngine implements ICoreEngine {
     ];
 
     const CATS = ["การเงิน", "ความรัก", "สุขภาพ", "การงาน", "ทั่วไป"];
+    const zodIndex = this.valid ? this.z : Math.floor(Math.random() * ZOD_LIST.length);
 
     return {
+      offering,
+      care: false,
       category: CATS[best],
       message: GUIDES[best],
       merit: Math.min(100, Math.max(10, Math.floor(t.length / 5) * 10 || 10)),
+      lucky: pad2(Math.floor(Math.random() * 100)),
+      color: ZOD_LIST[zodIndex].color,
     };
   }
 

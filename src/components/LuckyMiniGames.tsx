@@ -21,6 +21,19 @@ const RPSGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({ onWin, o
   const [matchOver, setMatchOver] = useState<'win' | 'lose' | null>(null);
   const [isShooting, setIsShooting] = useState<boolean>(false);
   const lastPlayerChoiceRef = useRef<Choice | null>(null);
+  const shotTimerRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (shotTimerRef.current !== null) {
+        clearTimeout(shotTimerRef.current);
+        shotTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const TARGET_POINTS = 2; // Best of 3 (แข่ง 2 แต้ม)
 
@@ -36,7 +49,13 @@ const RPSGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({ onWin, o
     setIsShooting(true);
     setRoundResult(null);
 
-    setTimeout(() => {
+    if (shotTimerRef.current !== null) {
+      clearTimeout(shotTimerRef.current);
+    }
+    shotTimerRef.current = window.setTimeout(() => {
+      shotTimerRef.current = null;
+      if (!isMountedRef.current) return;
+
       const all: Choice[] = ['rock', 'paper', 'scissors'];
       // Smart AI counter: 45% chance to predict counter to player's previous move
       let ai: Choice;
@@ -86,6 +105,11 @@ const RPSGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({ onWin, o
   };
 
   const handleResetMatch = () => {
+    if (shotTimerRef.current !== null) {
+      clearTimeout(shotTimerRef.current);
+      shotTimerRef.current = null;
+    }
+    setIsShooting(false);
     setPlayerScore(0);
     setAiScore(0);
     setPlayerChoice(null);
@@ -191,11 +215,15 @@ const WhackMoleGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
 
   const timerRef = useRef<number | null>(null);
   const moleIntervalRef = useRef<number | null>(null);
+  const onLoseRef = useRef(onLose);
+  onLoseRef.current = onLose;
 
   const TARGET_HITS = 5; // Target hits raised to 5
   const TIME_LIMIT = 7;  // Time limit tightened to 7 seconds
 
   const startGame = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (moleIntervalRef.current) clearInterval(moleIntervalRef.current);
     setScore(0);
     setTimeLeft(TIME_LIMIT);
     setGameOverResult(null);
@@ -213,19 +241,7 @@ const WhackMoleGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
     if (!gameRunning) return;
 
     timerRef.current = window.setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          if (moleIntervalRef.current) clearInterval(moleIntervalRef.current);
-          setTimeout(() => {
-            setGameRunning(false);
-            setGameOverResult('lose');
-            onLose();
-          }, 0);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
 
     // Faster mole popup speed (520ms)
@@ -241,7 +257,18 @@ const WhackMoleGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
       if (timerRef.current) clearInterval(timerRef.current);
       if (moleIntervalRef.current) clearInterval(moleIntervalRef.current);
     };
-  }, [gameRunning, onLose]);
+  }, [gameRunning]);
+
+  // Trigger lose once when countdown hits 0 (kept out of state updater for StrictMode safety)
+  useEffect(() => {
+    if (gameRunning && timeLeft <= 0) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (moleIntervalRef.current) clearInterval(moleIntervalRef.current);
+      setGameRunning(false);
+      setGameOverResult('lose');
+      onLoseRef.current();
+    }
+  }, [gameRunning, timeLeft]);
 
   // Handle hitting a pot
   const handleHit = (index: number) => {
@@ -337,6 +364,19 @@ const TicTacToeGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
   const [board, setBoard] = useState<Cell[]>(Array(9).fill(null));
   const [winner, setWinner] = useState<'O' | 'X' | 'draw' | null>(null);
   const [isAiTurn, setIsAiTurn] = useState<boolean>(false);
+  const aiTimerRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (aiTimerRef.current !== null) {
+        clearTimeout(aiTimerRef.current);
+        aiTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const WIN_LINES = [
     [0, 1, 2],
@@ -411,13 +451,19 @@ const TicTacToeGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
 
     // AI's Turn
     setIsAiTurn(true);
-    setTimeout(() => {
+    if (aiTimerRef.current !== null) {
+      clearTimeout(aiTimerRef.current);
+    }
+    aiTimerRef.current = window.setTimeout(() => {
+      aiTimerRef.current = null;
+      if (!isMountedRef.current) return;
       const chosenIdx = getStrategicAiMove(newBoard);
       if (chosenIdx !== undefined && chosenIdx !== -1) {
-        newBoard[chosenIdx] = 'X';
-        setBoard(newBoard);
+        const aiBoard = [...newBoard];
+        aiBoard[chosenIdx] = 'X';
+        setBoard(aiBoard);
 
-        const aiWinStatus = checkWinner(newBoard);
+        const aiWinStatus = checkWinner(aiBoard);
         if (aiWinStatus) {
           setWinner(aiWinStatus);
           if (aiWinStatus === 'O') onWin();
@@ -429,6 +475,10 @@ const TicTacToeGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
   };
 
   const resetGame = () => {
+    if (aiTimerRef.current !== null) {
+      clearTimeout(aiTimerRef.current);
+      aiTimerRef.current = null;
+    }
     setBoard(Array(9).fill(null));
     setWinner(null);
     setIsAiTurn(false);
@@ -526,29 +576,49 @@ const AuspiciousMatchGame: React.FC<{ onWin: () => void; onLose?: () => void }> 
   const [timerStarted, setTimerStarted] = useState<boolean>(false);
   const [timeUp, setTimeUp] = useState<boolean>(false);
   const timerRef = useRef<number | null>(null);
+  const flipTimerRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true);
+  const onLoseRef = useRef(onLose);
+  onLoseRef.current = onLose;
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (flipTimerRef.current !== null) {
+        clearTimeout(flipTimerRef.current);
+        flipTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Countdown timer once player starts playing
   useEffect(() => {
     if (!timerStarted || isWon || timeUp) return;
 
     timerRef.current = window.setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          setTimeout(() => {
-            setTimeUp(true);
-            onLose?.();
-          }, 0);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [timerStarted, isWon, timeUp, onLose]);
+  }, [timerStarted, isWon, timeUp]);
+
+  // Handle countdown reaching 0 outside the state updater
+  useEffect(() => {
+    if (timerStarted && !isWon && !timeUp && timeLeft <= 0) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (flipTimerRef.current !== null) {
+        clearTimeout(flipTimerRef.current);
+        flipTimerRef.current = null;
+      }
+      setTimeUp(true);
+      setIsLocked(false);
+      onLoseRef.current?.();
+    }
+  }, [timerStarted, isWon, timeUp, timeLeft]);
 
   const handleCardClick = (idx: number) => {
     if (isLocked || isWon || timeUp) return;
@@ -567,9 +637,15 @@ const AuspiciousMatchGame: React.FC<{ onWin: () => void; onLose?: () => void }> 
       setFlippedIndices(newFlipped);
       setIsLocked(true);
 
+      if (flipTimerRef.current !== null) {
+        clearTimeout(flipTimerRef.current);
+      }
+
       if (firstCard.pairKey === clickedCard.pairKey) {
         // Matched!
-        setTimeout(() => {
+        flipTimerRef.current = window.setTimeout(() => {
+          flipTimerRef.current = null;
+          if (!isMountedRef.current) return;
           const newMatched = [...matchedKeys, clickedCard.pairKey];
           setMatchedKeys(newMatched);
           setFlippedIndices([]);
@@ -583,7 +659,9 @@ const AuspiciousMatchGame: React.FC<{ onWin: () => void; onLose?: () => void }> 
         }, 400);
       } else {
         // Not matched - flip back
-        setTimeout(() => {
+        flipTimerRef.current = window.setTimeout(() => {
+          flipTimerRef.current = null;
+          if (!isMountedRef.current) return;
           setFlippedIndices([]);
           setIsLocked(false);
         }, 700);
@@ -593,6 +671,10 @@ const AuspiciousMatchGame: React.FC<{ onWin: () => void; onLose?: () => void }> 
 
   const handleRestart = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+    if (flipTimerRef.current !== null) {
+      clearTimeout(flipTimerRef.current);
+      flipTimerRef.current = null;
+    }
     setCards(shuffleHardMatchCards());
     setFlippedIndices([]);
     setMatchedKeys([]);

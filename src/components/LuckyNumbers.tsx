@@ -28,8 +28,22 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
 
   // Burn level: 0 = unburned, 1 = 33%, 2 = 66%, 3 = 100% (fully revealed)
   const [burnLevel, setBurnLevel] = useState<number>(0);
+  const burnLevelRef = useRef<number>(0);
   const [isBurning, setIsBurning] = useState<boolean>(false);
   const [isJournalSaved, setIsJournalSaved] = useState<boolean>(false);
+  const burnTimerRef = useRef<number | null>(null);
+  const isMountedRef = useRef<boolean>(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (burnTimerRef.current !== null) {
+        clearTimeout(burnTimerRef.current);
+        burnTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Initialize or fetch numbers when category changes
   const generateNumber = useCallback(
@@ -47,9 +61,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
         }
       } catch (err) {
         logger.error('Error in bridge.luckyNumbers:', err);
-        setTimeout(() => {
-          onToast('เกิดข้อผิดพลาดในการคำนวณเลขมงคล');
-        }, 0);
+        onToast('เกิดข้อผิดพลาดในการคำนวณเลขมงคล');
       }
     },
     [bridge, onToast]
@@ -64,33 +76,33 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
   // Handle category selection before playing the game
   const handleSelectCategory = (cat: 0 | 1) => {
     categoryRef.current = cat;
+    burnLevelRef.current = 0;
     setCategory(cat);
     setBurnLevel(0);
     setIsJournalSaved(false);
-    generateNumber(cat);
-    setTimeout(() => {
-      onToast(`ตั้งจิตขอ ${cat === 0 ? 'เลข 2 หลัก' : 'เลข 3 หลัก'} สำเร็จ! เริ่มเล่นมินิเกมได้เลย`);
-    }, 0);
+    onToast(`ตั้งจิตขอ ${cat === 0 ? 'เลข 2 หลัก' : 'เลข 3 หลัก'} สำเร็จ! เริ่มเล่นมินิเกมได้เลย`);
   };
 
 
   // Reset back to category selection prompt
   const handleResetToCategorySelection = () => {
+    if (burnTimerRef.current !== null) {
+      clearTimeout(burnTimerRef.current);
+      burnTimerRef.current = null;
+    }
+    setIsBurning(false);
     categoryRef.current = null;
+    burnLevelRef.current = 0;
     setCategory(null);
     setBurnLevel(0);
     setIsJournalSaved(false);
-    setTimeout(() => {
-      onToast('กลับสู่ขั้นตอนเลือกเลข 2 หลัก หรือ 3 หลัก');
-    }, 0);
+    onToast('กลับสู่ขั้นตอนเลือกเลข 2 หลัก หรือ 3 หลัก');
   };
 
   // When player wins a round in any mini-game
   const handleWin = useCallback(() => {
     if (categoryRef.current === null) {
-      setTimeout(() => {
-        onToast('⚠️ กรุณาเลือกประเภทเลข 2 หลัก หรือ 3 หลักก่อน');
-      }, 0);
+      onToast('⚠️ กรุณาเลือกประเภทเลข 2 หลัก หรือ 3 หลักก่อน');
       return;
     }
 
@@ -106,20 +118,24 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
       }
     }
 
-    setBurnLevel((prev) => {
-      const next = Math.min(3, prev + 1);
-      setTimeout(() => {
-        if (next === 3) {
-          onToast('🔥 ยันต์มอดไหม้สมบูรณ์! ปรากฏเลขมงคล 100%!');
-        } else {
-          onToast(`🔥 เพลิงเผายันต์ลามขึ้น! (${next}/3 ตา) ชนะอีก ${3 - next} ตา!`);
-        }
-      }, 0);
-      return next;
-    });
+    const next = Math.min(3, burnLevelRef.current + 1);
+    burnLevelRef.current = next;
+    setBurnLevel(next);
 
-    setTimeout(() => {
-      setIsBurning(false);
+    if (next === 3) {
+      onToast('🔥 ยันต์มอดไหม้สมบูรณ์! ปรากฏเลขมงคล 100%!');
+    } else {
+      onToast(`🔥 เพลิงเผายันต์ลามขึ้น! (${next}/3 ตา) ชนะอีก ${3 - next} ตา!`);
+    }
+
+    if (burnTimerRef.current !== null) {
+      clearTimeout(burnTimerRef.current);
+    }
+    burnTimerRef.current = window.setTimeout(() => {
+      burnTimerRef.current = null;
+      if (isMountedRef.current) {
+        setIsBurning(false);
+      }
     }, 1100);
   }, [onToast]);
 
@@ -145,20 +161,22 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
 
   // When player loses a round
   const handleLose = useCallback(() => {
-    setTimeout(() => {
-      onToast('🏮 ตานี้ยังไม่ชนะ เพลิงจึงยังไม่ลาม — เล่นใหม่อีกครั้ง!');
-    }, 0);
+    onToast('🏮 ตานี้ยังไม่ชนะ เพลิงจึงยังไม่ลาม — เล่นใหม่อีกครั้ง!');
   }, [onToast]);
 
   // Reset to start a new burning talisman with currently selected category
   const handleReset = () => {
     if (category === null) return;
+    if (burnTimerRef.current !== null) {
+      clearTimeout(burnTimerRef.current);
+      burnTimerRef.current = null;
+    }
+    setIsBurning(false);
+    burnLevelRef.current = 0;
     setBurnLevel(0);
     setIsJournalSaved(false);
     generateNumber(category);
-    setTimeout(() => {
-      onToast('รีเซ็ตพร้อมเริ่มเผายันต์ขอเลขใหม่');
-    }, 0);
+    onToast('รีเซ็ตพร้อมเริ่มเผายันต์ขอเลขใหม่');
   };
 
   return (

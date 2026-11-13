@@ -60,6 +60,8 @@ class AmbientSoundscapeEngine {
   private currentVolume = 0.65;
   private activeNodes: { stop?: () => void; disconnect?: () => void }[] = [];
   private loopTimer: number | null = null;
+  private chimeTimers: Set<number> = new Set();
+  private requestSeq = 0;
   private rainNoiseNode: AudioNode | null = null;
 
   private async getContext(): Promise<AudioContext | null> {
@@ -110,6 +112,7 @@ class AmbientSoundscapeEngine {
 
   async setSoundscape(type: SoundscapeType): Promise<void> {
     if (this.currentType === type && type !== 'none') return;
+    const reqId = ++this.requestSeq;
     this.stopCurrent();
     this.currentType = type;
 
@@ -119,6 +122,9 @@ class AmbientSoundscapeEngine {
     }
 
     const ctx = await this.getContext();
+    if (reqId !== this.requestSeq || this.currentType !== type) {
+      return;
+    }
     if (!ctx || !this.masterGain) {
       notifySoundscapeListeners();
       return;
@@ -149,6 +155,9 @@ class AmbientSoundscapeEngine {
       this.loopTimer = null;
     }
 
+    this.chimeTimers.forEach((id) => window.clearTimeout(id));
+    this.chimeTimers.clear();
+
     if (this.rainNoiseNode) {
       try {
         (this.rainNoiseNode as AudioBufferSourceNode).stop();
@@ -171,7 +180,8 @@ class AmbientSoundscapeEngine {
     const bambooPitches = [420, 510, 630, 780, 940, 1150, 1380];
 
     const strikeChime = (freq: number, delayMs = 0, force = 0.5) => {
-      window.setTimeout(() => {
+      const id = window.setTimeout(() => {
+        this.chimeTimers.delete(id);
         if (this.currentType !== 'bamboo_chime' || !this.masterGain) return;
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
@@ -208,6 +218,7 @@ class AmbientSoundscapeEngine {
         clickOsc.start(now);
         clickOsc.stop(now + 0.05);
       }, delayMs);
+      this.chimeTimers.add(id);
     };
 
     const triggerBreezeCluster = () => {
@@ -370,7 +381,7 @@ class AmbientSoundscapeEngine {
         const lfoGain = ctx.createGain();
         lfo.frequency.value = 3.2; // 3.2 Hz shimmer
         lfoGain.gain.value = 4.5;
-        lfo.connect(pOsc.frequency);
+        lfo.connect(lfoGain).connect(pOsc.frequency);
         lfo.start(t);
         lfo.stop(t + part.decay);
 

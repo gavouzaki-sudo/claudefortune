@@ -56,6 +56,8 @@ export interface LuckyNumbersResult {
 }
 
 export interface CandleResult {
+  level?: number;
+  remaining_ms?: number;
   unlocked: boolean;
   dedication: string;
   mantra: string[];
@@ -64,9 +66,10 @@ export interface CandleResult {
 }
 
 export interface OfferingResult {
-  category: string;
+  offering?: string;
+  category?: string;
   message: string;
-  merit: number;
+  merit?: number;
   lucky?: string;
   color?: string;
   care?: boolean;

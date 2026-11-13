@@ -95,6 +95,12 @@ test('Soundscapes configuration contains Bamboo Chimes, Temple Rain, Tibetan Bow
   assert.equal(typeof ambientSoundEngine.setVolume, 'function');
   ambientSoundEngine.setVolume(0.8);
   assert.equal(ambientSoundEngine.getVolume(), 0.8);
+
+  // Rapid soundscape switch: cancelling before init resolves must leave final state 'none'
+  const p1 = ambientSoundEngine.setSoundscape('bamboo_chime');
+  const p2 = ambientSoundEngine.setSoundscape('none');
+  await Promise.all([p1, p2]);
+  assert.equal(ambientSoundEngine.getSoundscape(), 'none');
 });
 
 test('Spiritual Text-to-Speech presets include Elder Sinsei, Dharma Calm, and Meditation Chanting', async () => {
@@ -110,6 +116,9 @@ test('Spiritual Text-to-Speech presets include Elder Sinsei, Dharma Calm, and Me
   assert.equal(typeof spiritualSpeechEngine.speak, 'function');
   assert.equal(typeof spiritualSpeechEngine.stop, 'function');
   assert.doesNotThrow(() => spiritualSpeechEngine.stop());
+
+  spiritualSpeechEngine.setPreset('dharma');
+  assert.equal(spiritualSpeechEngine.getState().activePresetId, 'dharma', 'setPreset must preserve chosen preset');
 
   // Google TTS speed assertions: default is +20% (1.2x) and supports adjustment
   assert.equal(spiritualSpeechEngine.getState().googleTtsSpeed, 1.2, 'Default Google TTS speed is +20% (1.2x)');

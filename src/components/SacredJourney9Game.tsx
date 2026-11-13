@@ -124,21 +124,46 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
     | { type: 'finish' }
     | { type: 'help' }
     | { type: 'temple_detail'; temple: TempleItem }
+    | { type: 'confirm_new_game' }
     | null
   >(null);
 
   const [selectedWish, setSelectedWish] = useState<string>(WISH_TOPICS[0]);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const timersRef = useRef<Set<number>>(new Set());
+  const isMountedRef = useRef(true);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const isRollingRef = useRef(isRolling);
+  isRollingRef.current = isRolling;
+  const hasRecoveredOnMountRef = useRef(false);
 
   const getTempleAtTile = useCallback(
-    (tileNum: number) => {
-      return state.selected.find((t) => t.tileId === tileNum);
+    (tileNum: number, selectedList: TempleItem[] = stateRef.current.selected) => {
+      return selectedList.find((t) => t.tileId === tileNum);
     },
-    [state.selected]
+    []
   );
 
-  // Safely restore state & modal recovery: if activeModal is null but status is temple/event, recover cleanly
+  // Unmount cleanup for timers and AudioContext
   useEffect(() => {
+    isMountedRef.current = true;
+    const timers = timersRef.current;
+    return () => {
+      isMountedRef.current = false;
+      timers.forEach((id) => clearTimeout(id));
+      timers.clear();
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current = null;
+      }
+    };
+  }, []);
+
+  // Safely restore pending modal once on initial mount if restored from localStorage
+  useEffect(() => {
+    if (hasRecoveredOnMountRef.current) return;
+    hasRecoveredOnMountRef.current = true;
     if (activeModal === null) {
       if (state.status === 'temple') {
         const t = getTempleAtTile(state.position);
@@ -277,38 +302,47 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
 
   // Check if there is an unvisited temple between from and to in direction dir
   const findNearestUnvisitedTemple = useCallback(
-    (from: number, to: number, dir: number) => {
+    (from: number, to: number, dir: number, visited: number[], selectedList: TempleItem[]) => {
       if (dir > 0) {
         for (let n = from + 1; n <= to; n++) {
-          const t = getTempleAtTile(n);
-          if (t && !state.visited.includes(t.id)) {
+          const t = getTempleAtTile(n, selectedList);
+          if (t && !visited.includes(t.id)) {
             return n;
           }
         }
       } else {
         for (let n = from - 1; n >= to; n--) {
-          const t = getTempleAtTile(n);
-          if (t && !state.visited.includes(t.id)) {
+          const t = getTempleAtTile(n, selectedList);
+          if (t && !visited.includes(t.id)) {
             return n;
           }
         }
       }
       return null;
     },
-    [getTempleAtTile, state.visited]
+    [getTempleAtTile]
   );
 
-  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  const delay = useCallback((ms: number) => {
+    return new Promise<boolean>((resolve) => {
+      const id = window.setTimeout(() => {
+        timersRef.current.delete(id);
+        resolve(isMountedRef.current);
+      }, ms);
+      timersRef.current.add(id);
+    });
+  }, []);
 
   // Move player step-by-step
   const movePlayerSteps = useCallback(
-    async (steps: number, allowTrigger = true) => {
-      const from = state.position;
+    async (steps: number, allowTrigger = true): Promise<'temple' | 'event' | 'finished' | 'ready' | 'aborted'> => {
+      const cur = stateRef.current;
+      const from = cur.position;
       let target = Math.max(1, Math.min(36, from + steps));
       const dir = Math.sign(target - from);
 
       if (dir !== 0) {
-        const checkpoint = findNearestUnvisitedTemple(from, target, dir);
+        const checkpoint = findNearestUnvisitedTemple(from, target, dir, cur.visited, cur.selected);
         if (checkpoint !== null) {
           target = checkpoint;
         }
@@ -322,34 +356,37 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
         currentPos = n;
         setState((prev) => ({ ...prev, position: currentPos }));
         playSound('step');
-        await delay(110);
+        const alive = await delay(110);
+        if (!alive) return 'aborted';
       }
 
+      const latest = stateRef.current;
+
       // Check arrival on tile
-      const templeOnTarget = getTempleAtTile(target);
-      if (templeOnTarget && !state.visited.includes(templeOnTarget.id)) {
+      const templeOnTarget = getTempleAtTile(target, latest.selected);
+      if (templeOnTarget && !latest.visited.includes(templeOnTarget.id)) {
         playSound('bell');
         setState((prev) => ({ ...prev, status: 'temple' }));
         setActiveModal({ type: 'temple', temple: templeOnTarget });
-        return;
+        return 'temple';
       }
 
       // Check event on tile
       const eventOnTarget = GAME_EVENTS[target];
-      if (allowTrigger && eventOnTarget && !state.triggered.includes(target)) {
+      if (allowTrigger && eventOnTarget && !latest.triggered.includes(target)) {
         playSound('item');
         setState((prev) => ({
           ...prev,
           status: 'event',
-          triggered: [...prev.triggered, target],
+          triggered: prev.triggered.includes(target) ? prev.triggered : [...prev.triggered, target],
         }));
         setActiveModal({ type: 'event', event: eventOnTarget, id: target });
-        return;
+        return 'event';
       }
 
       // Reached finish line tile 36
       if (target === 36) {
-        if (state.visited.length === 9) {
+        if (latest.visited.length === 9) {
           playSound('gong');
           onLaunchFireworks?.(12);
           setState((prev) => ({
@@ -364,37 +401,30 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
             ),
           }));
           setActiveModal({ type: 'finish' });
-          return;
+          return 'finished';
         } else {
           target = 35;
           setState((prev) => ({ ...prev, position: 35, status: 'ready' }));
           onToast('ยังสักการะไม่ครบ 9 วัด กำลังเดินทางต่อ');
-          return;
+          return 'ready';
         }
       }
 
       setState((prev) => ({ ...prev, status: 'ready' }));
+      return 'ready';
     },
-    [
-      findNearestUnvisitedTemple,
-      getTempleAtTile,
-      onLaunchFireworks,
-      onToast,
-      playSound,
-      state.position,
-      state.triggered,
-      state.visited,
-    ]
+    [delay, findNearestUnvisitedTemple, getTempleAtTile, onLaunchFireworks, onToast, playSound]
   );
 
   // Roll dice action
-  const handleRollDice = async () => {
-    if (isRolling || state.completed || state.status !== 'ready') return;
+  const handleRollDice = useCallback(async () => {
+    const cur = stateRef.current;
+    if (isRollingRef.current || cur.completed || cur.status !== 'ready') return;
 
-    if (state.skipTurns > 0) {
+    if (cur.skipTurns > 0) {
       setState((prev) => ({
         ...prev,
-        skipTurns: prev.skipTurns - 1,
+        skipTurns: Math.max(0, prev.skipTurns - 1),
         turn: prev.turn + 1,
         history: ['⏸️ พักการเดินทาง 1 รอบ', ...prev.history].slice(0, 35),
       }));
@@ -403,17 +433,20 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
     }
 
     setIsRolling(true);
+    isRollingRef.current = true;
     const diceResult = secureRandomInt(6) + 1;
 
     for (let i = 0; i < 7; i++) {
       playSound('dice');
       const fake = secureRandomInt(6) + 1;
       setDisplayDice(fake);
-      await delay(70);
+      const alive = await delay(70);
+      if (!alive) return;
     }
 
     setDisplayDice(diceResult);
     setIsRolling(false);
+    isRollingRef.current = false;
 
     setState((prev) => ({
       ...prev,
@@ -423,7 +456,10 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
     }));
 
     await movePlayerSteps(diceResult, true);
-  };
+  }, [delay, movePlayerSteps, onToast, playSound]);
+
+  const rollDiceRef = useRef(handleRollDice);
+  rollDiceRef.current = handleRollDice;
 
   // Smart Primary Action (Handles Ready, Temple, Event, or Finished without getting stuck)
   const handlePrimaryAction = () => {
@@ -559,19 +595,18 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
 
     if (event.move) {
       const delta = event.move;
-      if (delta < 0 && state.inventory.yantra > 0) {
+      if (delta < 0 && stateRef.current.inventory.yantra > 0) {
         setActiveModal({ type: 'yantra_choice', delta });
         return;
       }
-      await movePlayerSteps(delta, false);
       setState((prev) => ({
         ...prev,
-        status: 'ready',
         history: [`📍 เหตุการณ์: เคลื่อนที่ ${delta > 0 ? '+' : ''}${delta} ช่อง`, ...prev.history].slice(
           0,
           35
         ),
       }));
+      await movePlayerSteps(delta, false);
     } else {
       setState((prev) => ({ ...prev, status: 'ready' }));
     }
@@ -584,18 +619,25 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
       setState((prev) => ({
         ...prev,
         inventory: { ...prev.inventory, yantra: Math.max(0, prev.inventory.yantra - 1) },
+        status: 'ready',
         history: ['🧿 ใช้ยันต์คุ้มภัย! ป้องกันการถอยหลังได้สำเร็จ', ...prev.history].slice(0, 35),
       }));
       onToast('🧿 ใช้ยันต์คุ้มภัย ป้องกันการถอยหลังสำเร็จ');
-      setState((prev) => ({ ...prev, status: 'ready' }));
     } else {
+      setState((prev) => ({
+        ...prev,
+        history: [`📍 เหตุการณ์: เคลื่อนที่ ${delta > 0 ? '+' : ''}${delta} ช่อง`, ...prev.history].slice(
+          0,
+          35
+        ),
+      }));
       await movePlayerSteps(delta, false);
-      setState((prev) => ({ ...prev, status: 'ready' }));
     }
   };
 
   const handleUseInventory = async (key: 'yantra' | 'bell' | 'lotus') => {
-    if (state.inventory[key] <= 0 || isRolling || state.status !== 'ready' || state.completed) {
+    const cur = stateRef.current;
+    if (cur.inventory[key] <= 0 || isRollingRef.current || cur.status !== 'ready' || cur.completed) {
       return;
     }
 
@@ -605,6 +647,10 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
     }
 
     if (key === 'bell') {
+      if (cur.skipTurns > 0) {
+        onToast('⏸️ มีสถานะหยุดพักอยู่ กรุณาจบรอบพักหรือใช้ดอกบัวก่อนสั่นระฆัง');
+        return;
+      }
       playSound('bell');
       setState((prev) => ({
         ...prev,
@@ -613,14 +659,18 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
         history: ['🔔 สั่นระฆังมงคล! ได้รับสิทธิ์ทอยลูกเต๋าเพิ่มทันที', ...prev.history].slice(0, 35),
       }));
       onToast('🔔 สั่นระฆังมงคล ทอยลูกเต๋าเพิ่ม 1 ครั้ง!');
-      setTimeout(() => {
-        handleRollDice();
+      const id = window.setTimeout(() => {
+        timersRef.current.delete(id);
+        if (isMountedRef.current) {
+          rollDiceRef.current();
+        }
       }, 300);
+      timersRef.current.add(id);
       return;
     }
 
     if (key === 'lotus') {
-      if (state.skipTurns <= 0) {
+      if (cur.skipTurns <= 0) {
         onToast('🪷 ปัจจุบันไม่มีสถานะหยุดพัก ไม่จำเป็นต้องใช้ดอกบัว');
         return;
       }
@@ -636,16 +686,15 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
   };
 
   const handleStartNewGame = () => {
-    if (
-      !window.confirm(
-        'ต้องการเริ่มการเดินทางรอบใหม่ และสุ่มวัดชุดใหม่ 9 แห่งจาก 100 วัดใช่หรือไม่?'
-      )
-    ) {
-      return;
-    }
+    setActiveModal({ type: 'confirm_new_game' });
+  };
+
+  const confirmStartNewGame = () => {
     const fresh = createFreshGame();
     setState(fresh);
     setDisplayDice(5);
+    setIsRolling(false);
+    isRollingRef.current = false;
     setActiveModal(null);
     onToast('🌟 สุ่มวัดมงคลชุดใหม่ 9 แห่งเรียบร้อย');
   };
@@ -955,7 +1004,7 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
                 type="button"
                 className={`sj-item-btn secondary ${state.inventory.bell > 0 ? 'has-item' : ''}`}
                 onClick={() => handleUseInventory('bell')}
-                disabled={state.inventory.bell === 0 || state.completed || isRolling}
+                disabled={state.inventory.bell === 0 || state.completed || isRolling || state.status !== 'ready' || state.skipTurns > 0}
                 title="ระฆังมงคล: กดเพื่อทอยลูกเต๋าเพิ่มทันที 1 ครั้ง"
               >
                 <span className="sj-item-icon">🔔</span>
@@ -1397,6 +1446,61 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
                 onClick={() => setActiveModal(null)}
               >
                 ปิดหน้าต่าง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 7. Confirm New Game Modal */}
+      {activeModal?.type === 'confirm_new_game' && (
+        <div
+          className="sj-overlay show"
+          role="dialog"
+          aria-modal="true"
+          aria-label="ยืนยันเริ่มเกมใหม่"
+          onClick={() => setActiveModal(null)}
+        >
+          <div className="sj-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="modal-close-btn"
+              onClick={() => setActiveModal(null)}
+              aria-label="ปิดหน้าต่าง"
+            >
+              ✕
+            </button>
+
+            <div className="modal-sheet-header">
+              <div className="sj-modal-emblem" aria-hidden="true" style={{ fontSize: '2.4rem' }}>
+                🎲
+              </div>
+              <h3 className="modal-title sj-modal-title">เริ่มการเดินทางรอบใหม่</h3>
+            </div>
+
+            <div className="modal-body-content">
+              <div className="modal-info-card">
+                <p style={{ margin: 0, lineHeight: 1.6 }}>
+                  ต้องการเริ่มการเดินทางรอบใหม่ และสุ่มวัดชุดใหม่ 9 แห่งจาก 100 วัดใช่หรือไม่?
+                </p>
+              </div>
+            </div>
+
+            <div className="modal-sheet-footer sj-modal-actions" style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
+              <button
+                type="button"
+                className="btn secondary"
+                style={{ flex: 1, padding: '0.7rem' }}
+                onClick={() => setActiveModal(null)}
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                className="btn gold"
+                style={{ flex: 1, padding: '0.7rem' }}
+                onClick={confirmStartNewGame}
+              >
+                สุ่มวัดชุดใหม่
               </button>
             </div>
           </div>

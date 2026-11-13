@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { generateLuckyCardBlob, type CardData } from '../utils/luckyCardCanvas';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -19,41 +19,49 @@ export const LuckyCardModal: React.FC<LuckyCardModalProps> = ({
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const activeUrlRef = useRef<string | null>(null);
+  const onToastRef = useRef(onToast);
+  onToastRef.current = onToast;
 
   useEffect(() => {
-    if (!isOpen || !cardData) {
-      if (imageUrl) {
-        URL.revokeObjectURL(imageUrl);
-        setImageUrl(null);
+    const revokeActiveUrl = () => {
+      if (activeUrlRef.current) {
+        URL.revokeObjectURL(activeUrlRef.current);
+        activeUrlRef.current = null;
       }
+    };
+
+    if (!isOpen || !cardData) {
+      revokeActiveUrl();
+      setImageUrl(null);
       setImageBlob(null);
       return;
     }
 
-    let isMounted = true;
+    let isCancelled = false;
     setLoading(true);
 
     generateLuckyCardBlob(cardData)
       .then((blob) => {
-        if (!isMounted) return;
+        if (isCancelled) return;
+        revokeActiveUrl();
         const url = URL.createObjectURL(blob);
+        activeUrlRef.current = url;
         setImageBlob(blob);
         setImageUrl(url);
         setLoading(false);
       })
       .catch((err) => {
         console.error(err);
-        if (isMounted) {
+        if (!isCancelled) {
           setLoading(false);
-          onToast('ไม่สามารถสร้างรูปการ์ดได้ โปรดลองอีกครั้ง');
+          onToastRef.current('ไม่สามารถสร้างรูปการ์ดได้ โปรดลองอีกครั้ง');
         }
       });
 
     return () => {
-      isMounted = false;
-      if (imageUrl) {
-        URL.revokeObjectURL(imageUrl);
-      }
+      isCancelled = true;
+      revokeActiveUrl();
     };
   }, [isOpen, cardData]);
 
