@@ -117,37 +117,19 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
   return (
     <section id="tab-tarot" className="ritual-frameless-stage tab" role="tabpanel">
       {/* Spread Type Selector */}
-      <div className="chips" role="radiogroup" aria-label="รูปแบบการเปิดไพ่">
-        <label className="chip">
-          <input
-            type="radio"
-            name="spread"
-            value="1"
-            checked={spread === 1}
-            onChange={() => handleSpreadChange(1)}
-          />
-          <span>ไพ่ 1 ใบ</span>
-        </label>
-        <label className="chip">
-          <input
-            type="radio"
-            name="spread"
-            value="3"
-            checked={spread === 3}
-            onChange={() => handleSpreadChange(3)}
-          />
-          <span>ไพ่ 3 ใบ</span>
-        </label>
-        <label className="chip">
-          <input
-            type="radio"
-            name="spread"
-            value="5"
-            checked={spread === 5}
-            onChange={() => handleSpreadChange(5)}
-          />
-          <span>ไพ่ 5 ใบ</span>
-        </label>
+      <div className="pills" role="radiogroup" aria-label="รูปแบบการเปิดไพ่">
+        {[1, 3, 5].map((count) => (
+          <button
+            key={count}
+            type="button"
+            role="radio"
+            aria-checked={spread === count}
+            className={`pill ${spread === count ? 'active' : ''}`}
+            onClick={() => handleSpreadChange(count)}
+          >
+            ไพ่ {count} ใบ
+          </button>
+        ))}
       </div>
 
       {/* Control Actions */}
