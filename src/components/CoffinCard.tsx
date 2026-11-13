@@ -3,21 +3,17 @@ import type { Bridge } from '../bridge';
 import type { TarotCard, BlessingResult } from '../types';
 import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
 import { saveJournalEntry } from '../utils/fortuneJournal';
-import { buildTarotCardData } from '../utils/cardDataBuilder';
+import { buildTarotCardData, TAROT_GLYPHS } from '../utils/cardDataBuilder';
 import type { CardData } from '../utils/luckyCardCanvas';
 import { playWoodClatter } from '../utils/chantAudio';
 import { logger } from '../utils/logger';
+import { pad2 } from '../utils/formatters';
 
 interface CoffinCardProps {
   bridge: Bridge;
   onToast: (msg: string) => void;
   onOpenCard?: (card: CardData) => void;
 }
-
-const GLYPHS = [
-  '🃏', '🪄', '🌙', '👑', '🏛️', '📿', '💞', '🛞', '🦁', '🏮', '☸️', '⚖️',
-  '🙃', '🦋', '⚗️', '⛓️', '🗼', '⭐', '🌕', '☀️', '📯', '🌏',
-];
 
 export const CoffinCard: React.FC<CoffinCardProps> = ({
   bridge,
@@ -71,16 +67,15 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
     }
   };
 
-  const handleSaveAndShare = () => {
-    if (!coffinCard) return;
+  const buildAndSaveCoffinReading = (): CardData | null => {
+    if (!coffinCard) return null;
 
     const { cardData, details } = buildTarotCardData(
       [coffinCard],
       1,
-      GLYPHS,
+      TAROT_GLYPHS,
       { 1: ['ไพ่จากโลงศพ'] }
     );
-
     cardData.title = `ไพ่จากโลงศพ · ${coffinCard.name}`;
 
     if (!isJournalSaved) {
@@ -94,29 +89,20 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
       onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
     }
 
-    if (onOpenCard) {
+    return cardData;
+  };
+
+  const handleSaveAndShare = () => {
+    const cardData = buildAndSaveCoffinReading();
+    if (cardData && onOpenCard) {
       onOpenCard(cardData);
     }
   };
 
   const handleSaveOnly = () => {
-    if (!coffinCard || isJournalSaved) return;
-
-    const { details } = buildTarotCardData(
-      [coffinCard],
-      1,
-      GLYPHS,
-      { 1: ['ไพ่จากโลงศพ'] }
-    );
-
-    saveJournalEntry({
-      type: 'tarot',
-      title: `ไพ่จากโลงศพ · ${coffinCard.name}`,
-      summary: `${coffinCard.name}${coffinCard.reversed ? ' (กลับหัว)' : ' (หัวตั้ง)'} · ${coffinCard.meaning}`,
-      details,
-    });
-    setIsJournalSaved(true);
-    onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
+    if (!isJournalSaved) {
+      buildAndSaveCoffinReading();
+    }
   };
 
   return (
@@ -170,8 +156,8 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
                 <div className="tcard-in">
                   <div className="tface tback" />
                   <div className={`tface tfront ${coffinCard.reversed ? 'rev' : ''}`}>
-                    <div className="num">{String(coffinCard.id).padStart(2, '0')}</div>
-                    <div className="glyph">{GLYPHS[coffinCard.id] || '🎴'}</div>
+                    <div className="num">{pad2(coffinCard.id)}</div>
+                    <div className="glyph">{TAROT_GLYPHS[coffinCard.id] || '🎴'}</div>
                     <div>
                       <div className="nm">{coffinCard.name}</div>
                       <div className="en">{coffinCard.en}</div>

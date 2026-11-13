@@ -8,7 +8,7 @@ interface BurnTalismanProps {
   onResetCategory?: () => void;
 }
 
-interface SmokeParticle {
+interface BaseParticle {
   x: number;
   y: number;
   vx: number;
@@ -17,32 +17,19 @@ interface SmokeParticle {
   alpha: number;
   maxLife: number;
   life: number;
+}
+
+interface SmokeParticle extends BaseParticle {
   drift: number;
   stickIndex: number;
 }
 
-interface EmberParticle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  size: number;
-  alpha: number;
-  maxLife: number;
-  life: number;
+interface EmberParticle extends BaseParticle {
   color: string;
   wobble: number;
 }
 
-interface GoldSparkle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  size: number;
-  alpha: number;
-  maxLife: number;
-  life: number;
+interface GoldSparkle extends BaseParticle {
   color: string;
   twinklePhase: number;
 }

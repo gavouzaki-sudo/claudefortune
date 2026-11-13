@@ -955,16 +955,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                     ))}
                   </div>
                 </div>
-
-                <div className="ritual-modal-footer">
-                  <button
-                    type="button"
-                    className="btn primary glow-gold full-width"
-                    onClick={handleCloseModal}
-                  >
-                    <span>🙏 สาธุ / น้อมรับพรมงคล</span>
-                  </button>
-                </div>
               </div>
             )}
 
@@ -1026,16 +1016,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                     </div>
                   </>
                 )}
-
-                <div className="ritual-modal-footer">
-                  <button
-                    type="button"
-                    className="btn primary glow-gold full-width"
-                    onClick={handleCloseModal}
-                  >
-                    <span>🙏 สาธุ / น้อมรับพรมงคล</span>
-                  </button>
-                </div>
               </div>
             )}
 
@@ -1090,18 +1070,18 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                     ))}
                   </div>
                 </div>
-
-                <div className="ritual-modal-footer">
-                  <button
-                    type="button"
-                    className="btn primary glow-gold full-width"
-                    onClick={handleCloseModal}
-                  >
-                    <span>🙏 สาธุ / น้อมรับพรมงคล</span>
-                  </button>
-                </div>
               </div>
             )}
+
+            <div className="ritual-modal-footer">
+              <button
+                type="button"
+                className="btn primary glow-gold full-width"
+                onClick={handleCloseModal}
+              >
+                <span>🙏 สาธุ / น้อมรับพรมงคล</span>
+              </button>
+            </div>
           </div>
         </div>,
         document.body

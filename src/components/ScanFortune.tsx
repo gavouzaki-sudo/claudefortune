@@ -232,27 +232,25 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
             เลือกภาพถ่ายใบหน้าหรือภาพถ่ายฝ่ามือ เพื่อให้ระบบคำนวณวิเคราะห์ธาตุและโหงวเฮ้ง
           </p>
 
-          <div className="chips small" role="radiogroup" aria-label="ประเภทภาพ">
-            <label className="chip">
-              <input
-                type="radio"
-                name="imgmode"
-                value="0"
-                checked={imgMode === 0}
-                onChange={() => setImgMode(0)}
-              />
-              <span>สแกนใบหน้า</span>
-            </label>
-            <label className="chip">
-              <input
-                type="radio"
-                name="imgmode"
-                value="1"
-                checked={imgMode === 1}
-                onChange={() => setImgMode(1)}
-              />
-              <span>สแกนภาพฝ่ามือ</span>
-            </label>
+          <div className="pills scan-mode-pills" role="radiogroup" aria-label="ประเภทภาพ">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={imgMode === 0}
+              className={`pill ${imgMode === 0 ? 'active' : ''}`}
+              onClick={() => setImgMode(0)}
+            >
+              สแกนใบหน้า
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={imgMode === 1}
+              className={`pill ${imgMode === 1 ? 'active' : ''}`}
+              onClick={() => setImgMode(1)}
+            >
+              สแกนภาพฝ่ามือ
+            </button>
           </div>
           <label className="drop" htmlFor="in-image">
             <input

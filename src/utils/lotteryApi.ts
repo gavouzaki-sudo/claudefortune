@@ -147,27 +147,21 @@ function normalizeApiResponse(rawResponse: any): LotteryDisplayData {
   };
 }
 
-/**
- * Fetch latest lottery result from GLO API
- * POST /api/glo/lottery/getLatestLottery
- */
-export async function getLatestLotteryResult(): Promise<LotteryDisplayData> {
-  const isBrowser = typeof window !== 'undefined';
-  // Never attempt direct cross-origin requests to www.glo.or.th from the browser
-  // because www.glo.or.th does not allow CORS and returns 503 on OPTIONS preflight.
-  const endpoints = isBrowser
-    ? ['/api/glo/lottery/getLatestLottery']
-    : ['/api/glo/lottery/getLatestLottery', 'https://www.glo.or.th/api/lottery/getLatestLottery'];
-
+async function fetchLotteryEndpoints(
+  endpoints: string[],
+  body: Record<string, unknown>,
+  isValidPayload: (json: any) => boolean,
+  errorLabel: string
+): Promise<LotteryDisplayData | null> {
   for (const url of endpoints) {
     try {
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify(body),
       });
 
       if (res.ok) {
@@ -182,7 +176,7 @@ export async function getLatestLotteryResult(): Promise<LotteryDisplayData> {
         }
         try {
           const json = JSON.parse(text);
-          if (json.status && json.response) {
+          if (json.status && isValidPayload(json)) {
             return normalizeApiResponse(json);
           }
         } catch {
@@ -190,9 +184,31 @@ export async function getLatestLotteryResult(): Promise<LotteryDisplayData> {
         }
       }
     } catch (err) {
-      logger.debug(`Could not fetch lottery from ${url}:`, err);
+      logger.debug(`${errorLabel} from ${url}:`, err);
     }
   }
+  return null;
+}
+
+/**
+ * Fetch latest lottery result from GLO API
+ * POST /api/glo/lottery/getLatestLottery
+ */
+export async function getLatestLotteryResult(): Promise<LotteryDisplayData> {
+  const isBrowser = typeof window !== 'undefined';
+  // Never attempt direct cross-origin requests to www.glo.or.th from the browser
+  // because www.glo.or.th does not allow CORS and returns 503 on OPTIONS preflight.
+  const endpoints = isBrowser
+    ? ['/api/glo/lottery/getLatestLottery']
+    : ['/api/glo/lottery/getLatestLottery', 'https://www.glo.or.th/api/lottery/getLatestLottery'];
+
+  const result = await fetchLotteryEndpoints(
+    endpoints,
+    {},
+    (json) => Boolean(json.response),
+    'Could not fetch lottery'
+  );
+  if (result) return result;
 
   logger.info('Using backup latest lottery draw data');
   return { ...BACKUP_LATEST_DRAW };
@@ -224,39 +240,13 @@ export async function getLotteryResultByDate(
     ? ['/api/glo/checking/getLotteryResult']
     : ['/api/glo/checking/getLotteryResult', 'https://www.glo.or.th/api/checking/getLotteryResult'];
 
-  for (const url of endpoints) {
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        const contentType = (res.headers.get('content-type') || '').toLowerCase();
-        if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
-          continue;
-        }
-        const text = await res.text();
-        if (text.trim().startsWith('<')) {
-          continue;
-        }
-        try {
-          const json = JSON.parse(text);
-          if (json.status && json.response?.result) {
-            return normalizeApiResponse(json);
-          }
-        } catch {
-          continue;
-        }
-      }
-    } catch (err) {
-      logger.debug(`Could not fetch draw by date from ${url}:`, err);
-    }
-  }
+  const result = await fetchLotteryEndpoints(
+    endpoints,
+    payload,
+    (json) => Boolean(json.response?.result),
+    'Could not fetch draw by date'
+  );
+  if (result) return result;
 
   const lookupKey = `${yearCe}-${payload.month}-${payload.date}`;
   if (KNOWN_BACKUP_DRAWS[lookupKey]) {

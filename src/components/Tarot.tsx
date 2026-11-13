@@ -3,7 +3,7 @@ import { Bridge } from '../bridge';
 import type { TarotCard } from '../types';
 import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
 import { saveJournalEntry } from '../utils/fortuneJournal';
-import { buildTarotCardData } from '../utils/cardDataBuilder';
+import { buildTarotCardData, TAROT_GLYPHS } from '../utils/cardDataBuilder';
 import type { CardData } from '../utils/luckyCardCanvas';
 import { logger } from '../utils/logger';
 import { pad2 } from '../utils/formatters';
@@ -13,10 +13,6 @@ interface TarotProps {
   onToast: (msg: string) => void;
   onOpenCard?: (card: CardData) => void;
 }
-
-const GLYPHS = [
-  "🃏", "🪄", "🌙", "👑", "🏛️", "📿", "💞", "🛞", "🦁", "🏮", "☸️", "⚖️", "🙃", "🦋", "⚗️", "⛓️", "🗼", "⭐", "🌕", "☀️", "📯", "🌏"
-];
 
 const SPREAD_POSITIONS: Record<number, string[]> = {
   1: ["ไพ่ประจำวัน"],
@@ -49,7 +45,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
     const { cardData, details: tarotDetails } = buildTarotCardData(
       activeCards,
       spread,
-      GLYPHS,
+      TAROT_GLYPHS,
       SPREAD_POSITIONS
     );
 
@@ -182,7 +178,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
                     <div className="tface tback" />
                     <div className={`tface tfront ${card.reversed ? 'rev' : ''}`}>
                       <div className="num">{pad2(card.id)}</div>
-                      <div className="glyph">{GLYPHS[card.id] || '🎴'}</div>
+                      <div className="glyph">{TAROT_GLYPHS[card.id] || '🎴'}</div>
                       <div>
                         <div className="nm">{card.name}</div>
                         <div className="en">{card.en}</div>

@@ -80,23 +80,6 @@
   min-width: 155px;
 }
 
-.btn-clear-compact-select {
-  background: rgba(239, 68, 68, 0.25);
-  border: 1px solid rgba(239, 68, 68, 0.6);
-  color: #fca5a5;
-  border-radius: 6px;
-  cursor: pointer;
-  padding: 2px 7px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  margin-left: 4px;
-  transition: all 0.15s ease;
-}
-.btn-clear-compact-select:hover {
-  background: #dc2626;
-  color: #ffffff;
-}
-
 /* Toolbar Buttons - Permanent Default Illumination */
 .btn-toolbar-compact {
   appearance: none;

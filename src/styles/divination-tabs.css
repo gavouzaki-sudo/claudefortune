@@ -830,33 +830,6 @@
   font-size: 0.72rem;
 }
 
-.tarot-variant-floating-toggle {
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 60;
-  pointer-events: auto;
-  background: rgba(20, 10, 36, 0.78);
-  border: 1px solid var(--gold);
-  color: var(--gold2);
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.35rem 0.85rem;
-  border-radius: 9999px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 15px color-mix(in srgb, var(--glow) 30%, transparent);
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-.tarot-variant-floating-toggle:hover {
-  background: rgba(45, 20, 75, 0.95);
-  transform: translateY(-1px) scale(1.04);
-  box-shadow: 0 6px 25px var(--glow);
-}
-
 /* --------------------------------------------------------------------------
    5. LUCKY NUMBERS & TALISMAN BURNING ALTAR (เลขมงคล)
    -------------------------------------------------------------------------- */
@@ -2376,6 +2349,125 @@
   padding: 0.6rem 1.2rem;
   opacity: 1 !important;
   visibility: visible !important;
+}
+
+.scan-grid .card {
+  background: rgba(20, 11, 24, 0.78);
+  border: 1px solid rgba(232, 185, 74, 0.3);
+  border-radius: 16px;
+  padding: 1.1rem;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.scan-grid .card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.scan-grid .card-title-row h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--gold2, #fff0b8);
+}
+
+.scan-grid .card-tag-pill {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--gold2, #fff0b8);
+  background: rgba(232, 185, 74, 0.16);
+  border: 1px solid rgba(232, 185, 74, 0.45);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  white-space: nowrap;
+}
+
+.scan-grid .card-sub-hint {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--muted, #cdb995);
+  line-height: 1.45;
+}
+
+.scan-grid .result {
+  margin-top: 0.5rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  text-align: left;
+}
+
+.scan-grid .result h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+  color: var(--gold, #e8b94a);
+}
+
+.scan-grid .result p {
+  margin: 0.25rem 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+/* ScoreBars (โชคลาภ / ความรัก / การงาน / โชคชะตา / สุขภาพ) */
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0.85rem 0 0.75rem;
+}
+
+.bars .bar {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr auto;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.9rem;
+}
+
+.bars .bar span {
+  color: var(--muted, #cdb995);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.bars .bar .track {
+  position: relative;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(232, 185, 74, 0.28);
+  overflow: hidden;
+}
+
+.bars .bar .fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold, #e8b94a), #fff0b8);
+  box-shadow: 0 0 10px rgba(232, 185, 74, 0.5);
+  transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.bars .bar b {
+  min-width: 1.4rem;
+  text-align: right;
+  color: var(--gold2, #fff0b8);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.scan-mode-pills {
+  margin: 0.2rem 0 0.35rem;
+}
+
+.scan-mode-pills .pill {
+  padding: 0.45rem 1.05rem;
+  font-size: 0.9rem;
 }
 
 /* --------------------------------------------------------------------------

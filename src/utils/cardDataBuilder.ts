@@ -8,6 +8,11 @@ import type { StickResult, TarotCard } from '../types';
 import type { AuspiciousDay } from '../data/auspiciousCalendarData';
 import { WORK_CATEGORIES_INFO } from '../data/auspiciousCalendarData';
 
+export const TAROT_GLYPHS: string[] = [
+  '🃏', '🪄', '🌙', '👑', '🏛️', '📿', '💞', '🛞', '🦁', '🏮', '☸️', '⚖️',
+  '🙃', '🦋', '⚗️', '⛓️', '🗼', '⭐', '🌕', '☀️', '📯', '🌏',
+];
+
 export function buildStickCardData(result: StickResult): CardData {
   return {
     type: 'stick',
@@ -29,7 +34,7 @@ export function buildStickCardData(result: StickResult): CardData {
 export function buildTarotCardData(
   activeCards: TarotCard[],
   spread: number = activeCards.length,
-  glyphs: Record<number, string> = {},
+  glyphs: Record<number, string> = TAROT_GLYPHS,
   spreadPositions: Record<number, string[]> = {}
 ): { cardData: CardData; details: NonNullable<CardData['details']> } {
   const tarotDetails = {

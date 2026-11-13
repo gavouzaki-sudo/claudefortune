@@ -252,6 +252,42 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     }, 150);
   };
 
+  const scrollToCardAndNormalize = (
+    el: HTMLDivElement,
+    targetCard: HTMLElement | null,
+    topic: DivinationTopic
+  ) => {
+    const finishNav = () => {
+      if (navigateTimeoutRef.current) {
+        clearTimeout(navigateTimeoutRef.current);
+        navigateTimeoutRef.current = null;
+      }
+      el.removeEventListener('scrollend', finishNav);
+      el.classList.remove('is-navigating');
+      isNavigatingRef.current = false;
+
+      if (activeCopyRef.current !== 2) {
+        const copy2Card = el.querySelector<HTMLElement>(
+          `[data-topic="${topic}"][data-copy="2"]`
+        );
+        if (copy2Card) {
+          const normalPos = getCardCenterPos(el, copy2Card);
+          el.scrollTo({ left: normalPos, behavior: 'auto' });
+          activeCopyRef.current = 2;
+        }
+      }
+    };
+
+    requestAnimationFrame(() => {
+      if (targetCard) {
+        const targetPos = getCardCenterPos(el, targetCard);
+        el.scrollTo({ left: targetPos, behavior: 'smooth' });
+      }
+      el.addEventListener('scrollend', finishNav, { once: true });
+      navigateTimeoutRef.current = window.setTimeout(finishNav, 550);
+    });
+  };
+
   // Arrow buttons: Deterministic infinite navigation with zero-drift copy normalization
   const handleArrowScroll = (direction: 'left' | 'right') => {
     const el = scrollContainerRef.current;
@@ -316,36 +352,7 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     const targetCard = el.querySelector<HTMLElement>(
       `[data-topic="${targetTopic}"][data-copy="${nextCopy}"]`
     );
-
-    const finishNav = () => {
-      if (navigateTimeoutRef.current) {
-        clearTimeout(navigateTimeoutRef.current);
-        navigateTimeoutRef.current = null;
-      }
-      el.removeEventListener('scrollend', finishNav);
-      el.classList.remove('is-navigating');
-      isNavigatingRef.current = false;
-
-      if (activeCopyRef.current !== 2) {
-        const copy2Card = el.querySelector<HTMLElement>(
-          `[data-topic="${targetTopic}"][data-copy="2"]`
-        );
-        if (copy2Card) {
-          const normalPos = getCardCenterPos(el, copy2Card);
-          el.scrollTo({ left: normalPos, behavior: 'auto' });
-          activeCopyRef.current = 2;
-        }
-      }
-    };
-
-    requestAnimationFrame(() => {
-      if (targetCard) {
-        const targetPos = getCardCenterPos(el, targetCard);
-        el.scrollTo({ left: targetPos, behavior: 'smooth' });
-      }
-      el.addEventListener('scrollend', finishNav, { once: true });
-      navigateTimeoutRef.current = window.setTimeout(finishNav, 550);
-    });
+    scrollToCardAndNormalize(el, targetCard, targetTopic);
   };
 
   // Mouse Drag-to-Scroll handlers
@@ -411,34 +418,7 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     onSelectTopic(topic);
 
     void el.offsetWidth;
-
-    const finishNav = () => {
-      if (navigateTimeoutRef.current) {
-        clearTimeout(navigateTimeoutRef.current);
-        navigateTimeoutRef.current = null;
-      }
-      el.removeEventListener('scrollend', finishNav);
-      el.classList.remove('is-navigating');
-      isNavigatingRef.current = false;
-
-      if (activeCopyRef.current !== 2) {
-        const copy2Card = el.querySelector<HTMLElement>(
-          `[data-topic="${topic}"][data-copy="2"]`
-        );
-        if (copy2Card) {
-          const normalPos = getCardCenterPos(el, copy2Card);
-          el.scrollTo({ left: normalPos, behavior: 'auto' });
-          activeCopyRef.current = 2;
-        }
-      }
-    };
-
-    requestAnimationFrame(() => {
-      const targetPos = getCardCenterPos(el, card);
-      el.scrollTo({ left: targetPos, behavior: 'smooth' });
-      el.addEventListener('scrollend', finishNav, { once: true });
-      navigateTimeoutRef.current = window.setTimeout(finishNav, 550);
-    });
+    scrollToCardAndNormalize(el, card, topic);
   };
 
   // Clean up timers on unmount

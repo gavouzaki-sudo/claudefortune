@@ -1355,7 +1355,7 @@
   transition: all 0.2s ease;
 }
 .modal-close-btn:hover {
-  background: rgba(239, 68, 68, 0.8);
+  background: rgba(239, 68, 68, 0.35);
   color: #fff;
 }
 

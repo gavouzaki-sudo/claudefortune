@@ -1073,442 +1073,386 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
         ensuring that only a single, clean framed window appears on screen.
       */}
       {activeModal && typeof document !== 'undefined' && createPortal(
-        <>
-          {/* 1. Temple Worship Modal */}
-          {activeModal.type === 'temple' && (
+        (() => {
+          const closeModal = () => setActiveModal(null);
+
+          const renderModalShell = ({
+            ariaLabel,
+            allowBackdropClose = true,
+            modalClassName = 'sj-modal',
+            emblem,
+            emblemStyle = { fontSize: '2.5rem' },
+            title,
+            titleColor,
+            headerExtra,
+            bodyStyle,
+            footerStyle = { marginTop: '1rem' },
+            children,
+            footer,
+          }: {
+            ariaLabel: string;
+            allowBackdropClose?: boolean;
+            modalClassName?: string;
+            emblem: React.ReactNode;
+            emblemStyle?: React.CSSProperties;
+            title: React.ReactNode;
+            titleColor?: string;
+            headerExtra?: React.ReactNode;
+            bodyStyle?: React.CSSProperties;
+            footerStyle?: React.CSSProperties;
+            children: React.ReactNode;
+            footer: React.ReactNode;
+          }) => (
             <div
               className="sj-overlay show"
-          role="dialog"
-          aria-modal="true"
-          aria-label="สักการะวัด"
-          onClick={() => setActiveModal(null)}
-        >
-          <div className="sj-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="modal-close-btn"
-              onClick={() => setActiveModal(null)}
-              aria-label="ปิดหน้าต่าง"
+              role="dialog"
+              aria-modal="true"
+              aria-label={ariaLabel}
+              onClick={allowBackdropClose ? closeModal : undefined}
             >
-              ✕
-            </button>
+              <div className={modalClassName} onClick={(e) => e.stopPropagation()}>
+                {allowBackdropClose && (
+                  <button
+                    type="button"
+                    className="modal-close-btn"
+                    onClick={closeModal}
+                    aria-label="ปิดหน้าต่าง"
+                  >
+                    ✕
+                  </button>
+                )}
 
-            <div className="modal-sheet-header">
-              <div className="sj-modal-emblem" aria-hidden="true">
-                🏯
-              </div>
-              <h3 className="modal-title sj-modal-title">ถึงจุดสักการะมหามงคล</h3>
-              <p className="modal-subtitle sj-modal-temple-name" style={{ fontSize: '1.25rem', color: '#ffd700', fontWeight: 800 }}>
-                {activeModal.temple.name}
-              </p>
-              <div className="sj-modal-sub" style={{ color: '#e5d5be', fontSize: '0.9rem' }}>
-                จังหวัด{activeModal.temple.province} · ภาค{activeModal.temple.region}
-              </div>
-            </div>
-
-            <div className="modal-body-content">
-              <div className="modal-info-card sj-modal-blessing-box">
-                <h4 className="info-card-title">✨ คติมงคลและคำอำนวยพร</h4>
-                <p className="sj-modal-wish" style={{ margin: '0.4rem 0' }}><strong>คติมงคล:</strong> {activeModal.temple.wish}</p>
-                <p className="sj-modal-blessing" style={{ margin: '0.4rem 0' }}><strong>คำอำนวยพร:</strong> {activeModal.temple.blessing}</p>
-              </div>
-
-              <div className="modal-info-card" style={{ marginTop: '0.8rem' }}>
-                <label htmlFor="sj-wish-select-modal" className="sj-modal-label" style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 700 }}>
-                  เลือกคำอธิษฐานจิตในใจ
-                </label>
-                <select
-                  id="sj-wish-select-modal"
-                  className="dropdown-compact-select sj-modal-select"
-                  style={{ width: '100%', padding: '0.6rem', fontSize: '0.95rem' }}
-                  value={selectedWish}
-                  onChange={(e) => setSelectedWish(e.target.value)}
-                >
-                  {WISH_TOPICS.map((topic) => (
-                    <option key={topic} value={topic}>
-                      🙏 ขอพร: {topic}
-                    </option>
-                  ))}
-                </select>
-                <p className="sj-modal-disclaimer" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.4rem' }}>
-                  การเลือกคำอธิษฐานเป็นส่วนหนึ่งของเกม เพื่อความเจริญทางปัญญาและกำลังใจ
-                </p>
-              </div>
-            </div>
-
-            <div className="modal-sheet-footer sj-modal-actions" style={{ marginTop: '1rem' }}>
-              <button
-                type="button"
-                className="btn gold full-width"
-                style={{ width: '100%', padding: '0.8rem', fontSize: '1rem', fontWeight: 700 }}
-                onClick={() => handleConfirmTempleBlessing(activeModal.temple)}
-              >
-                🙏 สักการะและรับพร (+20 แต้มบุญ)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 2. Event Modal */}
-      {activeModal?.type === 'event' && (
-        <div
-          className="sj-overlay show"
-          role="dialog"
-          aria-modal="true"
-          aria-label="เหตุการณ์ระหว่างทาง"
-          onClick={() => setActiveModal(null)}
-        >
-          <div className="sj-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="modal-close-btn"
-              onClick={() => setActiveModal(null)}
-              aria-label="ปิดหน้าต่าง"
-            >
-              ✕
-            </button>
-
-            <div className="modal-sheet-header">
-              <div className="sj-modal-emblem" aria-hidden="true" style={{ fontSize: '2.5rem' }}>
-                {activeModal.event.icon}
-              </div>
-              <h3 className="modal-title sj-modal-title">{activeModal.event.name}</h3>
-            </div>
-
-            <div className="modal-body-content">
-              <div className="modal-info-card">
-                <p className="sj-modal-event-desc" style={{ fontSize: '1rem', lineHeight: 1.6 }}>{activeModal.event.desc}</p>
-                <p className="sj-modal-disclaimer" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.6rem' }}>
-                  ผลของเหตุการณ์บนช่องนี้จะทำงาน 1 ครั้งในแต่ละรอบการเดินทาง
-                </p>
-              </div>
-            </div>
-
-            <div className="modal-sheet-footer sj-modal-actions" style={{ marginTop: '1rem' }}>
-              <button
-                type="button"
-                className="btn gold full-width"
-                style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}
-                onClick={() => handleAcknowledgeEvent(activeModal.event)}
-              >
-                รับทราบ
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Yantra Protection Choice Modal */}
-      {activeModal?.type === 'yantra_choice' && (
-        <div
-          className="sj-overlay show"
-          role="dialog"
-          aria-modal="true"
-          aria-label="ใช้ยันต์คุ้มภัย"
-        >
-          <div className="sj-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-sheet-header">
-              <div className="sj-modal-emblem" aria-hidden="true" style={{ fontSize: '2.5rem' }}>
-                🧿
-              </div>
-              <h3 className="modal-title sj-modal-title">ใช้ยันต์คุ้มภัยหรือไม่?</h3>
-            </div>
-
-            <div className="modal-body-content">
-              <div className="modal-info-card">
-                <p className="sj-modal-event-desc" style={{ fontSize: '1rem', lineHeight: 1.6 }}>
-                  อุปสรรคนี้ส่งผลให้ต้องถอยหลัง {Math.abs(activeModal.delta)} ช่อง
-                  <br />
-                  คุณมียันต์คุ้มภัย ต้องการใช้เพื่อป้องกันการถอยหลังหรือไม่?
-                </p>
-              </div>
-            </div>
-
-            <div className="modal-sheet-footer sj-modal-actions" style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
-              <button
-                type="button"
-                className="btn gold"
-                style={{ flex: 1, padding: '0.7rem' }}
-                onClick={() => handleUseYantraChoice(true, activeModal.delta)}
-              >
-                🧿 ใช้ยันต์คุ้มภัย
-              </button>
-              <button
-                type="button"
-                className="btn secondary"
-                style={{ flex: 1, padding: '0.7rem' }}
-                onClick={() => handleUseYantraChoice(false, activeModal.delta)}
-              >
-                ยอมรับผล (ถอยหลัง)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 4. Grand Finish Modal */}
-      {activeModal?.type === 'finish' && (
-        <div
-          className="sj-overlay show"
-          role="dialog"
-          aria-modal="true"
-          aria-label="มหามงคล 9 วัด สำเร็จ"
-          onClick={() => setActiveModal(null)}
-        >
-          <div className="sj-modal finish-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="modal-close-btn"
-              onClick={() => setActiveModal(null)}
-              aria-label="ปิดหน้าต่าง"
-            >
-              ✕
-            </button>
-
-            <div className="modal-sheet-header">
-              <div className="sj-modal-emblem" aria-hidden="true" style={{ fontSize: '2.5rem' }}>
-                🌟
-              </div>
-              <h3 className="modal-title sj-modal-title" style={{ color: '#ffd700' }}>มหามงคล 9 วัด สำเร็จบริบูรณ์</h3>
-              <p style={{ fontSize: '1.05rem', margin: '0.4rem 0 0.8rem', color: '#fff' }}>
-                ยินดีด้วย! คุณเดินทางสักการะครบทั้ง 9 วัดมงคลสำเร็จแล้ว!
-              </p>
-            </div>
-
-            <div className="modal-body-content">
-              <div className="modal-info-card sj-finish-stats-box">
-                <div className="sj-finish-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0' }}>
-                  <span>คะแนนบุญสะสมในเกม:</span>
-                  <strong className="sj-gold-text" style={{ color: '#ffd700', fontSize: '1.2rem' }}>{state.merit} แต้ม</strong>
+                <div className="modal-sheet-header">
+                  <div className="sj-modal-emblem" aria-hidden="true" style={emblemStyle}>
+                    {emblem}
+                  </div>
+                  <h3 className="modal-title sj-modal-title" style={titleColor ? { color: titleColor } : undefined}>
+                    {title}
+                  </h3>
+                  {headerExtra}
                 </div>
-                <div className="sj-finish-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0' }}>
-                  <span>จำนวนรอบที่ใช้เดินทาง:</span>
-                  <strong>{state.turn} รอบ</strong>
+
+                <div className="modal-body-content" style={bodyStyle}>
+                  {children}
                 </div>
-                <div className="sj-finish-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0' }}>
-                  <span>คำอธิษฐานจิต:</span>
-                  <strong style={{ color: '#f59e0b' }}>{selectedWish}</strong>
+
+                <div className="modal-sheet-footer sj-modal-actions" style={footerStyle}>
+                  {footer}
                 </div>
               </div>
-
-              <p className="sj-modal-disclaimer" style={{ marginTop: '0.75rem', fontSize: '0.82rem', textAlign: 'center', color: '#cbaf8c' }}>
-                ขอให้ทุกก้าวเดินในชีวิตจริงเต็มไปด้วยสติ ปัญญา ความเมตตา และความร่มเย็นเป็นสุข
-              </p>
             </div>
+          );
 
-            <div className="modal-sheet-footer sj-modal-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '1rem' }}>
-              <button
-                type="button"
-                className="btn secondary"
-                style={{ flex: '1 1 45%', padding: '0.7rem' }}
-                onClick={handleSaveToFortuneJournal}
-              >
-                📖 บันทึกลงสมุดดวง
-              </button>
-              {onOpenCard && (
-                <button
-                  type="button"
-                  className="btn gold"
-                  style={{ flex: '1 1 45%', padding: '0.7rem' }}
-                  onClick={() => {
-                    handleOpenLuckyCard();
-                    setActiveModal(null);
-                  }}
-                >
-                  🎴 การ์ดมงคล 9 วัด
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn secondary full-width"
-                style={{ width: '100%', marginTop: '0.3rem', padding: '0.7rem' }}
-                onClick={() => {
-                  setActiveModal(null);
-                  handleStartNewGame();
-                }}
-              >
-                🎲 เล่นชุดวัดใหม่
-              </button>
-            </div>
-          </div>
-        </div>
+          switch (activeModal.type) {
+            case 'temple':
+              return renderModalShell({
+                ariaLabel: 'สักการะวัด',
+                emblem: '🏯',
+                emblemStyle: undefined,
+                title: 'ถึงจุดสักการะมหามงคล',
+                headerExtra: (
+                  <>
+                    <p className="modal-subtitle sj-modal-temple-name" style={{ fontSize: '1.25rem', color: '#ffd700', fontWeight: 800 }}>
+                      {activeModal.temple.name}
+                    </p>
+                    <div className="sj-modal-sub" style={{ color: '#e5d5be', fontSize: '0.9rem' }}>
+                      จังหวัด{activeModal.temple.province} · ภาค{activeModal.temple.region}
+                    </div>
+                  </>
+                ),
+                children: (
+                  <>
+                    <div className="modal-info-card sj-modal-blessing-box">
+                      <h4 className="info-card-title">✨ คติมงคลและคำอำนวยพร</h4>
+                      <p className="sj-modal-wish" style={{ margin: '0.4rem 0' }}><strong>คติมงคล:</strong> {activeModal.temple.wish}</p>
+                      <p className="sj-modal-blessing" style={{ margin: '0.4rem 0' }}><strong>คำอำนวยพร:</strong> {activeModal.temple.blessing}</p>
+                    </div>
+
+                    <div className="modal-info-card" style={{ marginTop: '0.8rem' }}>
+                      <label htmlFor="sj-wish-select-modal" className="sj-modal-label" style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 700 }}>
+                        เลือกคำอธิษฐานจิตในใจ
+                      </label>
+                      <select
+                        id="sj-wish-select-modal"
+                        className="dropdown-compact-select sj-modal-select"
+                        style={{ width: '100%', padding: '0.6rem', fontSize: '0.95rem' }}
+                        value={selectedWish}
+                        onChange={(e) => setSelectedWish(e.target.value)}
+                      >
+                        {WISH_TOPICS.map((topic) => (
+                          <option key={topic} value={topic}>
+                            🙏 ขอพร: {topic}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="sj-modal-disclaimer" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.4rem' }}>
+                        การเลือกคำอธิษฐานเป็นส่วนหนึ่งของเกม เพื่อความเจริญทางปัญญาและกำลังใจ
+                      </p>
+                    </div>
+                  </>
+                ),
+                footer: (
+                  <button
+                    type="button"
+                    className="btn gold full-width"
+                    style={{ width: '100%', padding: '0.8rem', fontSize: '1rem', fontWeight: 700 }}
+                    onClick={() => handleConfirmTempleBlessing(activeModal.temple)}
+                  >
+                    🙏 สักการะและรับพร (+20 แต้มบุญ)
+                  </button>
+                ),
+              });
+
+            case 'event':
+              return renderModalShell({
+                ariaLabel: 'เหตุการณ์ระหว่างทาง',
+                emblem: activeModal.event.icon,
+                title: activeModal.event.name,
+                children: (
+                  <div className="modal-info-card">
+                    <p className="sj-modal-event-desc" style={{ fontSize: '1rem', lineHeight: 1.6 }}>{activeModal.event.desc}</p>
+                    <p className="sj-modal-disclaimer" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.6rem' }}>
+                      ผลของเหตุการณ์บนช่องนี้จะทำงาน 1 ครั้งในแต่ละรอบการเดินทาง
+                    </p>
+                  </div>
+                ),
+                footer: (
+                  <button
+                    type="button"
+                    className="btn gold full-width"
+                    style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}
+                    onClick={() => handleAcknowledgeEvent(activeModal.event)}
+                  >
+                    รับทราบ
+                  </button>
+                ),
+              });
+
+            case 'yantra_choice':
+              return renderModalShell({
+                ariaLabel: 'ใช้ยันต์คุ้มภัย',
+                allowBackdropClose: false,
+                emblem: '🧿',
+                title: 'ใช้ยันต์คุ้มภัยหรือไม่?',
+                footerStyle: { display: 'flex', gap: '10px', marginTop: '1rem' },
+                children: (
+                  <div className="modal-info-card">
+                    <p className="sj-modal-event-desc" style={{ fontSize: '1rem', lineHeight: 1.6 }}>
+                      อุปสรรคนี้ส่งผลให้ต้องถอยหลัง {Math.abs(activeModal.delta)} ช่อง
+                      <br />
+                      คุณมียันต์คุ้มภัย ต้องการใช้เพื่อป้องกันการถอยหลังหรือไม่?
+                    </p>
+                  </div>
+                ),
+                footer: (
+                  <>
+                    <button
+                      type="button"
+                      className="btn gold"
+                      style={{ flex: 1, padding: '0.7rem' }}
+                      onClick={() => handleUseYantraChoice(true, activeModal.delta)}
+                    >
+                      🧿 ใช้ยันต์คุ้มภัย
+                    </button>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      style={{ flex: 1, padding: '0.7rem' }}
+                      onClick={() => handleUseYantraChoice(false, activeModal.delta)}
+                    >
+                      ยอมรับผล (ถอยหลัง)
+                    </button>
+                  </>
+                ),
+              });
+
+            case 'finish':
+              return renderModalShell({
+                ariaLabel: 'มหามงคล 9 วัด สำเร็จ',
+                modalClassName: 'sj-modal finish-modal',
+                emblem: '🌟',
+                title: 'มหามงคล 9 วัด สำเร็จบริบูรณ์',
+                titleColor: '#ffd700',
+                footerStyle: { display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '1rem' },
+                headerExtra: (
+                  <p style={{ fontSize: '1.05rem', margin: '0.4rem 0 0.8rem', color: '#fff' }}>
+                    ยินดีด้วย! คุณเดินทางสักการะครบทั้ง 9 วัดมงคลสำเร็จแล้ว!
+                  </p>
+                ),
+                children: (
+                  <>
+                    <div className="modal-info-card sj-finish-stats-box">
+                      <div className="sj-finish-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0' }}>
+                        <span>คะแนนบุญสะสมในเกม:</span>
+                        <strong className="sj-gold-text" style={{ color: '#ffd700', fontSize: '1.2rem' }}>{state.merit} แต้ม</strong>
+                      </div>
+                      <div className="sj-finish-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0' }}>
+                        <span>จำนวนรอบที่ใช้เดินทาง:</span>
+                        <strong>{state.turn} รอบ</strong>
+                      </div>
+                      <div className="sj-finish-stat-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0' }}>
+                        <span>คำอธิษฐานจิต:</span>
+                        <strong style={{ color: '#f59e0b' }}>{selectedWish}</strong>
+                      </div>
+                    </div>
+
+                    <p className="sj-modal-disclaimer" style={{ marginTop: '0.75rem', fontSize: '0.82rem', textAlign: 'center', color: '#cbaf8c' }}>
+                      ขอให้ทุกก้าวเดินในชีวิตจริงเต็มไปด้วยสติ ปัญญา ความเมตตา และความร่มเย็นเป็นสุข
+                    </p>
+                  </>
+                ),
+                footer: (
+                  <>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      style={{ flex: '1 1 45%', padding: '0.7rem' }}
+                      onClick={handleSaveToFortuneJournal}
+                    >
+                      📖 บันทึกลงสมุดดวง
+                    </button>
+                    {onOpenCard && (
+                      <button
+                        type="button"
+                        className="btn gold"
+                        style={{ flex: '1 1 45%', padding: '0.7rem' }}
+                        onClick={() => {
+                          handleOpenLuckyCard();
+                          closeModal();
+                        }}
+                      >
+                        🎴 การ์ดมงคล 9 วัด
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn secondary full-width"
+                      style={{ width: '100%', marginTop: '0.3rem', padding: '0.7rem' }}
+                      onClick={() => {
+                        closeModal();
+                        handleStartNewGame();
+                      }}
+                    >
+                      🎲 เล่นชุดวัดใหม่
+                    </button>
+                  </>
+                ),
+              });
+
+            case 'help':
+              return renderModalShell({
+                ariaLabel: 'วิธีเล่นเกมมหามงคล 9 วัด',
+                emblem: '📖',
+                title: 'วิธีเล่นมหามงคล 9 วัด',
+                children: (
+                  <div className="modal-info-card">
+                    <ol className="sj-help-list" style={{ paddingLeft: '1.2rem', lineHeight: 1.8, fontSize: '0.92rem' }}>
+                      <li>ระบบสุ่มวัด 9 แห่งจากฐานข้อมูล 100 วัดทั่วไทยในทุกการเริ่มเกมใหม่</li>
+                      <li>ทอยลูกเต๋า 1 ลูก เพื่อก้าวเดินบนกระดานทางบุญ 36 ช่อง</li>
+                      <li>ต้องหยุดสักการะวัดที่ยังไม่เคยไป ห้ามเดินข้าม เพื่อรับแต้มบุญ +20</li>
+                      <li>ช่องสีชมพูคือโบนัส สีเทาคืออุปสรรค สีเขียวคือเหตุการณ์พิเศษ</li>
+                      <li>เก็บของมงคล: ยันต์ป้องกันถอยหลัง, ระฆังทอยเพิ่ม, ดอกบัวล้างรอบพัก</li>
+                      <li>เมื่อสักการะครบ 9 วัด จะได้รับโบนัสปิดท้าย 150 แต้ม พร้อมฉลองสู่เส้นชัย!</li>
+                    </ol>
+                    <p className="sj-modal-disclaimer" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.6rem' }}>
+                      เกมนี้เป็นเกมจำลองทางวัฒนธรรมเพื่อความบันเทิงและสิริมงคล
+                    </p>
+                  </div>
+                ),
+                footer: (
+                  <button
+                    type="button"
+                    className="btn gold full-width"
+                    style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}
+                    onClick={closeModal}
+                  >
+                    เข้าใจแล้ว
+                  </button>
+                ),
+              });
+
+            case 'temple_detail':
+              return renderModalShell({
+                ariaLabel: `ข้อมูล ${activeModal.temple.name}`,
+                emblem: '🏯',
+                title: activeModal.temple.name,
+                titleColor: '#ffd700',
+                bodyStyle: { marginTop: '0.6rem' },
+                headerExtra: (
+                  <div className="sj-modal-sub" style={{ color: '#e5d5be', fontSize: '0.9rem', marginTop: '0.2rem' }}>
+                    จังหวัด{activeModal.temple.province} · ภาค{activeModal.temple.region} · ช่องที่ {activeModal.temple.tileId}
+                  </div>
+                ),
+                children: (
+                  <>
+                    <div style={{ textAlign: 'left', lineHeight: 1.6, fontSize: '0.95rem', padding: '0 4px' }}>
+                      <p className="sj-modal-wish" style={{ margin: '0.4rem 0' }}>
+                        <strong style={{ color: '#ffd700' }}>คติมงคล:</strong> {activeModal.temple.wish}
+                      </p>
+                      <p className="sj-modal-blessing" style={{ margin: '0.4rem 0', color: '#e5d5be' }}>
+                        <strong style={{ color: '#ffd700' }}>คำอำนวยพร:</strong> {activeModal.temple.blessing}
+                      </p>
+                    </div>
+
+                    <div style={{ marginTop: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 4px 0', borderTop: '1px solid rgba(213, 166, 75, 0.25)' }}>
+                      <span style={{ color: '#c4ad8c' }}>สถานะการสักการะ:</span>
+                      <strong style={{ color: state.visited.includes(activeModal.temple.id) ? '#ffd700' : '#f59e0b' }}>
+                        {state.visited.includes(activeModal.temple.id) ? '✅ สักการะแล้ว' : '⏳ รอการเดินทางไปถึง'}
+                      </strong>
+                    </div>
+                  </>
+                ),
+                footer: (
+                  <button
+                    type="button"
+                    className="btn gold full-width"
+                    style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}
+                    onClick={closeModal}
+                  >
+                    ปิดหน้าต่าง
+                  </button>
+                ),
+              });
+
+            case 'confirm_new_game':
+              return renderModalShell({
+                ariaLabel: 'ยืนยันเริ่มเกมใหม่',
+                emblem: '🎲',
+                emblemStyle: { fontSize: '2.4rem' },
+                title: 'เริ่มการเดินทางรอบใหม่',
+                footerStyle: { display: 'flex', gap: '10px', marginTop: '1rem' },
+                children: (
+                  <div className="modal-info-card">
+                    <p style={{ margin: 0, lineHeight: 1.6 }}>
+                      ต้องการเริ่มการเดินทางรอบใหม่ และสุ่มวัดชุดใหม่ 9 แห่งจาก 100 วัดใช่หรือไม่?
+                    </p>
+                  </div>
+                ),
+                footer: (
+                  <>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      style={{ flex: 1, padding: '0.7rem' }}
+                      onClick={closeModal}
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      type="button"
+                      className="btn gold"
+                      style={{ flex: 1, padding: '0.7rem' }}
+                      onClick={confirmStartNewGame}
+                    >
+                      สุ่มวัดชุดใหม่
+                    </button>
+                  </>
+                ),
+              });
+          }
+        })(),
+        document.body
       )}
-
-      {/* 5. Help Modal */}
-      {activeModal?.type === 'help' && (
-        <div
-          className="sj-overlay show"
-          role="dialog"
-          aria-modal="true"
-          aria-label="วิธีเล่นเกมมหามงคล 9 วัด"
-          onClick={() => setActiveModal(null)}
-        >
-          <div className="sj-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="modal-close-btn"
-              onClick={() => setActiveModal(null)}
-              aria-label="ปิดหน้าต่าง"
-            >
-              ✕
-            </button>
-
-            <div className="modal-sheet-header">
-              <div className="sj-modal-emblem" aria-hidden="true" style={{ fontSize: '2.5rem' }}>
-                📖
-              </div>
-              <h3 className="modal-title sj-modal-title">วิธีเล่นมหามงคล 9 วัด</h3>
-            </div>
-
-            <div className="modal-body-content">
-              <div className="modal-info-card">
-                <ol className="sj-help-list" style={{ paddingLeft: '1.2rem', lineHeight: 1.8, fontSize: '0.92rem' }}>
-                  <li>ระบบสุ่มวัด 9 แห่งจากฐานข้อมูล 100 วัดทั่วไทยในทุกการเริ่มเกมใหม่</li>
-                  <li>ทอยลูกเต๋า 1 ลูก เพื่อก้าวเดินบนกระดานทางบุญ 36 ช่อง</li>
-                  <li>ต้องหยุดสักการะวัดที่ยังไม่เคยไป ห้ามเดินข้าม เพื่อรับแต้มบุญ +20</li>
-                  <li>ช่องสีชมพูคือโบนัส สีเทาคืออุปสรรค สีเขียวคือเหตุการณ์พิเศษ</li>
-                  <li>เก็บของมงคล: ยันต์ป้องกันถอยหลัง, ระฆังทอยเพิ่ม, ดอกบัวล้างรอบพัก</li>
-                  <li>เมื่อสักการะครบ 9 วัด จะได้รับโบนัสปิดท้าย 150 แต้ม พร้อมฉลองสู่เส้นชัย!</li>
-                </ol>
-                <p className="sj-modal-disclaimer" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.6rem' }}>
-                  เกมนี้เป็นเกมจำลองทางวัฒนธรรมเพื่อความบันเทิงและสิริมงคล
-                </p>
-              </div>
-            </div>
-
-            <div className="modal-sheet-footer sj-modal-actions" style={{ marginTop: '1rem' }}>
-              <button
-                type="button"
-                className="btn gold full-width"
-                style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}
-                onClick={() => setActiveModal(null)}
-              >
-                เข้าใจแล้ว
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 6. Temple Details Inspection Modal */}
-      {activeModal?.type === 'temple_detail' && (
-        <div
-          className="sj-overlay show"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`ข้อมูล ${activeModal.temple.name}`}
-          onClick={() => setActiveModal(null)}
-        >
-          <div className="sj-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="modal-close-btn"
-              onClick={() => setActiveModal(null)}
-              aria-label="ปิดหน้าต่าง"
-            >
-              ✕
-            </button>
-
-            <div className="modal-sheet-header">
-              <div className="sj-modal-emblem" aria-hidden="true" style={{ fontSize: '2.5rem' }}>
-                🏯
-              </div>
-              <h3 className="modal-title sj-modal-title" style={{ color: '#ffd700' }}>{activeModal.temple.name}</h3>
-              <div className="sj-modal-sub" style={{ color: '#e5d5be', fontSize: '0.9rem', marginTop: '0.2rem' }}>
-                จังหวัด{activeModal.temple.province} · ภาค{activeModal.temple.region} · ช่องที่ {activeModal.temple.tileId}
-              </div>
-            </div>
-
-            <div className="modal-body-content" style={{ marginTop: '0.6rem' }}>
-              <div style={{ textAlign: 'left', lineHeight: 1.6, fontSize: '0.95rem', padding: '0 4px' }}>
-                <p className="sj-modal-wish" style={{ margin: '0.4rem 0' }}>
-                  <strong style={{ color: '#ffd700' }}>คติมงคล:</strong> {activeModal.temple.wish}
-                </p>
-                <p className="sj-modal-blessing" style={{ margin: '0.4rem 0', color: '#e5d5be' }}>
-                  <strong style={{ color: '#ffd700' }}>คำอำนวยพร:</strong> {activeModal.temple.blessing}
-                </p>
-              </div>
-
-              <div style={{ marginTop: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 4px 0', borderTop: '1px solid rgba(213, 166, 75, 0.25)' }}>
-                <span style={{ color: '#c4ad8c' }}>สถานะการสักการะ:</span>
-                <strong style={{ color: state.visited.includes(activeModal.temple.id) ? '#ffd700' : '#f59e0b' }}>
-                  {state.visited.includes(activeModal.temple.id) ? '✅ สักการะแล้ว' : '⏳ รอการเดินทางไปถึง'}
-                </strong>
-              </div>
-            </div>
-
-            <div className="modal-sheet-footer sj-modal-actions" style={{ marginTop: '1rem' }}>
-              <button
-                type="button"
-                className="btn gold full-width"
-                style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}
-                onClick={() => setActiveModal(null)}
-              >
-                ปิดหน้าต่าง
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* 7. Confirm New Game Modal */}
-      {activeModal?.type === 'confirm_new_game' && (
-        <div
-          className="sj-overlay show"
-          role="dialog"
-          aria-modal="true"
-          aria-label="ยืนยันเริ่มเกมใหม่"
-          onClick={() => setActiveModal(null)}
-        >
-          <div className="sj-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="modal-close-btn"
-              onClick={() => setActiveModal(null)}
-              aria-label="ปิดหน้าต่าง"
-            >
-              ✕
-            </button>
-
-            <div className="modal-sheet-header">
-              <div className="sj-modal-emblem" aria-hidden="true" style={{ fontSize: '2.4rem' }}>
-                🎲
-              </div>
-              <h3 className="modal-title sj-modal-title">เริ่มการเดินทางรอบใหม่</h3>
-            </div>
-
-            <div className="modal-body-content">
-              <div className="modal-info-card">
-                <p style={{ margin: 0, lineHeight: 1.6 }}>
-                  ต้องการเริ่มการเดินทางรอบใหม่ และสุ่มวัดชุดใหม่ 9 แห่งจาก 100 วัดใช่หรือไม่?
-                </p>
-              </div>
-            </div>
-
-            <div className="modal-sheet-footer sj-modal-actions" style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
-              <button
-                type="button"
-                className="btn secondary"
-                style={{ flex: 1, padding: '0.7rem' }}
-                onClick={() => setActiveModal(null)}
-              >
-                ยกเลิก
-              </button>
-              <button
-                type="button"
-                className="btn gold"
-                style={{ flex: 1, padding: '0.7rem' }}
-                onClick={confirmStartNewGame}
-              >
-                สุ่มวัดชุดใหม่
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>,
-    document.body
-  )}
     </div>
   );
 };

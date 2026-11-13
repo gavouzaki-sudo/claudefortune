@@ -501,21 +501,25 @@ export function getKalaYogaForYear(inputYear: number): {
 }
 
 // Maha Thaksa Relationship Calculation (คำนวณทักษาปกรณ์เปรียบเทียบวันเกิดกับวันในปฏิทิน)
+function buildKalakiniRelation(labelTh: string): ThaksaRelation {
+  return {
+    relation: 'kalakini',
+    nameTh: 'กาลกิณี',
+    isKalakini: true,
+    isFavorable: false,
+    scoreBonus: -100,
+    badgeText: '⚠️ วันกาลกิณี (ควรหลีกเลี่ยง)',
+    badgeStyle: 'bad',
+    advice: `เป็นวันกาลกิณีของคนเกิด${labelTh} ตามหลักมหาทักษาโบราณ ควรหลีกเลี่ยงการจัดพิธีมงคล ออกรถ แต่งงาน หรือขึ้นบ้านใหม่`,
+  };
+}
+
 export function getThaksaRelation(birthDayId: BirthDayId, dayOfWeek: number): ThaksaRelation {
   const birthOption = BIRTH_DAYS.find((b) => b.id === birthDayId);
 
   // 1. Direct authoritative check for Kalakini day
   if (birthOption && birthOption.kalakiniDayOfWeek === dayOfWeek) {
-    return {
-      relation: 'kalakini',
-      nameTh: 'กาลกิณี',
-      isKalakini: true,
-      isFavorable: false,
-      scoreBonus: -100,
-      badgeText: '⚠️ วันกาลกิณี (ควรหลีกเลี่ยง)',
-      badgeStyle: 'bad',
-      advice: `เป็นวันกาลกิณีของคนเกิด${birthOption.labelTh} ตามหลักมหาทักษาโบราณ ควรหลีกเลี่ยงการจัดพิธีมงคล ออกรถ แต่งงาน หรือขึ้นบ้านใหม่`,
-    };
+    return buildKalakiniRelation(birthOption.labelTh);
   }
 
   // 2. Standard Thaksa sequence: บริวาร, อายุ, เดช, ศรี, มูละ, อุตสาหะ, มนตรี, กาลกิณี
@@ -624,16 +628,7 @@ export function getThaksaRelation(birthDayId: BirthDayId, dayOfWeek: number): Th
       };
     case 7:
     default:
-      return {
-        relation: 'kalakini',
-        nameTh: 'กาลกิณี',
-        isKalakini: true,
-        isFavorable: false,
-        scoreBonus: -100,
-        badgeText: '⚠️ วันกาลกิณี (ควรหลีกเลี่ยง)',
-        badgeStyle: 'bad',
-        advice: `เป็นวันกาลกิณีของคนเกิด${birthOption?.labelTh ?? ''} ตามหลักมหาทักษาโบราณ ควรหลีกเลี่ยงการจัดพิธีมงคล ออกรถ แต่งงาน หรือขึ้นบ้านใหม่`,
-      };
+      return buildKalakiniRelation(birthOption?.labelTh ?? '');
   }
 }
 
