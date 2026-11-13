@@ -975,6 +975,19 @@ button:focus-visible,
   animation: pop 0.25s ease-out;
 }
 
+.fireworks {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9998;
+  display: none;
+}
+.fireworks.is-active {
+  display: block;
+}
+
 /* --------------------------------------------------------------------------
    10. PWA OFFLINE INDICATOR & IOS INSTALL GUIDE MODAL
    -------------------------------------------------------------------------- */

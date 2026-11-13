@@ -264,7 +264,7 @@ export const App: React.FC = () => {
                   onClick={handleOpenFestival}
                   title="ไหว้พระขอพร มหามงคล 9 วัด ทั่วไทย"
                 >
-                  <span>ไหว้พระขอพร</span>
+                  <span>ไหว้พระ</span>
                 </button>
 
                 <button
@@ -273,7 +273,7 @@ export const App: React.FC = () => {
                   onClick={handleOpenAuspicious}
                   title="ปฏิทินวันมงคลและฤกษ์งามยามดี"
                 >
-                  <span>ฤกษ์มงคล</span>
+                  <span>ดูฤกษ์</span>
                 </button>
 
                 <button
@@ -291,7 +291,7 @@ export const App: React.FC = () => {
                   onClick={() => setIsJournalOpen(true)}
                   title="สมุดดวงชะตา"
                 >
-                  <span>สมุดดวง</span>
+                  <span>ดวง</span>
                   {journalCount > 0 && <span className="header-journal-badge">{journalCount}</span>}
                 </button>
               </div>

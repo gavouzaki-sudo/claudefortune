@@ -1,4 +1,4 @@
-import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import { getRandomArrayItem } from '../utils/formatters';
 
 export interface FireworksHandle {
@@ -8,6 +8,7 @@ export interface FireworksHandle {
 export const Fireworks = forwardRef<FireworksHandle>((_, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fwRunningRef = useRef(false);
+  const [isActive, setIsActive] = useState(false);
 
   const launch = (bursts = 7) => {
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
@@ -21,7 +22,8 @@ export const Fireworks = forwardRef<FireworksHandle>((_, ref) => {
     if (!fwRunningRef.current) {
       cv.width = window.innerWidth * dpr;
       cv.height = window.innerHeight * dpr;
-      ctx.scale(dpr, dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      setIsActive(true);
     }
 
     const cs = getComputedStyle(document.body);
@@ -93,6 +95,7 @@ export const Fireworks = forwardRef<FireworksHandle>((_, ref) => {
       } else {
         ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
         fwRunningRef.current = false;
+        setIsActive(false);
       }
     };
 
@@ -111,11 +114,18 @@ export const Fireworks = forwardRef<FireworksHandle>((_, ref) => {
       cv.width = window.innerWidth * dpr;
       cv.height = window.innerHeight * dpr;
       const ctx = cv.getContext('2d');
-      ctx?.scale(dpr, dpr);
+      ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  return <canvas id="fireworks" ref={canvasRef} className="fireworks" aria-hidden="true" />;
+  return (
+    <canvas
+      id="fireworks"
+      ref={canvasRef}
+      className={`fireworks ${isActive ? 'is-active' : ''}`}
+      aria-hidden="true"
+    />
+  );
 });

@@ -355,8 +355,8 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
             ))}
           </div>
 
-          <div className="prophecy-actions-footer">
-            {onOpenCard && (
+          {onOpenCard && (
+            <div className="prophecy-actions-footer">
               <button
                 type="button"
                 className="btn gold btn-view-lucky-card"
@@ -365,23 +365,8 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
               >
                 <span>🎴 บันทึก&แชร์</span>
               </button>
-            )}
-            <button
-              type="button"
-              className="btn ghost btn-reshake-prophecy"
-              onClick={handleResetToShake}
-            >
-              <span>🔄 เซียมซีใบใหม่</span>
-            </button>
-            <button
-              type="button"
-              className="btn ghost btn-retest-puapoi"
-              onClick={() => setStep('puapoi')}
-              title="กลับไปหน้าเสี่ยงทายไม้ปัวปวย"
-            >
-              <span>🎲 โยนไม้ปัวปวยอีกครั้ง</span>
-            </button>
-          </div>
+            </div>
+          )}
         </article>
       )}
     </section>
