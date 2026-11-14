@@ -6,6 +6,10 @@ import {
   type LotteryDisplayData,
   type CheckTicketResult,
 } from '../utils/lotteryApi';
+import {
+  LOTTERY_DRAW_DAY_OPTIONS,
+  getActualDrawDateIso,
+} from '../data/postponedLotteryDraws';
 import { logger } from '../utils/logger';
 
 const THAI_MONTHS_SHORT = [
@@ -27,12 +31,15 @@ function getRecentDrawPresets(now: Date = new Date()): DrawPreset[] {
   let day = now.getDate() >= 16 ? 16 : 1;
 
   for (let i = 0; i < 4; i++) {
-    const yearBe = yearCe + 543;
+    const nominalIso = `${yearCe}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const actualIso = getActualDrawDateIso(nominalIso);
+    const [actY, actM, actD] = actualIso.split('-').map((v) => parseInt(v, 10));
+    const actYearBe = actY + 543;
     presets.push({
-      day: String(day).padStart(2, '0'),
-      month: String(month).padStart(2, '0'),
-      yearBe: String(yearBe),
-      label: `${day} ${THAI_MONTHS_SHORT[month - 1]} ${String(yearBe).slice(-2)}`,
+      day: String(actD).padStart(2, '0'),
+      month: String(actM).padStart(2, '0'),
+      yearBe: String(actYearBe),
+      label: `${actD} ${THAI_MONTHS_SHORT[actM - 1]} ${String(actYearBe).slice(-2)}`,
     });
     if (day === 16) {
       day = 1;
@@ -202,6 +209,9 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
           <p className="lottery-date-text">
             งวดประจำวันที่ {loading ? 'กำลังโหลด...' : lotteryData?.formattedThaiDate || 'รออัปเดตข้อมูล'}
           </p>
+          {!loading && lotteryData?.postponedNote && (
+            <p className="lottery-postponed-note">📅 {lotteryData.postponedNote}</p>
+          )}
         </div>
 
         {/* Date Selector Popover (When activated) */}
@@ -240,8 +250,11 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
                 className="compact-date-select"
                 aria-label="เลือกวันที่"
               >
-                <option value="01">01</option>
-                <option value="16">16</option>
+                {LOTTERY_DRAW_DAY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               <select
                 value={selectedMonth}

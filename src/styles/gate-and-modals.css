@@ -1621,6 +1621,13 @@
   font-family: var(--font-body);
   letter-spacing: 0.01em;
 }
+.lottery-postponed-note {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #d4f7dc;
+  margin: 0.15rem 0 0;
+  line-height: 1.25;
+}
 
 /* Compact Date Drawer Popover */
 .lottery-compact-date-popover {

@@ -4,6 +4,12 @@
 import { logger } from './logger';
 import { safeStorage } from './storage';
 import { THAI_MONTHS } from '../data/auspiciousCalendarData';
+import {
+  resolvePostponedDraw,
+  formatPostponedNote,
+  formatShortThaiDate,
+  shiftIsoDate,
+} from '../data/postponedLotteryDraws';
 
 const DEFAULT_CF_WORKER_URL = 'https://mlre-glo-proxy.gavouzaki.workers.dev';
 const DEFAULT_CF_PROJECT_ID = 'MLRE';
@@ -53,6 +59,7 @@ export interface LotteryDisplayData {
   formattedThaiDate: string; // "1 พฤศจิกายน 2569"
   period?: number[];
   pdfUrl?: string;
+  postponedNote?: string;
   isFallback?: boolean;
 }
 
@@ -207,6 +214,11 @@ function normalizeApiResponse(rawResponse: any): LotteryDisplayData {
   const last2 = respData?.last2?.number?.[0]?.value || '85';
   const last2Price = formatPrice(respData?.last2?.price, '2,000');
 
+  const postponedEntry = resolvePostponedDraw(dateStr);
+  const postponedNote = postponedEntry && postponedEntry.actualDate === dateStr
+    ? formatPostponedNote(postponedEntry)
+    : undefined;
+
   return {
     first,
     firstPrice,
@@ -220,6 +232,7 @@ function normalizeApiResponse(rawResponse: any): LotteryDisplayData {
     formattedThaiDate,
     period,
     pdfUrl,
+    postponedNote,
     isFallback: false,
   };
 }
@@ -371,12 +384,18 @@ export async function getLotteryResultByDate(
   const parsedYear = typeof yearInput === 'number' ? yearInput : parseInt(String(yearInput).trim(), 10) || defaultYearBE;
   // If user entered Buddhist Era (B.E. >= 2400 e.g. 2569, 2567), convert to C.E. (e.g. 2026, 2024)
   const yearCe = parsedYear >= 2400 ? parsedYear - 543 : parsedYear;
-  const yearBe = parsedYear >= 2400 ? parsedYear : parsedYear + 543;
+
+  const requestedIso = `${yearCe}-${month.padStart(2, '0')}-${date.padStart(2, '0')}`;
+  const postponedEntry = resolvePostponedDraw(requestedIso);
+  const effectiveIso = postponedEntry ? postponedEntry.actualDate : requestedIso;
+  const [effYearStr, effMonthStr, effDayStr] = effectiveIso.split('-');
+  const effectiveYearCe = parseInt(effYearStr, 10) || yearCe;
+  const effectiveYearBe = effectiveYearCe + 543;
 
   const payload = {
-    date: date.padStart(2, '0'),
-    month: month.padStart(2, '0'),
-    year: String(yearCe),
+    date: effDayStr,
+    month: effMonthStr,
+    year: String(effectiveYearCe),
   };
 
   const isBrowser = typeof window !== 'undefined';
@@ -412,7 +431,7 @@ export async function getLotteryResultByDate(
     return outcome.data;
   }
 
-  const lookupKey = `${yearCe}-${payload.month}-${payload.date}`;
+  const lookupKey = effectiveIso;
   const cachedDraw = getCachedDrawByDate(lookupKey);
   if (cachedDraw) {
     return cachedDraw;
@@ -421,16 +440,45 @@ export async function getLotteryResultByDate(
     return { ...KNOWN_BACKUP_DRAWS[lookupKey] };
   }
 
+  // Auto-probe nearby dates (+1, -1, +2, -2 days) for unrecorded future postponed draws
+  // Only runs when the API responded cleanly with emptyDraw and the requested date is <= today.
+  const todayIso = getTodayIsoDate();
+  if (!postponedEntry && outcome.emptyDraw && requestedIso <= todayIso) {
+    for (const offset of [1, -1, 2, -2]) {
+      const candidateIso = shiftIsoDate(requestedIso, offset);
+      if (candidateIso > todayIso) continue;
+      const [candY, candM, candD] = candidateIso.split('-');
+      const probeOutcome = await fetchLotteryEndpoints(
+        endpoints,
+        { date: candD, month: candM, year: candY },
+        (json) => Boolean(json.response?.result),
+        'Could not probe nearby draw'
+      );
+      if (probeOutcome.data) {
+        const enriched: LotteryDisplayData = {
+          ...probeOutcome.data,
+          postponedNote:
+            probeOutcome.data.postponedNote ||
+            `พบผลรางวัลในวันใกล้เคียง (เลื่อนจาก ${formatShortThaiDate(requestedIso)})`,
+        };
+        cacheLotteryDraw(enriched, false);
+        return enriched;
+      }
+    }
+  }
+
+  const postponedSuffix = postponedEntry ? ` (${formatPostponedNote(postponedEntry)})` : '';
+
   if (outcome.emptyDraw) {
     throw new Error(
-      `ยังไม่มีข้อมูลผลการออกรางวัลของงวดวันที่ ${payload.date}/${payload.month}/${yearBe} (อาจยังไม่ถึงกำหนดวันออกสลาก หรือไม่มีการออกรางวัลในวันที่เลือก)`
+      `ยังไม่มีข้อมูลผลการออกรางวัลของงวดวันที่ ${payload.date}/${payload.month}/${effectiveYearBe}${postponedSuffix} (อาจยังไม่ถึงกำหนดวันออกสลาก หรือไม่มีการออกรางวัลในวันที่เลือก)`
     );
   }
 
   const detail = outcome.diagnostic
     ? ` [${outcome.diagnostic}]`
     : ' (โปรดตรวจสอบการเชื่อมต่อเครือข่าย หรือเซิร์ฟเวอร์กองสลากฯ)';
-  throw new Error(`ไม่พบข้อมูลผลการออกรางวัลของงวดวันที่ ${payload.date}/${payload.month}/${yearBe}${detail}`);
+  throw new Error(`ไม่พบข้อมูลผลการออกรางวัลของงวดวันที่ ${payload.date}/${payload.month}/${effectiveYearBe}${postponedSuffix}${detail}`);
 }
 
 /**

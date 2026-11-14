@@ -544,3 +544,51 @@ test('Dynamic year labels, drawRoundedRect fallback, and shared AudioContext sin
   assert.equal(await getSharedAudioContext(), null);
 });
 
+test('Thai Lottery: postponed draw schedule (2559–2569) resolves normal and actual dates', async () => {
+  const {
+    POSTPONED_LOTTERY_DRAWS,
+    LOTTERY_DRAW_DAY_OPTIONS,
+    resolvePostponedDraw,
+    getActualDrawDateIso,
+    formatPostponedNote,
+    shiftIsoDate,
+  } = await import('../src/data/postponedLotteryDraws');
+
+  assert.ok(POSTPONED_LOTTERY_DRAWS.length >= 34);
+  assert.equal(LOTTERY_DRAW_DAY_OPTIONS.length, 31);
+  assert.equal(LOTTERY_DRAW_DAY_OPTIONS[0].value, '01');
+  assert.equal(LOTTERY_DRAW_DAY_OPTIONS[15].value, '16');
+  assert.equal(LOTTERY_DRAW_DAY_OPTIONS[30].value, '31');
+
+  // UTC-safe date shifting across month/year boundaries
+  assert.equal(shiftIsoDate('2027-01-01', -2), '2026-12-30');
+  assert.equal(shiftIsoDate('2026-08-01', -1), '2026-07-31');
+  assert.equal(shiftIsoDate('2026-01-16', 1), '2026-01-17');
+
+  // Teacher's Day 2569 (16 Jan -> 17 Jan)
+  assert.equal(getActualDrawDateIso('2026-01-16'), '2026-01-17');
+  assert.equal(getActualDrawDateIso('2026-01-17'), '2026-01-17');
+  // Labor Day 2569 (1 May -> 2 May)
+  assert.equal(getActualDrawDateIso('2026-05-01'), '2026-05-02');
+  // New Year 2569 & 2570 (1 Jan -> 2 Jan)
+  assert.equal(getActualDrawDateIso('2026-01-01'), '2026-01-02');
+  assert.equal(getActualDrawDateIso('2027-01-01'), '2027-01-02');
+  // Royal Cremation Ceremony Dec 2569 (16 Dec -> 17 Dec)
+  assert.equal(getActualDrawDateIso('2026-12-16'), '2026-12-17');
+  // COVID-19 2563 (1 Apr -> 16 May)
+  assert.equal(getActualDrawDateIso('2020-04-01'), '2020-05-16');
+  // Year-end 2567 canceled Dec 30 -> Jan 2, 2568
+  assert.equal(getActualDrawDateIso('2024-12-30'), '2025-01-02');
+  // Asalha Puja 2562 (16 Jul -> 15 Jul) and 2566 (1 Aug -> 31 Jul)
+  assert.equal(getActualDrawDateIso('2019-07-16'), '2019-07-15');
+  assert.equal(getActualDrawDateIso('2023-08-01'), '2023-07-31');
+  // Makha Bucha 2561 (1 Mar -> 2 Mar)
+  assert.equal(getActualDrawDateIso('2018-03-01'), '2018-03-02');
+  // Normal unaffected draw remains unchanged
+  assert.equal(getActualDrawDateIso('2026-11-01'), '2026-11-01');
+
+  const decEntry = resolvePostponedDraw('2026-12-17');
+  assert.ok(decEntry);
+  assert.match(formatPostponedNote(decEntry), /16 ธันวาคม 2569/);
+  assert.match(formatPostponedNote(decEntry), /พระราชพิธี/);
+});
