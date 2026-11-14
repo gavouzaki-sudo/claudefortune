@@ -19,12 +19,17 @@ interface LotteryEndpointConfig {
 
 function getWorkerConfig(): { baseUrl: string; projectId: string; accessToken: string } | null {
   const env = (typeof import.meta !== 'undefined' ? (import.meta as unknown as { env?: Record<string, string | undefined> }).env : undefined) || {};
-  const rawUrl = (env.VITE_GLO_PROXY_URL ?? DEFAULT_CF_WORKER_URL).trim();
+  const rawUrl = (env.VITE_GLO_PROXY_URL || '').trim() || DEFAULT_CF_WORKER_URL;
   if (!rawUrl) return null;
+  const withProtocol = /^https?:\/\//i.test(rawUrl)
+    ? rawUrl
+    : rawUrl.startsWith('/')
+      ? rawUrl
+      : `https://${rawUrl}`;
   return {
-    baseUrl: rawUrl.replace(/\/+$/, ''),
-    projectId: (env.VITE_GLO_PROXY_PROJECT_ID ?? DEFAULT_CF_PROJECT_ID).trim(),
-    accessToken: (env.VITE_GLO_PROXY_TOKEN ?? DEFAULT_CF_ACCESS_TOKEN).trim(),
+    baseUrl: withProtocol.replace(/\/+$/, ''),
+    projectId: (env.VITE_GLO_PROXY_PROJECT_ID || '').trim() || DEFAULT_CF_PROJECT_ID,
+    accessToken: (env.VITE_GLO_PROXY_TOKEN || '').trim() || DEFAULT_CF_ACCESS_TOKEN,
   };
 }
 
@@ -219,53 +224,89 @@ function normalizeApiResponse(rawResponse: any): LotteryDisplayData {
   };
 }
 
+interface FetchEndpointsOutcome {
+  data: LotteryDisplayData | null;
+  diagnostic?: string;
+  emptyDraw?: boolean;
+}
+
 async function fetchLotteryEndpoints(
   endpoints: LotteryEndpointConfig[],
   body: Record<string, unknown>,
   isValidPayload: (json: any) => boolean,
   errorLabel: string
-): Promise<LotteryDisplayData | null> {
+): Promise<FetchEndpointsOutcome> {
+  let lastDiagnostic: string | undefined;
+  let sawEmptyDraw = false;
+
   for (const endpoint of endpoints) {
     try {
       const res = await fetch(endpoint.url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'application/json',
           ...endpoint.headers,
         },
         body: JSON.stringify(body),
       });
 
-      if (res.ok) {
-        const contentType = (res.headers.get('content-type') || '').toLowerCase();
-        // Guard against static hosting / SPA fallback returning index.html
-        if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
-          continue;
-        }
-        const text = await res.text();
-        if (text.trim().startsWith('<')) {
-          continue;
-        }
+      const contentType = (res.headers.get('content-type') || '').toLowerCase();
+      // Guard against static hosting / SPA fallback returning index.html
+      if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
+        continue;
+      }
+
+      const text = await res.text();
+      if (text.trim().startsWith('<')) {
+        continue;
+      }
+
+      if (!res.ok) {
         try {
-          const parsed = JSON.parse(text);
-          // Unwrap Cloudflare Worker proxy envelope { ok: true, data: <GLO response> }
-          const json =
-            parsed && typeof parsed === 'object' && parsed.ok === true && parsed.data && !parsed.response
-              ? parsed.data
-              : parsed;
-          if (json?.status && isValidPayload(json)) {
-            return normalizeApiResponse(json);
+          const errJson = JSON.parse(text);
+          if (errJson?.error) {
+            const originInfo =
+              res.status === 403 && typeof window !== 'undefined'
+                ? ` — Origin ปัจจุบันคือ ${window.location.origin}`
+                : '';
+            lastDiagnostic = `Proxy HTTP ${res.status}: ${errJson.error}${originInfo}`;
+            logger.warn(`${errorLabel} (${endpoint.url}): ${lastDiagnostic}`);
           }
         } catch {
-          continue;
+          lastDiagnostic = `HTTP ${res.status}`;
         }
+        continue;
       }
-    } catch (err) {
+
+      try {
+        const parsed = JSON.parse(text);
+        // Unwrap Cloudflare Worker proxy envelope { ok: true, data: <GLO response> }
+        const json =
+          parsed && typeof parsed === 'object' && parsed.ok === true && parsed.data && !parsed.response
+            ? parsed.data
+            : parsed;
+        if (json?.status && isValidPayload(json)) {
+          return { data: normalizeApiResponse(json) };
+        }
+        if (json?.status === true && !isValidPayload(json)) {
+          sawEmptyDraw = true;
+          break;
+        }
+        if (parsed && typeof parsed === 'object' && parsed.error) {
+          lastDiagnostic = String(parsed.error);
+        }
+      } catch {
+        continue;
+      }
+    } catch (err: any) {
+      const originInfo = typeof window !== 'undefined' ? ` (Origin: ${window.location.origin})` : '';
+      if (endpoint.url.startsWith('http')) {
+        lastDiagnostic = `เชื่อมต่อ Proxy ไม่ได้${originInfo}`;
+      }
       logger.debug(`${errorLabel} from ${endpoint.url}:`, err);
     }
   }
-  return null;
+  return { data: null, diagnostic: lastDiagnostic, emptyDraw: sawEmptyDraw };
 }
 
 /**
@@ -295,15 +336,15 @@ export async function getLatestLotteryResult(): Promise<LotteryDisplayData> {
     endpoints.push({ url: 'https://www.glo.or.th/api/lottery/getLatestLottery' });
   }
 
-  const result = await fetchLotteryEndpoints(
+  const outcome = await fetchLotteryEndpoints(
     endpoints,
     {},
     (json) => Boolean(json.response),
     'Could not fetch lottery'
   );
-  if (result) {
-    cacheLotteryDraw(result, true);
-    return result;
+  if (outcome.data) {
+    cacheLotteryDraw(outcome.data, true);
+    return outcome.data;
   }
 
   const cachedLatest = getCachedLatestDraw();
@@ -360,15 +401,15 @@ export async function getLotteryResultByDate(
     endpoints.push({ url: 'https://www.glo.or.th/api/checking/getLotteryResult' });
   }
 
-  const result = await fetchLotteryEndpoints(
+  const outcome = await fetchLotteryEndpoints(
     endpoints,
     payload,
     (json) => Boolean(json.response?.result),
     'Could not fetch draw by date'
   );
-  if (result) {
-    cacheLotteryDraw(result, false);
-    return result;
+  if (outcome.data) {
+    cacheLotteryDraw(outcome.data, false);
+    return outcome.data;
   }
 
   const lookupKey = `${yearCe}-${payload.month}-${payload.date}`;
@@ -380,7 +421,16 @@ export async function getLotteryResultByDate(
     return { ...KNOWN_BACKUP_DRAWS[lookupKey] };
   }
 
-  throw new Error(`ไม่พบข้อมูลผลการออกรางวัลของงวดวันที่ ${payload.date}/${payload.month}/${yearBe} (โปรดตรวจสอบการเชื่อมต่อเครือข่าย หรือเซิร์ฟเวอร์กองสลากฯ)`);
+  if (outcome.emptyDraw) {
+    throw new Error(
+      `ยังไม่มีข้อมูลผลการออกรางวัลของงวดวันที่ ${payload.date}/${payload.month}/${yearBe} (อาจยังไม่ถึงกำหนดวันออกสลาก หรือไม่มีการออกรางวัลในวันที่เลือก)`
+    );
+  }
+
+  const detail = outcome.diagnostic
+    ? ` [${outcome.diagnostic}]`
+    : ' (โปรดตรวจสอบการเชื่อมต่อเครือข่าย หรือเซิร์ฟเวอร์กองสลากฯ)';
+  throw new Error(`ไม่พบข้อมูลผลการออกรางวัลของงวดวันที่ ${payload.date}/${payload.month}/${yearBe}${detail}`);
 }
 
 /**
