@@ -39,6 +39,7 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
   const [breathPhase, setBreathPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale');
   const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
   const [timerRemaining, setTimerRemaining] = useState<number>(0);
+  const [timerRunId, setTimerRunId] = useState<number>(0);
   const [quoteIndex, setQuoteIndex] = useState<number>(0);
 
   const timerRef = useRef<number | null>(null);
@@ -77,28 +78,31 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
   useEffect(() => {
     if (timerSeconds === null) return;
 
-    setTimerRemaining(timerSeconds);
+    let remaining = timerSeconds;
+    setTimerRemaining(remaining);
     if (timerRef.current) clearInterval(timerRef.current);
 
     timerRef.current = window.setInterval(() => {
-      setTimerRemaining((prev) => {
-        if (prev <= 1) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          timerRef.current = null;
-          setTimerSeconds(null);
-          // Play temple bell completion tone
-          spiritualSpeechEngine.playTempleChime();
-          onToast('🔔 สิ้นสุดเวลาฝึกสมาธิ ขออนุโมทนาในกุศลจิต');
-          return 0;
-        }
-        return prev - 1;
-      });
+      remaining -= 1;
+      if (remaining <= 0) {
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
+        setTimerRemaining(0);
+        setTimerSeconds(null);
+        spiritualSpeechEngine.playTempleChime();
+        onToast('🔔 สิ้นสุดเวลาฝึกสมาธิ ขออนุโมทนาในกุศลจิต');
+        return;
+      }
+      setTimerRemaining(remaining);
     }, 1000);
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
-  }, [timerSeconds, onToast]);
+  }, [timerSeconds, timerRunId, onToast]);
 
   // Audio coordination: Ensure only ONE sound plays to prevent audio clashes
   const handleSelectSoundscape = (type: SoundscapeType) => {
@@ -263,7 +267,10 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
               key={sec}
               type="button"
               className={`btn-timer-pill ${timerSeconds === sec ? 'active' : ''}`}
-              onClick={() => setTimerSeconds(sec)}
+              onClick={() => {
+                setTimerSeconds(sec);
+                setTimerRunId((id) => id + 1);
+              }}
             >
               {sec / 60} นาที
             </button>

@@ -51,6 +51,8 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
   const goldSparklesRef = useRef<GoldSparkle[]>([]);
   const flameTimeRef = useRef<number>(0);
   const animationFrameIdRef = useRef<number | null>(null);
+  const propsRef = useRef({ burnLevel, luckyNumber, category, isBurning });
+  propsRef.current = { burnLevel, luckyNumber, category, isBurning };
 
   // Responsive dimensions (reduced height 50%)
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({
@@ -98,6 +100,9 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
         wobble: Math.random() * Math.PI * 2,
       });
     }
+    if (embers.length > 220) {
+      embers.splice(0, embers.length - 220);
+    }
   }, []);
 
   // Spawn extra celebratory golden sparkles from treasure pile
@@ -119,6 +124,9 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
         color: goldColors[Math.floor(Math.random() * goldColors.length)],
         twinklePhase: Math.random() * Math.PI * 2,
       });
+    }
+    if (sparkles.length > 220) {
+      sparkles.splice(0, sparkles.length - 220);
     }
   }, []);
 
@@ -297,9 +305,16 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
       ctx.save();
       ctx.scale(dpr, dpr);
 
+      const {
+        burnLevel: curTargetBurn,
+        luckyNumber: curLuckyNumber,
+        category: curCategory,
+        isBurning: curIsBurning,
+      } = propsRef.current;
+
       // Smooth interpolation towards target burn level
-      smoothBurnRef.current += (burnLevel - smoothBurnRef.current) * 0.055;
-      smoothIncenseRef.current += (burnLevel - smoothIncenseRef.current) * 0.045;
+      smoothBurnRef.current += (curTargetBurn - smoothBurnRef.current) * 0.055;
+      smoothIncenseRef.current += (curTargetBurn - smoothIncenseRef.current) * 0.045;
       flameTimeRef.current += 0.06;
       const ft = flameTimeRef.current;
       const curBurn = smoothBurnRef.current;
@@ -389,7 +404,7 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
         ctx.fill();
 
         // Spawn smoke particles continuously from glowing tip
-        if (Math.random() < 0.6) {
+        if (Math.random() < 0.6 && smokeParticlesRef.current.length < 180) {
           smokeParticlesRef.current.push({
             x: tipX + (Math.random() - 0.5) * 2,
             y: tipY,
@@ -519,9 +534,9 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
       ctx.fillStyle = curBurn >= 3 ? '#ffe57f' : '#ffab91';
       ctx.textAlign = 'center';
       ctx.fillText(
-        category === 0
+        curCategory === 0
           ? '✦ เลขท้าย 2 ตัวมงคล ✦'
-          : category === 1
+          : curCategory === 1
           ? '✦ เลขท้าย 3 ตัวมงคล ✦'
           : '✦ ยันต์ไฟเบิกเลขมงคล ✦',
         talisCx,
@@ -529,7 +544,7 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
       );
 
       // Render the Digits
-      const digits = Array.from(luckyNumber || (category === 1 ? '889' : '89'));
+      const digits = Array.from(curLuckyNumber || (curCategory === 1 ? '889' : '89'));
       const digitSpacing = talisW / (digits.length + 1);
 
       digits.forEach((digit, idx) => {
@@ -694,7 +709,7 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
             if (i === 0) ctx.moveTo(px, py);
             else ctx.lineTo(px, py);
 
-            if (Math.random() < (isBurning ? 0.45 : 0.18)) {
+            if (Math.random() < (curIsBurning ? 0.45 : 0.18) && emberParticlesRef.current.length < 220) {
               emberParticlesRef.current.push({
                 x: px + (Math.random() - 0.5) * 6,
                 y: py + (Math.random() - 0.5) * 4,
@@ -799,7 +814,7 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
       drawGoldIngot(goldCx, goldCy - 21, w < 440 ? 24 : 28, w < 440 ? 15 : 17, ft + 2.4);
 
       // 4E. Spawn Living Rising Gold Glitter Particles
-      if (Math.random() < 0.45) {
+      if (Math.random() < 0.45 && goldSparklesRef.current.length < 220) {
         goldSparklesRef.current.push({
           x: goldCx + (Math.random() - 0.5) * 32,
           y: goldCy - 6 - Math.random() * 20,
@@ -901,9 +916,10 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
       isRunning = false;
       if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
+        animationFrameIdRef.current = null;
       }
     };
-  }, [dimensions, burnLevel, luckyNumber, category, isBurning]);
+  }, [dimensions]);
 
   const burnPercent = Math.min(100, Math.round((burnLevel / 3) * 100));
 

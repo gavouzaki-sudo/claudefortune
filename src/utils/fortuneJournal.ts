@@ -2,7 +2,7 @@
 
 import { safeStorage } from './storage';
 import { logger } from './logger';
-import { formatThaiDate } from './formatters';
+import { formatThaiDateTime } from './formatters';
 
 export type FortuneType = 'stick' | 'tarot' | 'number' | 'remedy' | 'scan' | 'auspicious';
 
@@ -42,7 +42,7 @@ export function saveJournalEntry(
   entry: Omit<FortuneJournalEntry, 'id' | 'timestamp' | 'dateFormatted'>
 ): FortuneJournalEntry {
   const now = new Date();
-  const dateFormatted = formatThaiDate(now);
+  const dateFormatted = formatThaiDateTime(now);
 
   const fullEntry: FortuneJournalEntry = {
     ...entry,

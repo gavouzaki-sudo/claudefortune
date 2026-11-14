@@ -45,6 +45,23 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
   const lastPointerRef = useRef<[number, number]>([0, 0]);
   const isPointerDownRef = useRef(false);
   const resultRef = useRef<HTMLDivElement>(null);
+  const isMountedRef = useRef(true);
+  const timersRef = useRef<Set<number>>(new Set());
+
+  const clearTrackedTimers = useCallback(() => {
+    timersRef.current.forEach((id) => clearTimeout(id));
+    timersRef.current.clear();
+  }, []);
+
+  const waitMs = useCallback((ms: number) => {
+    return new Promise<boolean>((resolve) => {
+      const id = window.setTimeout(() => {
+        timersRef.current.delete(id);
+        resolve(isMountedRef.current);
+      }, ms);
+      timersRef.current.add(id);
+    });
+  }, []);
 
   const finishShake = useCallback(async () => {
     if (buttonIntervalRef.current) {
@@ -52,7 +69,8 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
       buttonIntervalRef.current = null;
     }
     setBusy(true);
-    await new Promise((r) => setTimeout(r, 450));
+    const aliveAfterShake = await waitMs(450);
+    if (!aliveAfterShake) return;
     setIsShaking(false);
 
     try {
@@ -61,26 +79,35 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
       setResult(res);
       setShowFallen(false);
 
-      setTimeout(() => {
-        setShowFallen(true);
+      const fallenId = window.setTimeout(() => {
+        timersRef.current.delete(fallenId);
+        if (isMountedRef.current) {
+          setShowFallen(true);
+        }
       }, 20);
+      timersRef.current.add(fallenId);
 
       const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-      await new Promise((r) => setTimeout(r, reduceMotion ? 100 : 750));
+      const aliveAfterFall = await waitMs(reduceMotion ? 100 : 750);
+      if (!aliveAfterFall) return;
 
       setStep('puapoi');
       setPuaPoiVerified(false);
       onToast(`✨ ไม้เซียมซีใบที่ ${res.stick} หล่นออกมาแล้ว! โปรดโยนไม้ปัวปวยขอยืนยัน`);
     } catch (err) {
       logger.error('Error drawing Siamese stick:', err);
-      onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
+      if (isMountedRef.current) {
+        onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
+      }
     } finally {
       shakeValueRef.current = 0;
       shakeRawRef.current = 0;
-      setShakeMeter(0);
-      setBusy(false);
+      if (isMountedRef.current) {
+        setShakeMeter(0);
+        setBusy(false);
+      }
     }
-  }, [bridge, onToast]);
+  }, [bridge, onToast, waitMs]);
 
   const addShake = useCallback(
     (amount: number) => {
@@ -122,7 +149,9 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       if (buttonIntervalRef.current) {
         clearInterval(buttonIntervalRef.current);
         buttonIntervalRef.current = null;
@@ -131,8 +160,9 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
         clearTimeout(shakeTimeoutRef.current);
         shakeTimeoutRef.current = null;
       }
+      clearTrackedTimers();
     };
-  }, []);
+  }, [clearTrackedTimers]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     isPointerDownRef.current = true;
@@ -168,6 +198,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
       clearInterval(buttonIntervalRef.current);
       buttonIntervalRef.current = null;
     }
+    clearTrackedTimers();
     spiritualSpeechEngine.stop();
     setStep('cylinder');
     setFallenNum(null);
@@ -203,9 +234,13 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
     setPuaPoiVerified(true);
     setProphecyMode(mode);
     setStep('prophecy');
-    setTimeout(() => {
-      resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const scrollId = window.setTimeout(() => {
+      timersRef.current.delete(scrollId);
+      if (isMountedRef.current) {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }, 50);
+    timersRef.current.add(scrollId);
 
     if (mode === 'listen' && result) {
       const fullText = formatStickReading(result);

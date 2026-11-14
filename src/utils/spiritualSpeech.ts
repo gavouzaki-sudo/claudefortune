@@ -135,6 +135,8 @@ class SpiritualSpeechEngine {
   private fallbackTicker: number | null = null;
   private activeUtterance: SpeechSynthesisUtterance | null = null;
   private fallbackInProgress = false;
+  private voiceListenerBound = false;
+  private playbackToken = 0;
 
   constructor() {
     this.initSynth();
@@ -169,13 +171,13 @@ class SpiritualSpeechEngine {
   }
 
   private initVoiceListeners(): void {
-    if (!this.synth) return;
+    if (!this.synth || this.voiceListenerBound) return;
+    this.voiceListenerBound = true;
     try {
-      if (this.synth.onvoiceschanged !== undefined) {
-        this.synth.onvoiceschanged = () => this.loadVoices();
-      }
       if (typeof this.synth.addEventListener === 'function') {
         this.synth.addEventListener('voiceschanged', () => this.loadVoices());
+      } else if (this.synth.onvoiceschanged !== undefined) {
+        this.synth.onvoiceschanged = () => this.loadVoices();
       }
     } catch {}
   }
@@ -516,6 +518,7 @@ class SpiritualSpeechEngine {
       }
 
       let endedOrErrored = false;
+      const token = this.playbackToken;
 
       const cleanupUtterance = () => {
         if (this.activeUtterance === utter) {
@@ -533,11 +536,12 @@ class SpiritualSpeechEngine {
         if (endedOrErrored) return;
         endedOrErrored = true;
         cleanupUtterance();
+        if (token !== this.playbackToken || !this.state.isSpeaking) return;
         this.fallbackInProgress = false;
 
-        if (!this.state.isSpeaking) return;
         const pauseDuration = preset.id === 'meditation' ? 550 : 350;
         this.speechTimeout = window.setTimeout(() => {
+          if (token !== this.playbackToken || !this.state.isSpeaking) return;
           this.speakLine(index + 1);
         }, pauseDuration);
       };
@@ -547,6 +551,7 @@ class SpiritualSpeechEngine {
         endedOrErrored = true;
         cleanupUtterance();
 
+        if (token !== this.playbackToken || !this.state.isSpeaking) return;
         const errType = (e as any)?.error || '';
         if (errType === 'canceled' || errType === 'interrupted') {
           // Benign cancellation (e.g. user paused or stopped)
@@ -618,6 +623,7 @@ class SpiritualSpeechEngine {
       } catch {}
 
       let hasHandledFailure = false;
+      const token = this.playbackToken;
 
       // Disarm previous listeners to prevent ghost onended / onerror triggers
       audio.onended = null;
@@ -641,7 +647,7 @@ class SpiritualSpeechEngine {
       };
 
       const handleStreamFailure = (reason?: unknown) => {
-        if (hasHandledFailure) return;
+        if (hasHandledFailure || token !== this.playbackToken || !this.state.isSpeaking) return;
         hasHandledFailure = true;
         audio.onended = null;
         audio.onerror = null;
@@ -677,19 +683,20 @@ class SpiritualSpeechEngine {
       };
 
       audio.onended = () => {
-        if (hasHandledFailure || !this.state.isSpeaking) return;
+        if (hasHandledFailure || token !== this.playbackToken || !this.state.isSpeaking) return;
         this.fallbackInProgress = false;
         const pauseDuration = preset.id === 'meditation' ? 450 : 250;
         this.speechTimeout = window.setTimeout(() => {
+          if (token !== this.playbackToken || !this.state.isSpeaking) return;
           this.speakWithAudioTTS(index + 1);
         }, pauseDuration);
       };
 
       audio.onloadedmetadata = () => {
-        applyPlaybackRate(targetSpeed);
+        if (token === this.playbackToken) applyPlaybackRate(targetSpeed);
       };
       audio.onplay = () => {
-        applyPlaybackRate(targetSpeed);
+        if (token === this.playbackToken) applyPlaybackRate(targetSpeed);
       };
 
       audio.src = ttsUrl;
@@ -807,6 +814,7 @@ class SpiritualSpeechEngine {
   }
 
   stop(): void {
+    this.playbackToken += 1;
     if (this.speechTimeout) {
       window.clearTimeout(this.speechTimeout);
       this.speechTimeout = null;
@@ -819,6 +827,10 @@ class SpiritualSpeechEngine {
 
     if (this.audioPlayer) {
       try {
+        this.audioPlayer.onended = null;
+        this.audioPlayer.onerror = null;
+        this.audioPlayer.onloadedmetadata = null;
+        this.audioPlayer.onplay = null;
         this.audioPlayer.pause();
         this.audioPlayer.removeAttribute('src');
         this.audioPlayer.load();

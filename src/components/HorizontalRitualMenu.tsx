@@ -38,6 +38,9 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
   const isNavigatingRef = useRef(false);
   const navigateTimeoutRef = useRef<number | null>(null);
   const scrollDebounceTimerRef = useRef<number | null>(null);
+  const initNavTimerRef = useRef<number | null>(null);
+  const externalNavTimerRef = useRef<number | null>(null);
+  const dragDetectTimerRef = useRef<number | null>(null);
 
   // Mouse drag-to-scroll state
   const isDraggingRef = useRef(false);
@@ -179,14 +182,22 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
         const targetPos = getCardCenterPos(el, target);
         el.scrollTo({ left: targetPos, behavior: 'auto' });
       }
-      setTimeout(() => {
+      if (initNavTimerRef.current) clearTimeout(initNavTimerRef.current);
+      initNavTimerRef.current = window.setTimeout(() => {
+        initNavTimerRef.current = null;
         isNavigatingRef.current = false;
       }, 300);
     };
 
     centerInit();
-    const timer = setTimeout(centerInit, 80);
-    return () => clearTimeout(timer);
+    const timer = window.setTimeout(centerInit, 80);
+    return () => {
+      clearTimeout(timer);
+      if (initNavTimerRef.current) {
+        clearTimeout(initNavTimerRef.current);
+        initNavTimerRef.current = null;
+      }
+    };
   }, [baseRituals]);
 
   // Keep centered on window/orientation resize
@@ -231,7 +242,9 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
           el.scrollTo({ left: targetPos, behavior: 'smooth' });
           activeCopyRef.current = 2;
         }
-        setTimeout(() => {
+        if (externalNavTimerRef.current) clearTimeout(externalNavTimerRef.current);
+        externalNavTimerRef.current = window.setTimeout(() => {
+          externalNavTimerRef.current = null;
           isNavigatingRef.current = false;
         }, 400);
       }
@@ -385,7 +398,9 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
       const el = scrollContainerRef.current;
       if (el) {
         el.classList.remove('is-dragging');
-        setTimeout(() => {
+        if (dragDetectTimerRef.current) clearTimeout(dragDetectTimerRef.current);
+        dragDetectTimerRef.current = window.setTimeout(() => {
+          dragDetectTimerRef.current = null;
           detectCenterCard();
         }, 80);
       }
@@ -426,6 +441,9 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
     return () => {
       if (navigateTimeoutRef.current) clearTimeout(navigateTimeoutRef.current);
       if (scrollDebounceTimerRef.current) clearTimeout(scrollDebounceTimerRef.current);
+      if (initNavTimerRef.current) clearTimeout(initNavTimerRef.current);
+      if (externalNavTimerRef.current) clearTimeout(externalNavTimerRef.current);
+      if (dragDetectTimerRef.current) clearTimeout(dragDetectTimerRef.current);
     };
   }, []);
 

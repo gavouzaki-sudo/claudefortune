@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { Bridge } from '../bridge';
+import { isChantMuted } from '../utils/chantAudio';
 
 interface LoyKrathong3DProps {
   bridge: Bridge;
@@ -124,6 +125,7 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
 
   // Sound generator using Web Audio API (Zero external mp3 files)
   const playWaterSplashSound = useCallback(() => {
+    if (isChantMuted()) return;
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
@@ -531,9 +533,12 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
 
     // Animation & Physics Loop
     let animationFrameId = 0;
+    let isDisposed = false;
+    const targetVec = new THREE.Vector3();
     const timer = new THREE.Timer();
 
     function afterDraw(cb: () => void) {
+      if (isDisposed) return;
       const gl = renderer.getContext() as WebGL2RenderingContext | null;
       if (!gl || typeof gl.fenceSync !== 'function') {
         animationFrameId = window.setTimeout(cb, 80);
@@ -542,6 +547,12 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
       const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
       gl.flush();
       const poll = () => {
+        if (isDisposed) {
+          if (sync && typeof gl.deleteSync === 'function') {
+            gl.deleteSync(sync);
+          }
+          return;
+        }
         const state = sync && typeof gl.getSyncParameter === 'function' ? gl.getSyncParameter(sync, gl.SYNC_STATUS) : null;
         if (state === gl.UNSIGNALED) {
           animationFrameId = window.setTimeout(poll, 5);
@@ -556,6 +567,7 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
     }
 
     const tick = () => {
+      if (isDisposed) return;
       timer.update();
       const delta = timer.getDelta();
       const time = timer.getElapsed();
@@ -585,7 +597,8 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
 
           // Camera smoothly tracks floating krathong
           if (cameraRef.current && controlsRef.current) {
-            controlsRef.current.target.lerp(new THREE.Vector3(driftX * 0.6, 0.4, driftZ + 0.5), 0.03);
+            targetVec.set(driftX * 0.6, 0.4, driftZ + 0.5);
+            controlsRef.current.target.lerp(targetVec, 0.03);
           }
         } else {
           // Gently bobbing in place ready to launch
@@ -646,6 +659,7 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
 
     // Cleanup on unmount
     return () => {
+      isDisposed = true;
       window.removeEventListener('resize', handleResize);
       if (isSoftwareGl) {
         clearTimeout(animationFrameId);
@@ -695,7 +709,7 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
   };
 
   // Handle Floating Krathong (ปล่อยลอยสู่สายน้ำ)
-  const handleFloatKrathong = async () => {
+  const handleFloatKrathong = () => {
     if (isFloating) return;
 
     setIsFloating(true);

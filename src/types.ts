@@ -2,11 +2,15 @@ export type DivinationTopic = 'civilization' | 'stick' | 'tarot' | 'number' | 'r
 
 export interface ZodiacInfo {
   id: number;
+  index?: number;
   name: string;
   animal: string;
   color: string;
+  direction?: string;
   element: string;
   current_year_name: string;
+  current_year_index?: number;
+  year?: number;
 }
 
 export interface UserSession {

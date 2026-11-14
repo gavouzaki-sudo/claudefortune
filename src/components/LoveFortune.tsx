@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { UserSession } from '../types';
 import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
 import { getRandomArrayItem } from '../utils/formatters';
@@ -94,12 +94,26 @@ export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) =>
   const [selectedStatus, setSelectedStatus] = useState<'single' | 'crush' | 'couple'>('single');
   const [reading, setReading] = useState<LoveReading | null>(null);
   const [isReading, setIsReading] = useState(false);
+  const divinateTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (divinateTimerRef.current !== null) {
+        clearTimeout(divinateTimerRef.current);
+        divinateTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const handleDivinate = () => {
+    if (divinateTimerRef.current !== null) {
+      clearTimeout(divinateTimerRef.current);
+    }
     setIsReading(true);
     setReading(null);
 
-    setTimeout(() => {
+    divinateTimerRef.current = window.setTimeout(() => {
+      divinateTimerRef.current = null;
       const pool = LOVE_PREDICTIONS[selectedStatus] || LOVE_PREDICTIONS.single;
       const chosen = getRandomArrayItem(pool, pool[0]);
       setReading(chosen);

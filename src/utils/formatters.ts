@@ -23,8 +23,8 @@ export const getRandomArrayItem = <T>(arr: T[], fallback: T): T => {
   return arr[Math.floor(Math.random() * arr.length)];
 };
 
-/** Format Date object into Thai localized date string */
-export const formatThaiDate = (date: Date = new Date()): string => {
+/** Format Date object into Thai localized date and time string */
+export const formatThaiDateTime = (date: Date = new Date()): string => {
   try {
     return date.toLocaleDateString('th-TH', {
       year: 'numeric',

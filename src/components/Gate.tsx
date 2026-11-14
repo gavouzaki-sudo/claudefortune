@@ -29,9 +29,6 @@ const SYSTEM_LOCATIONS: Record<
   chinese: { x: 14, y: 40, halo: '#ff3b30', label: 'จีน', sub: '12 นักษัตรมังกรฟ้า' },
 };
 
-// Current Buddhist Era year for backend calculation
-const CURRENT_BE_YEAR = new Date().getFullYear() + 543;
-
 export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
   // Hierarchical Level: null initially, showing all 10 distributed systems
   // When user taps/hovers a system, it expands into a circular radial menu
@@ -93,9 +90,10 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
   // Complete session initialization with a chosen symbol
   const completeSession = (chosenItem: ZodiacItem, system: ZodiacSystem) => {
     setError(null);
+    const currentBeYear = new Date().getFullYear() + 543;
     const wasmZodiacId = chosenItem.id % 12;
 
-    const z = bridge.initSession(chosenItem.name, CURRENT_BE_YEAR, wasmZodiacId);
+    const z = bridge.initSession(chosenItem.name, currentBeYear, wasmZodiacId);
     if (z < 0) {
       setError(
         z === -2
@@ -115,7 +113,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
       element: chosenItem.element,
       aura: chosenItem.aura,
       attribute: chosenItem.attribute,
-      year: CURRENT_BE_YEAR,
+      year: currentBeYear,
       zodiac: z,
       info,
     };
@@ -473,6 +471,17 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                         onDoubleClick={(e) => {
                           e.stopPropagation();
                           completeSession(item, activeSystem);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (isSelected) {
+                              completeSession(item, activeSystem);
+                            } else {
+                              setActiveSymbolIndex(idx);
+                            }
+                          }
                         }}
                         role="button"
                         tabIndex={0}

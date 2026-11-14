@@ -470,5 +470,35 @@ test('Sacred Journey 9 Temples (มหามงคล 9 วัด) data and mech
   assert.ok(WISH_TOPICS.includes('ความสงบและความเป็นสิริมงคล'));
 });
 
+test('Regression: Bridge.fromBytes byteOffset, JsCoreEngine zodiac parity, and formatter disambiguation', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const { Bridge } = await import('../src/bridge');
+  const { formatThaiDateTime } = await import('../src/utils/formatters');
+  const formattersMod = await import('../src/utils/formatters');
 
+  // 1. formatters no longer exports conflicting formatThaiDate
+  assert.equal('formatThaiDate' in formattersMod, false);
+  assert.ok(formatThaiDateTime(new Date(2026, 9, 31, 10, 30)).length > 0);
 
+  // 2. Bridge.fromBytes respects non-zero byteOffset subarrays
+  const rawWasm = await readFile(new URL('../public/wasm/core.wasm', import.meta.url));
+  const padded = new Uint8Array(rawWasm.length + 16);
+  padded.set(rawWasm, 16);
+  const offsetSlice = padded.subarray(16);
+  assert.equal(offsetSlice.byteOffset, 16);
+  const wasmBridge = await Bridge.fromBytes(offsetSlice);
+  assert.equal(wasmBridge.version(), 1);
+  assert.equal(wasmBridge.initSession('ทดสอบ', 2000), 4);
+
+  // 3. JsCoreEngine.getZodiacInfo parity with Wasm schema
+  const jsBridge = await Bridge.fromBytes(new Uint8Array(0));
+  jsBridge.setDate(new Date(2026, 9, 31));
+  jsBridge.initSession('ทดสอบ', 1995);
+  const jsZodiac = jsBridge.zodiacInfo();
+  assert.equal(jsZodiac.index, 11);
+  assert.equal(jsZodiac.name, 'กุน');
+  assert.equal(typeof jsZodiac.direction, 'string');
+  assert.equal(jsZodiac.current_year_name, 'มะเมีย');
+  assert.equal(jsZodiac.current_year_index, 6);
+  assert.equal(jsZodiac.year, 2026);
+});

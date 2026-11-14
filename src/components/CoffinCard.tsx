@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { Bridge } from '../bridge';
 import type { TarotCard, BlessingResult } from '../types';
 import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
@@ -25,12 +25,29 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
   const [blessing, setBlessing] = useState<BlessingResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isJournalSaved, setIsJournalSaved] = useState(false);
+  const isMountedRef = useRef(true);
+  const openTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (openTimerRef.current !== null) {
+        clearTimeout(openTimerRef.current);
+        openTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const handleToggleCoffin = async () => {
     if (isLoading) return;
 
     if (coffinOpen) {
       // Close coffin
+      if (openTimerRef.current !== null) {
+        clearTimeout(openTimerRef.current);
+        openTimerRef.current = null;
+      }
       playWoodClatter();
       setCoffinOpen(false);
       setCoffinCard(null);
@@ -49,7 +66,14 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-    await new Promise((r) => setTimeout(r, reduceMotion ? 100 : 700));
+    await new Promise<void>((resolve) => {
+      if (openTimerRef.current !== null) clearTimeout(openTimerRef.current);
+      openTimerRef.current = window.setTimeout(() => {
+        openTimerRef.current = null;
+        resolve();
+      }, reduceMotion ? 100 : 700);
+    });
+    if (!isMountedRef.current) return;
 
     try {
       const tarot = bridge.drawTarot(1);
@@ -63,7 +87,9 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
       logger.error('Error in CoffinCard ritual:', err);
       onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 

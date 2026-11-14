@@ -88,7 +88,7 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
 
             {/* Subtle inner shadow filter */}
             <filter
-              id="blockShadow"
+              id={`blockShadow-${isLeft ? 'l' : 'r'}`}
               x="-20%"
               y="-20%"
               width="140%"
@@ -106,7 +106,7 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
 
           {isFlat ? (
             /* FLAT SIDE (หน้าหงาย - ด้านเรียบ มีขอบทองและตรามงคล) */
-            <g filter="url(#blockShadow)">
+            <g filter={`url(#blockShadow-${isLeft ? 'l' : 'r'})`}>
               {/* Outer crescent outline */}
               <path
                 d="M 25 15 C 80 35, 105 85, 95 165 C 65 140, 35 105, 25 15 Z"
@@ -163,7 +163,7 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
             </g>
           ) : (
             /* CONVEX SIDE (หน้าคว่ำ - หลังโค้งนูน สีแดงชาด เคลือบเงาสูง) */
-            <g filter="url(#blockShadow)">
+            <g filter={`url(#blockShadow-${isLeft ? 'l' : 'r'})`}>
               {/* Main 3D rounded crescent */}
               <path
                 d="M 25 15 C 80 35, 105 85, 95 165 C 65 140, 35 105, 25 15 Z"

@@ -382,7 +382,15 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       abstract draw(g: CanvasRenderingContext2D): void;
 
       dispose() {
-        // free canvas layers
+        const record = this as unknown as Record<string, unknown>;
+        for (const key of Object.keys(record)) {
+          const val = record[key];
+          if (typeof HTMLCanvasElement !== 'undefined' && val instanceof HTMLCanvasElement) {
+            val.width = 0;
+            val.height = 0;
+            record[key] = null;
+          }
+        }
       }
     }
 
@@ -1744,24 +1752,35 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
     /* =========================================================================
        SCENE MANAGER & RUNTIME
        ========================================================================= */
-    const scenes: Record<string, BaseScene> = {
-      stick: new TempleScene(),
-      tarot0: new TarotScene(0),
-      tarot1: new TarotScene(1),
-      number: new CemeteryScene(),
-      ritual: new HellScene(),
-      love: new LoveScene(),
-      scan: new ScanScene(),
-      festival: new TempleScene(),
-      cosmic: new CosmicScene(),
-      meditation: new CosmicScene(),
-      civilization: new CosmicScene(),
-      krathong: new TempleScene(),
-      coffin: new CemeteryScene(),
+    const createScene = (key: string): BaseScene => {
+      switch (key) {
+        case 'tarot0':
+          return new TarotScene(0);
+        case 'tarot1':
+          return new TarotScene(1);
+        case 'number':
+        case 'coffin':
+          return new CemeteryScene();
+        case 'ritual':
+          return new HellScene();
+        case 'love':
+          return new LoveScene();
+        case 'scan':
+          return new ScanScene();
+        case 'cosmic':
+        case 'meditation':
+        case 'civilization':
+          return new CosmicScene();
+        case 'stick':
+        case 'festival':
+        case 'krathong':
+        default:
+          return new TempleScene();
+      }
     };
 
-    let curSceneKey = activeTopic === 'tarot' ? (tarotVariant === 1 ? 'tarot1' : 'tarot0') : activeTopic;
-    let curScene: BaseScene = scenes[curSceneKey] || scenes.stick;
+    const curSceneKey = activeTopic === 'tarot' ? (tarotVariant === 1 ? 'tarot1' : 'tarot0') : activeTopic;
+    const curScene: BaseScene = createScene(curSceneKey);
     let lastTime = 0;
 
     const P: PointerState = {
@@ -1873,6 +1892,17 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointerup', onPointerUp);
+      curScene.dispose();
+      for (const k of Object.keys(GS)) {
+        GS[k].width = 0;
+        GS[k].height = 0;
+        delete GS[k];
+      }
+      if (RAY) {
+        RAY.width = 0;
+        RAY.height = 0;
+        RAY = null;
+      }
     };
   }, [activeTopic, tarotVariant]);
 

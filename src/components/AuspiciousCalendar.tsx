@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   generateMonthAuspiciousDays,
@@ -318,11 +318,26 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
 
 — คำนวณตามหลักโหราศาสตร์ไทย ศาลเจ้าแห่งโชคลาภ Lucky Shrine`;
 
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      onToast('คัดลอกไม่สำเร็จ โปรดคัดลอกข้อความด้วยตนเอง');
+      return;
+    }
+
     navigator.clipboard
       .writeText(text)
       .then(() => onToast('คัดลอกรายละเอียดฤกษ์มงคลแล้ว สามารถวางใน Line หรือข้อความได้เลย 📋'))
       .catch(() => onToast('คัดลอกไม่สำเร็จ โปรดคัดลอกข้อความด้วยตนเอง'));
   };
+
+  const scrollTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    return () => {
+      if (scrollTimerRef.current !== null) {
+        clearTimeout(scrollTimerRef.current);
+        scrollTimerRef.current = null;
+      }
+    };
+  }, []);
 
 
   // Handle Generate Lucky Card
@@ -373,7 +388,11 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
       setSearchQuery('');
       onToast('รีเซ็ตแสดงวันมงคลทุกประเภท');
     }
-    setTimeout(() => {
+    if (scrollTimerRef.current !== null) {
+      clearTimeout(scrollTimerRef.current);
+    }
+    scrollTimerRef.current = window.setTimeout(() => {
+      scrollTimerRef.current = null;
       document.getElementById('auspicious-results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
   };

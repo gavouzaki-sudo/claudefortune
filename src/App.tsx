@@ -109,6 +109,7 @@ export const App: React.FC = () => {
         const b = await Bridge.load();
         if (!isMounted) return;
         b.setDate();
+        b.seed();
         setBridge(b);
 
         // Gate (Civilization) is the initial home page
@@ -163,35 +164,26 @@ export const App: React.FC = () => {
     };
   }, [bridge]);
 
-  const handleOpenFestival = useCallback(() => {
-    spiritualSpeechEngine.stop();
-    stopChant();
-    if (!session) {
-      const guestSession = createDefaultGuestSession();
-      if (guestSession) setSession(guestSession);
-    }
-    setTab('festival');
-    try {
-      sessionStorage.setItem('shrine.activeTab', 'festival');
-    } catch {
-      // Ignore
-    }
-  }, [createDefaultGuestSession, session]);
+  const openGuestTab = useCallback(
+    (targetTab: 'festival' | 'auspicious') => {
+      spiritualSpeechEngine.stop();
+      stopChant();
+      if (!session) {
+        const guestSession = createDefaultGuestSession();
+        if (guestSession) setSession(guestSession);
+      }
+      setTab(targetTab);
+      try {
+        sessionStorage.setItem('shrine.activeTab', targetTab);
+      } catch {
+        // Ignore
+      }
+    },
+    [createDefaultGuestSession, session]
+  );
 
-  const handleOpenAuspicious = useCallback(() => {
-    spiritualSpeechEngine.stop();
-    stopChant();
-    if (!session) {
-      const guestSession = createDefaultGuestSession();
-      if (guestSession) setSession(guestSession);
-    }
-    setTab('auspicious');
-    try {
-      sessionStorage.setItem('shrine.activeTab', 'auspicious');
-    } catch {
-      // Ignore
-    }
-  }, [createDefaultGuestSession, session]);
+  const handleOpenFestival = useCallback(() => openGuestTab('festival'), [openGuestTab]);
+  const handleOpenAuspicious = useCallback(() => openGuestTab('auspicious'), [openGuestTab]);
 
   return (
     <LanguageProvider>
@@ -216,6 +208,7 @@ export const App: React.FC = () => {
                   try {
                     const b = await Bridge.load();
                     b.setDate();
+                    b.seed();
                     setBridge(b);
                   } catch (e) {
                     logger.error('Retry bridge load failed:', e);

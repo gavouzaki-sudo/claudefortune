@@ -361,21 +361,26 @@ class JsCoreEngine implements ICoreEngine {
   }
 
   getZodiacInfo(z: number = -1): ZodiacInfo {
-    const idx = z >= 0 ? z : this.valid ? this.z : 0;
-    const item = ZOD_LIST[idx % 12];
+    const rawIdx = z >= 0 ? z : this.valid ? this.z : 0;
+    const idx = ((Math.floor(rawIdx) % 12) + 12) % 12;
+    const item = ZOD_LIST[idx];
     const curYearIdx = this.yearBranch(this.curY);
     return {
-      id: idx % 12,
+      id: idx,
+      index: idx,
       name: item.name,
       animal: item.animal,
       color: item.color,
+      direction: item.dir,
       element: "มงคล",
       current_year_name: ZOD_LIST[curYearIdx].name,
+      current_year_index: curYearIdx,
+      year: this.curY,
     };
   }
 
   drawSiameseSticks(power: number): StickResult {
-    const n = Math.floor(Math.abs(Math.sin(power + Date.now())) * 28) % 28;
+    const n = (Math.floor(Math.abs(Math.sin(power + Date.now())) * 28) + Math.floor(Math.random() * 28)) % 28;
     const s = STICKS[n];
     const aspects = ASPECT_NAMES.map((name, a) => ({
       name,
@@ -728,7 +733,11 @@ export class Bridge {
 
   static async fromBytes(bytes: Uint8Array): Promise<Bridge> {
     try {
-      const result: unknown = await WebAssembly.instantiate(bytes.buffer, {});
+      const wasmBytes =
+        bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength
+          ? bytes
+          : bytes.slice();
+      const result: unknown = await WebAssembly.instantiate(wasmBytes as BufferSource, {});
       const instance = (result && typeof result === 'object' && 'instance' in result)
         ? (result as { instance: WebAssembly.Instance }).instance
         : (result as WebAssembly.Instance);
