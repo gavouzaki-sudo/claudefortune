@@ -2,9 +2,38 @@
 // Fetches official lottery results from GLO API with proxy & fallback support
 
 import { logger } from './logger';
+import { safeStorage } from './storage';
 import { THAI_MONTHS } from '../data/auspiciousCalendarData';
 
+const DEFAULT_CF_WORKER_URL = 'https://mlre-glo-proxy.gavouzaki.workers.dev';
+const DEFAULT_CF_PROJECT_ID = 'MLRE';
+const DEFAULT_CF_ACCESS_TOKEN = 'lotto';
 
+const LOTTERY_LATEST_CACHE_KEY = 'lucky_shrine_lottery_latest_v1';
+const LOTTERY_DRAWS_CACHE_KEY = 'lucky_shrine_lottery_draws_v1';
+
+interface LotteryEndpointConfig {
+  url: string;
+  headers?: Record<string, string>;
+}
+
+function getWorkerConfig(): { baseUrl: string; projectId: string; accessToken: string } | null {
+  const env = (typeof import.meta !== 'undefined' ? (import.meta as unknown as { env?: Record<string, string | undefined> }).env : undefined) || {};
+  const rawUrl = (env.VITE_GLO_PROXY_URL ?? DEFAULT_CF_WORKER_URL).trim();
+  if (!rawUrl) return null;
+  return {
+    baseUrl: rawUrl.replace(/\/+$/, ''),
+    projectId: (env.VITE_GLO_PROXY_PROJECT_ID ?? DEFAULT_CF_PROJECT_ID).trim(),
+    accessToken: (env.VITE_GLO_PROXY_TOKEN ?? DEFAULT_CF_ACCESS_TOKEN).trim(),
+  };
+}
+
+function getWorkerHeaders(projectId: string, accessToken: string): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (projectId) headers['X-MLRE-Project'] = projectId;
+  if (accessToken) headers['X-MLRE-Token'] = accessToken;
+  return headers;
+}
 
 export interface LotteryDisplayData {
   first: string; // 6 digits e.g. "423224"
@@ -108,6 +137,39 @@ export const KNOWN_BACKUP_DRAWS: Record<string, LotteryDisplayData> = {
 
 const BACKUP_LATEST_DRAW: LotteryDisplayData = KNOWN_BACKUP_DRAWS['2026-11-01'];
 
+function cacheLotteryDraw(draw: LotteryDisplayData, isLatest = false): void {
+  if (typeof window === 'undefined' || draw.isFallback) return;
+  if (isLatest) {
+    safeStorage.set('local', LOTTERY_LATEST_CACHE_KEY, draw);
+  }
+  if (draw.rawDate) {
+    const cachedMap = safeStorage.get<Record<string, LotteryDisplayData>>('local', LOTTERY_DRAWS_CACHE_KEY, {});
+    const updatedMap: Record<string, LotteryDisplayData> = {
+      ...cachedMap,
+      [draw.rawDate]: draw,
+    };
+    const keys = Object.keys(updatedMap).sort();
+    while (keys.length > 20) {
+      const oldest = keys.shift();
+      if (oldest) delete updatedMap[oldest];
+    }
+    safeStorage.set('local', LOTTERY_DRAWS_CACHE_KEY, updatedMap);
+  }
+}
+
+function getCachedLatestDraw(): LotteryDisplayData | null {
+  if (typeof window === 'undefined') return null;
+  const cached = safeStorage.get<LotteryDisplayData | null>('local', LOTTERY_LATEST_CACHE_KEY, null);
+  return cached ? { ...cached, isFallback: true } : null;
+}
+
+function getCachedDrawByDate(lookupKey: string): LotteryDisplayData | null {
+  if (typeof window === 'undefined') return null;
+  const cachedMap = safeStorage.get<Record<string, LotteryDisplayData>>('local', LOTTERY_DRAWS_CACHE_KEY, {});
+  const cached = cachedMap[lookupKey];
+  return cached ? { ...cached, isFallback: true } : null;
+}
+
 function formatPrice(priceStr?: string, defaultPrice = ''): string {
   if (!priceStr) return defaultPrice;
   const num = parseFloat(priceStr);
@@ -158,18 +220,19 @@ function normalizeApiResponse(rawResponse: any): LotteryDisplayData {
 }
 
 async function fetchLotteryEndpoints(
-  endpoints: string[],
+  endpoints: LotteryEndpointConfig[],
   body: Record<string, unknown>,
   isValidPayload: (json: any) => boolean,
   errorLabel: string
 ): Promise<LotteryDisplayData | null> {
-  for (const url of endpoints) {
+  for (const endpoint of endpoints) {
     try {
-      const res = await fetch(url, {
+      const res = await fetch(endpoint.url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
+          ...endpoint.headers,
         },
         body: JSON.stringify(body),
       });
@@ -185,8 +248,13 @@ async function fetchLotteryEndpoints(
           continue;
         }
         try {
-          const json = JSON.parse(text);
-          if (json.status && isValidPayload(json)) {
+          const parsed = JSON.parse(text);
+          // Unwrap Cloudflare Worker proxy envelope { ok: true, data: <GLO response> }
+          const json =
+            parsed && typeof parsed === 'object' && parsed.ok === true && parsed.data && !parsed.response
+              ? parsed.data
+              : parsed;
+          if (json?.status && isValidPayload(json)) {
             return normalizeApiResponse(json);
           }
         } catch {
@@ -194,23 +262,38 @@ async function fetchLotteryEndpoints(
         }
       }
     } catch (err) {
-      logger.debug(`${errorLabel} from ${url}:`, err);
+      logger.debug(`${errorLabel} from ${endpoint.url}:`, err);
     }
   }
   return null;
 }
 
 /**
- * Fetch latest lottery result from GLO API
- * POST /api/glo/lottery/getLatestLottery
+ * Fetch latest lottery result from GLO API (Vite proxy -> Cloudflare Worker -> cached/backup fallback)
+ * POST /api/glo/lottery/getLatestLottery or POST <worker>/api/glo/latest
  */
 export async function getLatestLotteryResult(): Promise<LotteryDisplayData> {
   const isBrowser = typeof window !== 'undefined';
-  // Never attempt direct cross-origin requests to www.glo.or.th from the browser
-  // because www.glo.or.th does not allow CORS and returns 503 on OPTIONS preflight.
-  const endpoints = isBrowser
-    ? ['/api/glo/lottery/getLatestLottery']
-    : ['/api/glo/lottery/getLatestLottery', 'https://www.glo.or.th/api/lottery/getLatestLottery'];
+  const worker = getWorkerConfig();
+  const endpoints: LotteryEndpointConfig[] = [];
+
+  if (isBrowser) {
+    endpoints.push({ url: '/api/glo/lottery/getLatestLottery' });
+    if (worker) {
+      endpoints.push({
+        url: `${worker.baseUrl}/api/glo/latest`,
+        headers: getWorkerHeaders(worker.projectId, worker.accessToken),
+      });
+    }
+  } else {
+    if (worker) {
+      endpoints.push({
+        url: `${worker.baseUrl}/api/glo/latest`,
+        headers: getWorkerHeaders(worker.projectId, worker.accessToken),
+      });
+    }
+    endpoints.push({ url: 'https://www.glo.or.th/api/lottery/getLatestLottery' });
+  }
 
   const result = await fetchLotteryEndpoints(
     endpoints,
@@ -218,15 +301,24 @@ export async function getLatestLotteryResult(): Promise<LotteryDisplayData> {
     (json) => Boolean(json.response),
     'Could not fetch lottery'
   );
-  if (result) return result;
+  if (result) {
+    cacheLotteryDraw(result, true);
+    return result;
+  }
+
+  const cachedLatest = getCachedLatestDraw();
+  if (cachedLatest) {
+    logger.info('Using cached latest lottery draw data from localStorage');
+    return cachedLatest;
+  }
 
   logger.info('Using backup latest lottery draw data');
   return { ...BACKUP_LATEST_DRAW };
 }
 
 /**
- * Check lottery result by date from GLO API
- * POST /api/glo/checking/getLotteryResult
+ * Check lottery result by date from GLO API (Vite proxy -> Cloudflare Worker -> cached/backup fallback)
+ * POST /api/glo/checking/getLotteryResult or POST <worker>/api/glo/history
  * Payload: {"date":"01","month":"03","year":"2024"}
  */
 export async function getLotteryResultByDate(
@@ -247,9 +339,26 @@ export async function getLotteryResultByDate(
   };
 
   const isBrowser = typeof window !== 'undefined';
-  const endpoints = isBrowser
-    ? ['/api/glo/checking/getLotteryResult']
-    : ['/api/glo/checking/getLotteryResult', 'https://www.glo.or.th/api/checking/getLotteryResult'];
+  const worker = getWorkerConfig();
+  const endpoints: LotteryEndpointConfig[] = [];
+
+  if (isBrowser) {
+    endpoints.push({ url: '/api/glo/checking/getLotteryResult' });
+    if (worker) {
+      endpoints.push({
+        url: `${worker.baseUrl}/api/glo/history`,
+        headers: getWorkerHeaders(worker.projectId, worker.accessToken),
+      });
+    }
+  } else {
+    if (worker) {
+      endpoints.push({
+        url: `${worker.baseUrl}/api/glo/history`,
+        headers: getWorkerHeaders(worker.projectId, worker.accessToken),
+      });
+    }
+    endpoints.push({ url: 'https://www.glo.or.th/api/checking/getLotteryResult' });
+  }
 
   const result = await fetchLotteryEndpoints(
     endpoints,
@@ -257,9 +366,16 @@ export async function getLotteryResultByDate(
     (json) => Boolean(json.response?.result),
     'Could not fetch draw by date'
   );
-  if (result) return result;
+  if (result) {
+    cacheLotteryDraw(result, false);
+    return result;
+  }
 
   const lookupKey = `${yearCe}-${payload.month}-${payload.date}`;
+  const cachedDraw = getCachedDrawByDate(lookupKey);
+  if (cachedDraw) {
+    return cachedDraw;
+  }
   if (KNOWN_BACKUP_DRAWS[lookupKey]) {
     return { ...KNOWN_BACKUP_DRAWS[lookupKey] };
   }
