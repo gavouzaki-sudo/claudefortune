@@ -502,3 +502,45 @@ test('Regression: Bridge.fromBytes byteOffset, JsCoreEngine zodiac parity, and f
   assert.equal(jsZodiac.current_year_index, 6);
   assert.equal(jsZodiac.year, 2026);
 });
+
+test('Dynamic year labels, drawRoundedRect fallback, and shared AudioContext singleton', async () => {
+  const { getCurrentYearRemedyLabel } = await import('../src/data/translations');
+  assert.equal(getCurrentYearRemedyLabel('th', 2026), 'แก้ปีชง 2569 (มะเมีย)');
+  assert.equal(getCurrentYearRemedyLabel('en', 2026), '2026 Year of the Horse Clash Remedy');
+  assert.equal(getCurrentYearRemedyLabel('zh', 2026), '2026 丙午马年化太岁');
+  assert.equal(getCurrentYearRemedyLabel('th', 2027), 'แก้ปีชง 2570 (มะแม)');
+  assert.equal(getCurrentYearRemedyLabel('en', 2027), '2027 Year of the Goat Clash Remedy');
+  assert.equal(getCurrentYearRemedyLabel('zh', 2027), '2027 丁未羊年化太岁');
+
+  const { normalizeToBE } = await import('../src/data/auspiciousCalendarData');
+  assert.equal(normalizeToBE(Number.NaN), new Date().getFullYear() + 543);
+
+  const { drawRoundedRect } = await import('../src/utils/canvasUtils');
+  const calls: string[] = [];
+  const mockCtxFallback = {
+    beginPath: () => calls.push('beginPath'),
+    moveTo: () => calls.push('moveTo'),
+    lineTo: () => calls.push('lineTo'),
+    quadraticCurveTo: () => calls.push('quadraticCurveTo'),
+    closePath: () => calls.push('closePath'),
+  } as unknown as CanvasRenderingContext2D;
+  drawRoundedRect(mockCtxFallback, 10, 20, 100, 50, [8]);
+  assert.ok(calls.includes('beginPath'));
+  assert.ok(calls.includes('quadraticCurveTo'));
+  assert.ok(calls.includes('closePath'));
+
+  let nativeCalled = false;
+  const mockCtxNative = {
+    beginPath: () => {},
+    roundRect: () => {
+      nativeCalled = true;
+    },
+  } as unknown as CanvasRenderingContext2D;
+  drawRoundedRect(mockCtxNative, 0, 0, 50, 50, 6);
+  assert.equal(nativeCalled, true);
+
+  const { getSharedAudioContextSync, getSharedAudioContext } = await import('../src/utils/audioContext');
+  assert.equal(getSharedAudioContextSync(), null);
+  assert.equal(await getSharedAudioContext(), null);
+});
+

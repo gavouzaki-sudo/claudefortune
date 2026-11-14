@@ -39,17 +39,27 @@ export function formatThaiDate(yearCe: number, month1Indexed: number, day: numbe
   return `${day} ${monthName} ${yearBe}`;
 }
 
+function getTodayIsoDate(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export function parseDateString(dateStr: string): { day: number; month: number; yearCe: number } {
   // Format: "YYYY-MM-DD"
   const parts = dateStr.split('-');
   if (parts.length === 3) {
-    return {
-      yearCe: parseInt(parts[0], 10),
-      month: parseInt(parts[1], 10),
-      day: parseInt(parts[2], 10),
-    };
+    const yearCe = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+    if (!Number.isNaN(yearCe) && !Number.isNaN(month) && !Number.isNaN(day)) {
+      return { yearCe, month, day };
+    }
   }
-  return { day: 1, month: 11, yearCe: 2026 };
+  const now = new Date();
+  return { day: now.getDate(), month: now.getMonth() + 1, yearCe: now.getFullYear() };
 }
 
 // Fallback data in case of offline or network interruption
@@ -107,7 +117,7 @@ function formatPrice(priceStr?: string, defaultPrice = ''): string {
 
 function normalizeApiResponse(rawResponse: any): LotteryDisplayData {
   const respData = rawResponse?.response?.data || rawResponse?.response?.result?.data || rawResponse?.data;
-  const dateStr = rawResponse?.response?.date || rawResponse?.response?.result?.date || rawResponse?.date || '2026-11-01';
+  const dateStr = rawResponse?.response?.date || rawResponse?.response?.result?.date || rawResponse?.date || getTodayIsoDate();
   const period = rawResponse?.response?.period || rawResponse?.response?.result?.period;
   const pdfUrl = rawResponse?.response?.pdf_url || rawResponse?.response?.result?.pdf_url;
 
@@ -224,7 +234,8 @@ export async function getLotteryResultByDate(
   month: string,
   yearInput: string | number
 ): Promise<LotteryDisplayData> {
-  const parsedYear = typeof yearInput === 'number' ? yearInput : parseInt(String(yearInput).trim(), 10) || 2569;
+  const defaultYearBE = new Date().getFullYear() + 543;
+  const parsedYear = typeof yearInput === 'number' ? yearInput : parseInt(String(yearInput).trim(), 10) || defaultYearBE;
   // If user entered Buddhist Era (B.E. >= 2400 e.g. 2569, 2567), convert to C.E. (e.g. 2026, 2024)
   const yearCe = parsedYear >= 2400 ? parsedYear - 543 : parsedYear;
   const yearBe = parsedYear >= 2400 ? parsedYear : parsedYear + 543;

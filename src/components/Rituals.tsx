@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Bridge } from '../bridge';
 import type { CandleResult, OfferingResult, RemedyResult } from '../types';
 import { isChantMuted } from '../utils/chantAudio';
+import { getSharedAudioContextSync } from '../utils/audioContext';
 
 
 const WISH_PRESETS = [
@@ -94,7 +95,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   const lanternModalTimerRef = useRef<number | null>(null);
   const sweepAnimTimerRef = useRef<number | null>(null);
   const chongTimerRef = useRef<number | null>(null);
-  const sweepAudioCtxRef = useRef<AudioContext | null>(null);
   const isMountedRef = useRef(true);
 
   // Chong state (Interactive 13-Part Talisman Sweeping Ceremony)
@@ -133,10 +133,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
       if (candleRafRef.current) {
         cancelAnimationFrame(candleRafRef.current);
       }
-      if (sweepAudioCtxRef.current) {
-        sweepAudioCtxRef.current.close().catch(() => {});
-        sweepAudioCtxRef.current = null;
-      }
     };
   }, []);
 
@@ -162,13 +158,8 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   // Web Audio Ceremonial Sweep Sound Synthesizer
   const playSweepAudio = useCallback((stepCount: number) => {
     try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtx) return;
-      if (!sweepAudioCtxRef.current) {
-        sweepAudioCtxRef.current = new AudioCtx();
-      }
-      const ctx = sweepAudioCtxRef.current;
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      const ctx = getSharedAudioContextSync();
+      if (!ctx) return;
 
       // 1. Paper rustle noise
       const duration = 0.28;

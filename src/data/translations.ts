@@ -2,6 +2,32 @@
 
 export type SupportedLang = 'th' | 'en' | 'zh';
 
+const THAI_ZODIAC_ANIMALS = [
+  'ชวด', 'ฉลู', 'ขาล', 'เถาะ', 'มะโรง', 'มะเส็ง',
+  'มะเมีย', 'มะแม', 'วอก', 'ระกา', 'จอ', 'กุน',
+] as const;
+
+const EN_ZODIAC_ANIMALS = [
+  'Rat', 'Ox', 'Tiger', 'Rabbit', 'Dragon', 'Snake',
+  'Horse', 'Goat', 'Monkey', 'Rooster', 'Dog', 'Pig',
+] as const;
+
+const ZH_HEAVENLY_STEMS = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'] as const;
+const ZH_EARTHLY_BRANCHES = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'] as const;
+const ZH_ZODIAC_ANIMALS = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'] as const;
+
+export function getCurrentYearRemedyLabel(lang: SupportedLang, ceYear: number = new Date().getFullYear()): string {
+  const zodiacIdx = (((ceYear - 4) % 12) + 12) % 12;
+  const stemIdx = (((ceYear - 4) % 10) + 10) % 10;
+  if (lang === 'th') {
+    return `แก้ปีชง ${ceYear + 543} (${THAI_ZODIAC_ANIMALS[zodiacIdx]})`;
+  }
+  if (lang === 'en') {
+    return `${ceYear} Year of the ${EN_ZODIAC_ANIMALS[zodiacIdx]} Clash Remedy`;
+  }
+  return `${ceYear} ${ZH_HEAVENLY_STEMS[stemIdx]}${ZH_EARTHLY_BRANCHES[zodiacIdx]}${ZH_ZODIAC_ANIMALS[zodiacIdx]}年化太岁`;
+}
+
 export interface Translations {
   appName: string;
   appSubtitle: string;
@@ -242,7 +268,7 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     ritualTitle: 'พิธีกรรมสะเดาะเคราะห์',
     ritualCandle: 'จุดเทียนต่อดวง',
     ritualLantern: 'ลอยโคมสะเดาะเคราะห์',
-    ritualRemedy: 'แก้ปีชง 2569 (มะเมีย)',
+    ritualRemedy: getCurrentYearRemedyLabel('th'),
     ritualOffering: 'ถวายสักการะดิจิทัล',
     ritualRemedyClash: 'ชงตรง 100%',
     ritualRemedyHarm: 'ไห่ (ให้ร้าย)',
@@ -365,7 +391,7 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     ritualTitle: 'Sacred Remedies & Rituals',
     ritualCandle: 'Light Long-Life Candle',
     ritualLantern: 'Sky Lantern Release',
-    ritualRemedy: '2026 Year of the Horse Clash Remedy',
+    ritualRemedy: getCurrentYearRemedyLabel('en'),
     ritualOffering: 'Digital Altar Offering',
     ritualRemedyClash: 'Direct Clash (100%)',
     ritualRemedyHarm: 'Harm (Subtle Friction)',
@@ -488,7 +514,7 @@ export const TRANSLATIONS: Record<SupportedLang, Translations> = {
     ritualTitle: '消灾化煞·祈福法事',
     ritualCandle: '点燃长明灯',
     ritualLantern: '放飞祈愿天灯',
-    ritualRemedy: '2026 丙午马年化太岁',
+    ritualRemedy: getCurrentYearRemedyLabel('zh'),
     ritualOffering: '殿前电子敬献',
     ritualRemedyClash: '正冲太岁 (100%)',
     ritualRemedyHarm: '相害太岁',

@@ -1126,9 +1126,8 @@ button:focus-visible,
   isolation: isolate;
 }
 
-/* SAFEGUARD: Force all interactive controls, buttons, toolbars, and inputs
-   inside .ritual-active-wrapper to ALWAYS render in their default state
-   above <FortuneCanvasBackground /> WITHOUT requiring a hover event! */
+/* Keep container stacking above <FortuneCanvasBackground /> without overriding
+   :disabled button states, positioned controls (e.g. clear/close buttons), or compositor layers */
 .ritual-active-wrapper .auspicious-container,
 .ritual-active-wrapper .auspicious-calendar-grid-view,
 .ritual-active-wrapper .calendar-weekdays-row,
@@ -1136,35 +1135,20 @@ button:focus-visible,
 .ritual-active-wrapper .calendar-cells-grid,
 .ritual-active-wrapper .calendar-cell,
 .ritual-active-wrapper .astrological-search-card,
-.ritual-active-wrapper button,
-.ritual-active-wrapper select,
-.ritual-active-wrapper input:not([type="file"]),
-.ritual-active-wrapper .btn,
-.ritual-active-wrapper .btn-toolbar-compact,
-.ritual-active-wrapper .btn-month-nav,
-.ritual-active-wrapper .dropdown-compact-select,
-.ritual-active-wrapper .dropdown-compact-item,
 .ritual-active-wrapper .sacred-journey-toolbar-row,
 .ritual-active-wrapper .auspicious-compact-toolbar-row,
 .ritual-active-wrapper .month-stepper-group,
-.ritual-active-wrapper .sj-panel,
-.ritual-active-wrapper .sj-roll-btn,
-.ritual-active-wrapper .sj-reset-btn,
-.ritual-active-wrapper .sj-dice {
-  position: relative !important;
-  z-index: 20 !important;
-  transform: translateZ(0) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
+.ritual-active-wrapper .sj-panel {
+  position: relative;
+  z-index: 15;
 }
 
-/* Keep smooth micro-interactions on hover without causing layout jumps or flicker */
-.ritual-active-wrapper button:hover,
+/* Keep smooth micro-interactions on enabled interactive buttons */
+.ritual-active-wrapper button:hover:not(:disabled),
 .ritual-active-wrapper .btn:hover:not(:disabled),
-.ritual-active-wrapper .btn-toolbar-compact:hover,
-.ritual-active-wrapper .btn-month-nav:hover {
-  transform: translateY(-1px) translateZ(0) !important;
+.ritual-active-wrapper .btn-toolbar-compact:hover:not(:disabled),
+.ritual-active-wrapper .btn-month-nav:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
 
 /* Scoped frameless reset: Only target stage backgrounds, NEVER strip inner panel borders or buttons */

@@ -5,6 +5,8 @@
 // 3. Tibetan Singing Bowl & Om Chant Drone (เสียงสวดมนต์ทิเบต & ทิเบตันซิงกิ้งโบว์ล)
 // 4. Ancient Temple Bell & Sacred Gong (เสียงระฆังวัด & ฆ้องมงคล)
 
+import { getSharedAudioContext } from './audioContext';
+
 export type SoundscapeType = 'none' | 'bamboo_chime' | 'temple_rain' | 'tibetan_bowl' | 'temple_bell';
 
 interface SoundscapeInfo {
@@ -66,31 +68,25 @@ class AmbientSoundscapeEngine {
 
   private async getContext(): Promise<AudioContext | null> {
     if (typeof window === 'undefined') return null;
-    if (!this.ctx) {
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtx) return null;
-      this.ctx = new AudioCtx();
-      this.masterGain = this.ctx.createGain();
+    const c = await getSharedAudioContext();
+    if (!c) return null;
+
+    if (this.ctx !== c || !this.masterGain) {
+      this.ctx = c;
+      this.masterGain = c.createGain();
       this.masterGain.gain.value = this.currentVolume;
 
       // Compressor limiter for ultra smooth sound
-      const comp = this.ctx.createDynamicsCompressor();
+      const comp = c.createDynamicsCompressor();
       comp.threshold.value = -8;
       comp.knee.value = 18;
       comp.ratio.value = 8;
       comp.attack.value = 0.05;
       comp.release.value = 0.25;
 
-      this.masterGain.connect(comp).connect(this.ctx.destination);
+      this.masterGain.connect(comp).connect(c.destination);
     }
 
-    if (this.ctx.state !== 'running') {
-      try {
-        await this.ctx.resume();
-      } catch {}
-    }
     return this.ctx;
   }
 

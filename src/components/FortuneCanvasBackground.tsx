@@ -1843,8 +1843,37 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
     window.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointerup', onPointerUp);
 
+    const isOccludedBy3D = activeTopic === 'krathong';
+
+    const drawStaticBackdrop = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#060914';
+      ctx.fillRect(0, 0, w, h);
+    };
+
+    const handleResizeWithBackdrop = () => {
+      handleResize();
+      if (isOccludedBy3D) {
+        drawStaticBackdrop();
+      }
+    };
+
+    window.removeEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResizeWithBackdrop);
+
+    if (isOccludedBy3D) {
+      drawStaticBackdrop();
+    }
+
     const render = (ts: number) => {
-      if (isDisposed) return;
+      if (isDisposed || isOccludedBy3D || document.hidden) {
+        animId = 0;
+        return;
+      }
       animId = requestAnimationFrame(render);
 
       const dt = M.min((ts - lastTime) / 1000 || 0.016, 0.05);
@@ -1883,12 +1912,32 @@ export const FortuneCanvasBackground: React.FC<FortuneCanvasBackgroundProps> = (
       ctx.globalAlpha = 1;
     };
 
-    animId = requestAnimationFrame(render);
+    const handleVisibilityChange = () => {
+      if (isOccludedBy3D) return;
+      if (document.hidden) {
+        if (animId) {
+          cancelAnimationFrame(animId);
+          animId = 0;
+        }
+      } else if (!isDisposed && !animId) {
+        lastTime = performance.now();
+        animId = requestAnimationFrame(render);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    if (!isOccludedBy3D && !document.hidden) {
+      lastTime = performance.now();
+      animId = requestAnimationFrame(render);
+    }
 
     return () => {
       isDisposed = true;
-      cancelAnimationFrame(animId);
-      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (animId) {
+        cancelAnimationFrame(animId);
+      }
+      window.removeEventListener('resize', handleResizeWithBackdrop);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointerup', onPointerUp);

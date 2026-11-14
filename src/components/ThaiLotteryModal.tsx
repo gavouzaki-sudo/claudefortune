@@ -8,6 +8,46 @@ import {
 } from '../utils/lotteryApi';
 import { logger } from '../utils/logger';
 
+const THAI_MONTHS_SHORT = [
+  'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+  'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
+] as const;
+
+interface DrawPreset {
+  day: string;
+  month: string;
+  yearBe: string;
+  label: string;
+}
+
+function getRecentDrawPresets(now: Date = new Date()): DrawPreset[] {
+  const presets: DrawPreset[] = [];
+  let yearCe = now.getFullYear();
+  let month = now.getMonth() + 1;
+  let day = now.getDate() >= 16 ? 16 : 1;
+
+  for (let i = 0; i < 4; i++) {
+    const yearBe = yearCe + 543;
+    presets.push({
+      day: String(day).padStart(2, '0'),
+      month: String(month).padStart(2, '0'),
+      yearBe: String(yearBe),
+      label: `${day} ${THAI_MONTHS_SHORT[month - 1]} ${String(yearBe).slice(-2)}`,
+    });
+    if (day === 16) {
+      day = 1;
+    } else {
+      day = 16;
+      month -= 1;
+      if (month < 1) {
+        month = 12;
+        yearCe -= 1;
+      }
+    }
+  }
+  return presets;
+}
+
 interface ThaiLotteryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -29,9 +69,11 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
 
   // Date search mode
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
-  const [selectedDay, setSelectedDay] = useState<string>('01');
-  const [selectedMonth, setSelectedMonth] = useState<string>('11');
-  const [selectedYear, setSelectedYear] = useState<string>('2569');
+  const [selectedDay, setSelectedDay] = useState<string>(() => (new Date().getDate() >= 16 ? '16' : '01'));
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
+  const [selectedYear, setSelectedYear] = useState<string>(() => String(new Date().getFullYear() + 543));
+  const currentYearBE = new Date().getFullYear() + 543;
+  const recentPresets = getRecentDrawPresets();
 
   // Load latest lottery draw on open
   useEffect(() => {
@@ -158,7 +200,7 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
         {/* Date Sub-Banner: Deep Green Background */}
         <div className="lottery-date-banner">
           <p className="lottery-date-text">
-            งวดประจำวันที่ {loading ? 'กำลังโหลด...' : lotteryData?.formattedThaiDate || '1 พฤศจิกายน 2569'}
+            งวดประจำวันที่ {loading ? 'กำลังโหลด...' : lotteryData?.formattedThaiDate || 'รออัปเดตข้อมูล'}
           </p>
         </div>
 
@@ -166,38 +208,21 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
         {showDatePicker && (
           <div className="lottery-compact-date-popover">
             <div className="compact-preset-row">
-              <button
-                type="button"
-                className="btn-quick-date"
-                onClick={() => handleSearchByDate('01', '11', '2569')}
-              >
-                1 พ.ย. 69
-              </button>
-              <button
-                type="button"
-                className="btn-quick-date"
-                onClick={() => handleSearchByDate('01', '02', '2569')}
-              >
-                1 ก.พ. 69
-              </button>
-              <button
-                type="button"
-                className="btn-quick-date"
-                onClick={() => handleSearchByDate('16', '10', '2569')}
-              >
-                16 ต.ค. 69
-              </button>
-              <button
-                type="button"
-                className="btn-quick-date"
-                onClick={() => handleSearchByDate('01', '10', '2569')}
-              >
-                1 ต.ค. 69
-              </button>
+              {recentPresets.map((preset) => (
+                <button
+                  key={`${preset.yearBe}-${preset.month}-${preset.day}`}
+                  type="button"
+                  className="btn-quick-date"
+                  onClick={() => handleSearchByDate(preset.day, preset.month, preset.yearBe)}
+                >
+                  {preset.label}
+                </button>
+              ))}
               <button
                 type="button"
                 className="btn-quick-date"
                 onClick={() => handleSearchByDate('01', '03', '2567')}
+                title="ข้อมูลงวดอ้างอิงออฟไลน์"
               >
                 1 มี.ค. 67
               </button>
@@ -242,11 +267,11 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
                 <input
                   type="number"
                   min="2540"
-                  max="2590"
+                  max={String(Math.max(2590, currentYearBE + 5))}
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
                   className="compact-year-input"
-                  placeholder="2569"
+                  placeholder={String(currentYearBE)}
                   aria-label="ปี พ.ศ."
                 />
               </div>

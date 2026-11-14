@@ -2,6 +2,7 @@
 // Generates authentic procedural melodic sequences, instrument modeling, and physical impulse response reverb.
 
 import { logger } from './logger';
+import { getSharedAudioContext } from './audioContext';
 
 export interface ChantMetadata {
   id: string;
@@ -364,12 +365,10 @@ class CulturalAudioEngine {
   async init(): Promise<void> {
     if (typeof window === 'undefined') return;
     try {
-      if (!this.ctx) {
-        const AudioCtx =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        if (!AudioCtx) return;
-        const c = (this.ctx = new AudioCtx());
+      const c = await getSharedAudioContext();
+      if (!c) return;
+      if (this.ctx !== c) {
+        this.ctx = c;
         this.out = c.createGain();
         this.out.gain.value = 0.8;
         const limiter = c.createDynamicsCompressor();
@@ -377,9 +376,7 @@ class CulturalAudioEngine {
         limiter.ratio.value = 12;
         this.out.connect(limiter).connect(c.destination);
         this.noise = this.makeNoise(2);
-      }
-      if (this.ctx && this.ctx.state !== 'running') {
-        await this.ctx.resume();
+        this.irCache = {};
       }
     } catch (err) {
       logger.debug('AudioContext initialization note (awaiting user interaction):', err);

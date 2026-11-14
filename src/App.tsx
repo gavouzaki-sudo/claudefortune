@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { Bridge } from './bridge';
 import type { UserSession, DivinationTopic } from './types';
 import { useToast } from './hooks/useToast';
@@ -11,30 +11,57 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/Header';
 import { Ambient } from './components/Ambient';
 import { Gate } from './components/Gate';
-import { SiameseSticks } from './components/SiameseSticks';
-import { Tarot } from './components/Tarot';
-import { LuckyNumbers } from './components/LuckyNumbers';
-import { Rituals } from './components/Rituals';
-import { ScanFortune } from './components/ScanFortune';
-import { LoveFortune } from './components/LoveFortune';
-import { FestivalStage } from './components/FestivalStage';
-import { LoyKrathong3D } from './components/LoyKrathong3D';
-import { CoffinCard } from './components/CoffinCard';
-import { FortuneCanvasBackground } from './components/FortuneCanvasBackground';
 import { HorizontalRitualMenu } from './components/HorizontalRitualMenu';
 import { Footer } from './components/Footer';
 import { Toast } from './components/Toast';
 import { Fireworks, type FireworksHandle } from './components/Fireworks';
-import { MeditationChamber } from './components/MeditationChamber';
-import { AuspiciousCalendar } from './components/AuspiciousCalendar';
-import { LuckyCardModal } from './components/LuckyCardModal';
-import { FortuneJournalModal } from './components/FortuneJournalModal';
-import { ThaiLotteryModal } from './components/ThaiLotteryModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { ambientSoundEngine } from './utils/ambientSoundscapes';
 import { spiritualSpeechEngine } from './utils/spiritualSpeech';
 import { stopChant } from './utils/chantAudio';
 import type { CardData } from './utils/luckyCardCanvas';
+
+const FortuneCanvasBackground = lazy(() =>
+  import('./components/FortuneCanvasBackground').then((m) => ({ default: m.FortuneCanvasBackground }))
+);
+const SiameseSticks = lazy(() =>
+  import('./components/SiameseSticks').then((m) => ({ default: m.SiameseSticks }))
+);
+const Tarot = lazy(() => import('./components/Tarot').then((m) => ({ default: m.Tarot })));
+const LuckyNumbers = lazy(() =>
+  import('./components/LuckyNumbers').then((m) => ({ default: m.LuckyNumbers }))
+);
+const Rituals = lazy(() => import('./components/Rituals').then((m) => ({ default: m.Rituals })));
+const ScanFortune = lazy(() =>
+  import('./components/ScanFortune').then((m) => ({ default: m.ScanFortune }))
+);
+const LoveFortune = lazy(() =>
+  import('./components/LoveFortune').then((m) => ({ default: m.LoveFortune }))
+);
+const FestivalStage = lazy(() =>
+  import('./components/FestivalStage').then((m) => ({ default: m.FestivalStage }))
+);
+const LoyKrathong3D = lazy(() =>
+  import('./components/LoyKrathong3D').then((m) => ({ default: m.LoyKrathong3D }))
+);
+const CoffinCard = lazy(() =>
+  import('./components/CoffinCard').then((m) => ({ default: m.CoffinCard }))
+);
+const MeditationChamber = lazy(() =>
+  import('./components/MeditationChamber').then((m) => ({ default: m.MeditationChamber }))
+);
+const AuspiciousCalendar = lazy(() =>
+  import('./components/AuspiciousCalendar').then((m) => ({ default: m.AuspiciousCalendar }))
+);
+const LuckyCardModal = lazy(() =>
+  import('./components/LuckyCardModal').then((m) => ({ default: m.LuckyCardModal }))
+);
+const FortuneJournalModal = lazy(() =>
+  import('./components/FortuneJournalModal').then((m) => ({ default: m.FortuneJournalModal }))
+);
+const ThaiLotteryModal = lazy(() =>
+  import('./components/ThaiLotteryModal').then((m) => ({ default: m.ThaiLotteryModal }))
+);
 
 export const App: React.FC = () => {
   const [bridge, setBridge] = useState<Bridge | null>(null);
@@ -296,11 +323,13 @@ export const App: React.FC = () => {
 
           {!loadError && bridge && session && (
             <div id="app">
-              <FortuneCanvasBackground
-                activeTopic={tab}
-                tarotVariant={tarotVariant}
-                onToggleTarotVariant={() => setTarotVariant((v) => (v === 0 ? 1 : 0))}
-              />
+              <Suspense fallback={null}>
+                <FortuneCanvasBackground
+                  activeTopic={tab}
+                  tarotVariant={tarotVariant}
+                  onToggleTarotVariant={() => setTarotVariant((v) => (v === 0 ? 1 : 0))}
+                />
+              </Suspense>
 
               <HorizontalRitualMenu
                 activeTopic={tab}
@@ -323,88 +352,99 @@ export const App: React.FC = () => {
 
               <div className="ritual-active-wrapper">
                 <ErrorBoundary fallbackMessage="เกิดข้อผิดพลาดชั่วคราวในพิธีกรรมส่วนนี้">
-                  {tab === 'stick' && (
-                    <SiameseSticks
-                      bridge={bridge}
-                      onToast={showToast}
-                      onOpenCard={handleOpenCard}
-                    />
-                  )}
-
-                  {tab === 'tarot' && (
-                    <Tarot
-                      bridge={bridge}
-                      onToast={showToast}
-                      onOpenCard={handleOpenCard}
-                    />
-                  )}
-
-                  {tab === 'number' && (
-                    <LuckyNumbers
-                      bridge={bridge}
-                      onToast={showToast}
-                      onOpenCard={handleOpenCard}
-                    />
-                  )}
-
-                  {tab === 'ritual' && (
-                    <Rituals
-                      bridge={bridge}
-                      userZodiac={session.zodiac}
-                      onToast={showToast}
-                    />
-                  )}
-
-                  {tab === 'love' && (
-                    <LoveFortune session={session} onToast={showToast} />
-                  )}
-
-                  {tab === 'scan' && (
-                    <ScanFortune bridge={bridge} onToast={showToast} />
-                  )}
-
-                  {tab === 'meditation' && (
-                    <MeditationChamber
-                      systemId={session.systemId}
-                      systemName={session.systemName}
-                      onToast={showToast}
-                    />
-                  )}
-
-                  {tab === 'auspicious' && (
-                    <AuspiciousCalendar
-                      onToast={showToast}
-                      onOpenCard={handleOpenCard}
-                    />
-                  )}
-
-                  {tab === 'krathong' && (
-                    <section id="tab-krathong" className="ritual-frameless-stage tab krathong-ritual-stage" role="tabpanel">
-                      <LoyKrathong3D
+                  <Suspense
+                    fallback={
+                      <section className="panel shrine-loading-panel">
+                        <div className="shrine-gate-loader">
+                          <span className="shrine-loader-emblem" aria-hidden="true">🏮</span>
+                          <p className="shrine-loader-sub">กำลังจัดเตรียมพิธีกรรม...</p>
+                        </div>
+                      </section>
+                    }
+                  >
+                    {tab === 'stick' && (
+                      <SiameseSticks
                         bridge={bridge}
                         onToast={showToast}
-                        onLaunchFireworks={(b) => fireworksRef.current?.launch(b)}
+                        onOpenCard={handleOpenCard}
                       />
-                    </section>
-                  )}
+                    )}
 
-                  {tab === 'coffin' && (
-                    <CoffinCard
-                      bridge={bridge}
-                      onToast={showToast}
-                      onOpenCard={handleOpenCard}
-                    />
-                  )}
+                    {tab === 'tarot' && (
+                      <Tarot
+                        bridge={bridge}
+                        onToast={showToast}
+                        onOpenCard={handleOpenCard}
+                      />
+                    )}
 
-                  {tab === 'festival' && (
-                    <FestivalStage
-                      bridge={bridge}
-                      festivalId={festivalId}
-                      onToast={showToast}
-                      onLaunchFireworks={(b) => fireworksRef.current?.launch(b)}
-                      onOpenCard={handleOpenCard}
-                    />
-                  )}
+                    {tab === 'number' && (
+                      <LuckyNumbers
+                        bridge={bridge}
+                        onToast={showToast}
+                        onOpenCard={handleOpenCard}
+                      />
+                    )}
+
+                    {tab === 'ritual' && (
+                      <Rituals
+                        bridge={bridge}
+                        userZodiac={session.zodiac}
+                        onToast={showToast}
+                      />
+                    )}
+
+                    {tab === 'love' && (
+                      <LoveFortune session={session} onToast={showToast} />
+                    )}
+
+                    {tab === 'scan' && (
+                      <ScanFortune bridge={bridge} onToast={showToast} />
+                    )}
+
+                    {tab === 'meditation' && (
+                      <MeditationChamber
+                        systemId={session.systemId}
+                        systemName={session.systemName}
+                        onToast={showToast}
+                      />
+                    )}
+
+                    {tab === 'auspicious' && (
+                      <AuspiciousCalendar
+                        onToast={showToast}
+                        onOpenCard={handleOpenCard}
+                      />
+                    )}
+
+                    {tab === 'krathong' && (
+                      <section id="tab-krathong" className="ritual-frameless-stage tab krathong-ritual-stage" role="tabpanel">
+                        <LoyKrathong3D
+                          bridge={bridge}
+                          onToast={showToast}
+                          onLaunchFireworks={(b) => fireworksRef.current?.launch(b)}
+                        />
+                      </section>
+                    )}
+
+                    {tab === 'coffin' && (
+                      <CoffinCard
+                        bridge={bridge}
+                        onToast={showToast}
+                        onOpenCard={handleOpenCard}
+                      />
+                    )}
+
+                    {tab === 'festival' && (
+                      <FestivalStage
+                        bridge={bridge}
+                        festivalId={festivalId}
+                        onToast={showToast}
+                        onLaunchFireworks={(b) => fireworksRef.current?.launch(b)}
+                        onOpenCard={handleOpenCard}
+                      />
+                    )}
+                  </Suspense>
                 </ErrorBoundary>
               </div>
 
@@ -416,25 +456,33 @@ export const App: React.FC = () => {
         <Toast message={toastMsg} />
         <Fireworks ref={fireworksRef} />
 
-        <LuckyCardModal
-          isOpen={isCardModalOpen}
-          cardData={activeCardData}
-          onClose={() => setIsCardModalOpen(false)}
-          onToast={showToast}
-        />
+        <Suspense fallback={null}>
+          {isCardModalOpen && (
+            <LuckyCardModal
+              isOpen={isCardModalOpen}
+              cardData={activeCardData}
+              onClose={() => setIsCardModalOpen(false)}
+              onToast={showToast}
+            />
+          )}
 
-        <FortuneJournalModal
-          isOpen={isJournalOpen}
-          onClose={() => setIsJournalOpen(false)}
-          onOpenCard={handleOpenCard}
-          onToast={showToast}
-        />
+          {isJournalOpen && (
+            <FortuneJournalModal
+              isOpen={isJournalOpen}
+              onClose={() => setIsJournalOpen(false)}
+              onOpenCard={handleOpenCard}
+              onToast={showToast}
+            />
+          )}
 
-        <ThaiLotteryModal
-          isOpen={isLotteryOpen}
-          onClose={() => setIsLotteryOpen(false)}
-          onToast={showToast}
-        />
+          {isLotteryOpen && (
+            <ThaiLotteryModal
+              isOpen={isLotteryOpen}
+              onClose={() => setIsLotteryOpen(false)}
+              onToast={showToast}
+            />
+          )}
+        </Suspense>
 
         <OfflineIndicator />
       </ErrorBoundary>

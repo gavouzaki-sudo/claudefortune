@@ -1,6 +1,8 @@
 // High-fidelity Lucky Card Canvas Generator
 // Renders an authentic, ornate gold-embossed divination card for social sharing and saving
 
+import { drawRoundedRect } from './canvasUtils';
+
 export interface CardData {
   type: 'stick' | 'tarot' | 'number' | 'remedy' | 'scan' | 'auspicious';
   title: string;
@@ -151,8 +153,7 @@ export async function generateLuckyCardBlob(data: CardData): Promise<Blob> {
     ctx.fillStyle = 'rgba(46, 20, 16, 0.9)';
     ctx.strokeStyle = '#d4af37';
     ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.roundRect(100, badgeY - 26, width - 200, 52, [26]);
+    drawRoundedRect(ctx, 100, badgeY - 26, width - 200, 52, [26]);
     ctx.fill();
     ctx.stroke();
 
@@ -169,8 +170,7 @@ export async function generateLuckyCardBlob(data: CardData): Promise<Blob> {
     ctx.fillStyle = '#8b1010';
     ctx.strokeStyle = '#f5c542';
     ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.roundRect(width / 2 - 130, 290, 260, 95, [18]);
+    drawRoundedRect(ctx, width / 2 - 130, 290, 260, 95, [18]);
     ctx.fill();
     ctx.stroke();
 
@@ -196,8 +196,7 @@ export async function generateLuckyCardBlob(data: CardData): Promise<Blob> {
     ctx.fillStyle = 'rgba(25, 12, 10, 0.85)';
     ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)';
     ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.roundRect(boxX, boxY, boxW, boxH, [16]);
+    drawRoundedRect(ctx, boxX, boxY, boxW, boxH, [16]);
     ctx.fill();
     ctx.stroke();
 
@@ -255,8 +254,7 @@ export async function generateLuckyCardBlob(data: CardData): Promise<Blob> {
       ctx.fillStyle = 'rgba(32, 16, 24, 0.9)';
       ctx.strokeStyle = '#d4af37';
       ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.roundRect(cX, cY, cardW, cardH, [12]);
+      drawRoundedRect(ctx, cX, cY, cardW, cardH, [12]);
       ctx.fill();
       ctx.stroke();
 
@@ -287,8 +285,7 @@ export async function generateLuckyCardBlob(data: CardData): Promise<Blob> {
     ctx.fillStyle = 'rgba(25, 12, 10, 0.85)';
     ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)';
     ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.roundRect(boxX, boxY, width - 160, 180, [14]);
+    drawRoundedRect(ctx, boxX, boxY, width - 160, 180, [14]);
     ctx.fill();
     ctx.stroke();
 
@@ -313,8 +310,7 @@ export async function generateLuckyCardBlob(data: CardData): Promise<Blob> {
     ctx.fillStyle = '#1c0a0a';
     ctx.strokeStyle = '#ffb84d';
     ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.roundRect(sealX, sealY, 400, 240, [24]);
+    drawRoundedRect(ctx, sealX, sealY, 400, 240, [24]);
     ctx.fill();
     ctx.stroke();
 
@@ -352,8 +348,7 @@ export async function generateLuckyCardBlob(data: CardData): Promise<Blob> {
     ctx.fillStyle = 'rgba(25, 12, 10, 0.85)';
     ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)';
     ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.roundRect(80, tipY, width - 160, 250, [16]);
+    drawRoundedRect(ctx, 80, tipY, width - 160, 250, [16]);
     ctx.fill();
     ctx.stroke();
 
@@ -379,15 +374,13 @@ export async function generateLuckyCardBlob(data: CardData): Promise<Blob> {
     ctx.fillStyle = 'rgba(25, 12, 10, 0.9)';
     ctx.strokeStyle = '#e8b94a';
     ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.roundRect(70, boxY, width - 140, 520, [20]);
+    drawRoundedRect(ctx, 70, boxY, width - 140, 520, [20]);
     ctx.fill();
     ctx.stroke();
 
     // Ornate gold banner inside box
     ctx.fillStyle = 'rgba(232, 185, 74, 0.15)';
-    ctx.beginPath();
-    ctx.roundRect(90, boxY + 20, width - 180, 70, [12]);
+    drawRoundedRect(ctx, 90, boxY + 20, width - 180, 70, [12]);
     ctx.fill();
 
     ctx.textAlign = 'center';
@@ -443,8 +436,7 @@ export async function generateLuckyCardBlob(data: CardData): Promise<Blob> {
 
     // Bottom Blessing Note
     ctx.fillStyle = 'rgba(232, 185, 74, 0.08)';
-    ctx.beginPath();
-    ctx.roundRect(95, gridY + 170, width - 190, 110, [10]);
+    drawRoundedRect(ctx, 95, gridY + 170, width - 190, 110, [10]);
     ctx.fill();
 
     ctx.textAlign = 'center';
@@ -467,8 +459,7 @@ export async function generateLuckyCardBlob(data: CardData): Promise<Blob> {
     ctx.fillStyle = 'rgba(25, 12, 10, 0.85)';
     ctx.strokeStyle = '#d4af37';
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(80, boxY, width - 160, 500, [16]);
+    drawRoundedRect(ctx, 80, boxY, width - 160, 500, [16]);
     ctx.fill();
     ctx.stroke();
 
@@ -494,8 +485,7 @@ export async function generateLuckyCardBlob(data: CardData): Promise<Blob> {
   ctx.fillStyle = 'rgba(179, 38, 30, 0.9)';
   ctx.strokeStyle = '#f5c542';
   ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(width / 2 - 110, sealBottomY - 10, 220, 50, [10]);
+  drawRoundedRect(ctx, width / 2 - 110, sealBottomY - 10, 220, 50, [10]);
   ctx.fill();
   ctx.stroke();
 

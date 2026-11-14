@@ -442,7 +442,7 @@ function calculateThaiRuk(yearCE: number, month: number, day: number): {
 
 // Helper to normalize Common Era (C.E.) or Buddhist Era (B.E.) years
 export function normalizeToBE(year: number): number {
-  if (!Number.isInteger(year)) return 2569;
+  if (!Number.isInteger(year)) return new Date().getFullYear() + 543;
   if (year >= 1800 && year < 2400) {
     return year + 543;
   }

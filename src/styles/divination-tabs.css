@@ -22,6 +22,10 @@
   transform: translateZ(0);
 }
 
+.lucky-numbers-section-stage {
+  padding-top: 0 !important;
+}
+
 /* Ensure interactive controls inside divination views never disappear in default state */
 .stick-stage,
 .tarot-table,
@@ -877,10 +881,6 @@
 
 .reel.settled {
   animation: pop 0.25s ease;
-}
-
-.lucky-numbers-section-stage {
-  padding-top: 0 !important;
 }
 
 .lucky-choose-category-bar {

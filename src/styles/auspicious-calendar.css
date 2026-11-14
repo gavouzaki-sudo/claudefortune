@@ -481,8 +481,8 @@ select.input-select:focus,
   border-radius: 12px !important;
   padding: 0.65rem 0.95rem !important;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7), 0 0 16px rgba(232, 185, 74, 0.25) !important;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.85rem;
   visibility: visible !important;
   opacity: 1 !important;
 }
@@ -578,11 +578,6 @@ select.input-select:focus,
 .view-results-count strong {
   color: #ffd700;
   font-weight: 800;
-}
-
-.results-view-mode-bar {
-  margin-top: 0.75rem;
-  margin-bottom: 0.85rem;
 }
 
 .view-mode-tabs-lead {

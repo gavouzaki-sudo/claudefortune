@@ -1,165 +1,23 @@
 // Smart Contextual Theme Engine
 // Intelligently matches themes based on calendar date, festivals, and user geography/timezone without annoying permission popups.
 
+import { MYSTICAL_THEMES } from '../data/themes';
+
 export interface ThemeInfo {
   id: string;
   name: string;
-  nameEn: string;
-  category: 'festival' | 'cultural' | 'core';
+  category: 'festival' | 'region';
   description: string;
   palette: string[]; // [primary, accent, background]
 }
 
-export const ALL_THEMES: ThemeInfo[] = [
-  // 1. Core Sanctuary Theme
-  {
-    id: 'shrine',
-    name: 'ศาลเจ้ามงคลดั้งเดิม',
-    nameEn: 'Sacred Lacquer Shrine',
-    category: 'core',
-    description: 'สีชาดและทองคำแท้ มนต์ขลังแห่งศาลเจ้าศักดิ์สิทธิ์',
-    palette: ['#b3261e', '#e8b94a', '#120a08'],
-  },
-  // 2. Festival Themes
-  {
-    id: 'xmas',
-    name: 'เทศกาลคริสต์มาส',
-    nameEn: 'Christmas & Winter Holiday',
-    category: 'festival',
-    description: 'ต้นสนเอเวอร์กรีน ผลฮอลลี่เบอร์รี่ และดาวเบธเลเฮมสีทองอร่าม',
-    palette: ['#c92a2a', '#ffd700', '#051a0e'],
-  },
-  {
-    id: 'songkran',
-    name: 'เทศกาลสงกรานต์',
-    nameEn: 'Songkran Water Festival',
-    category: 'festival',
-    description: 'สายน้ำเย็นชุ่มฉ่ำ สาดประกายแสงตะวันสีฟ้าครามและทอง',
-    palette: ['#1a9fc9', '#ffd966', '#04202a'],
-  },
-  {
-    id: 'halloween',
-    name: 'เทศกาลฮาโลวีน',
-    nameEn: 'Halloween & Samhain',
-    category: 'festival',
-    description: 'รัตติกาลลึกลับ ตะเกียงฟักทองสีส้มเพลิง และมนต์ม่วงเข้ม',
-    palette: ['#7a2bd1', '#ff8a1f', '#0b0612'],
-  },
-  {
-    id: 'loy',
-    name: 'เทศกาลลอยกระทง',
-    nameEn: 'Loy Krathong Festival',
-    category: 'festival',
-    description: 'แสงเทียนกระทงลอยบนสายน้ำยามราตรี สะท้อนแสงจันทร์เพ็ญ',
-    palette: ['#e0602d', '#ffcf70', '#061220'],
-  },
-  {
-    id: 'cny',
-    name: 'เทศกาลตรุษจีน',
-    nameEn: 'Chinese Lunar New Year',
-    category: 'festival',
-    description: 'สีแดงมงคลจักรพรรดิ โคมไฟทองคำ และพลังหยินหยางแห่งความมั่งคั่ง',
-    palette: ['#d62020', '#ffd24a', '#260404'],
-  },
-  {
-    id: 'newyear',
-    name: 'เทศกาลปีใหม่สากล',
-    nameEn: 'Global New Year',
-    category: 'festival',
-    description: 'ท้องฟ้าราตรีกึ่งศตวรรษ ประกายพลุสีครามและแสงดาวระยิบระยับ',
-    palette: ['#7e6bff', '#f1d27a', '#090c1d'],
-  },
-  // 3. Cultural & Regional Themes
-  {
-    id: 'thai',
-    name: 'อารยธรรมไทยโบราณ',
-    nameEn: 'Siam Royal Temple',
-    category: 'cultural',
-    description: 'สีม่วงครามราชสำนัก ลายรดน้ำทองคำ และดอกบัวบวงสรวง',
-    palette: ['#9c27b0', '#e8b94a', '#14081c'],
-  },
-  {
-    id: 'vedic',
-    name: 'อารยธรรมเวทมนตร์อินเดีย',
-    nameEn: 'Vedic Saffron & Gold',
-    category: 'cultural',
-    description: 'สีส้มหญ้าฝรั่น ดอกดาวเรืองบูชาไฟ และไม้จันทน์หอม',
-    palette: ['#e65100', '#ffb347', '#1f0d04'],
-  },
-  {
-    id: 'egyptian',
-    name: 'อารยธรรมไอยคุปต์อียิปต์',
-    nameEn: 'Egyptian Lapis & Sun Gold',
-    category: 'cultural',
-    description: 'หินลาพิสลาซูลีสีน้ำเงินเข้มและทองคำแท้แห่งฟาโรห์สุริยเทพ',
-    palette: ['#1565c0', '#f5c542', '#081224'],
-  },
-  {
-    id: 'islamic',
-    name: 'อารยธรรมอิสลามิคดวงดาว',
-    nameEn: 'Islamic Celestial Emerald',
-    category: 'cultural',
-    description: 'มรกตสีเขียวเข้ม เสี้ยวจันทร์ทองคำ และลวดลายเรขาคณิตศักดิ์สิทธิ์',
-    palette: ['#1b8a5a', '#d4af37', '#041a13'],
-  },
-  {
-    id: 'western',
-    name: 'อารยธรรมสากลจักรราศี',
-    nameEn: 'Western Celestial Starlight',
-    category: 'cultural',
-    description: 'ห้วงอวกาศน้ำเงินลึก แสงดาวสีเงินและกลุ่มดาวจักรราศีสากล',
-    palette: ['#3f51b5', '#e0d070', '#0a0d1f'],
-  },
-  {
-    id: 'aztec_mayan',
-    name: 'อารยธรรมแอซเท็ก-มายา',
-    nameEn: 'Mesoamerican Sun Stone',
-    category: 'cultural',
-    description: 'ศิลาสุริยันสีดินเผา แอมเบอร์ และมนต์แห่งพีระมิดโบราณ',
-    palette: ['#c0392b', '#e68c32', '#1a0f07'],
-  },
-  {
-    id: 'native_american',
-    name: 'อารยธรรมชนเผ่าพื้นเมือง',
-    nameEn: 'Indigenous Turquoise & Earth',
-    category: 'cultural',
-    description: 'หินเทอร์ควอยซ์สีฟ้าเขียว ดินผาสีแดง และจิตวิญญาณแห่งสายลม',
-    palette: ['#2a9d8f', '#d49a6a', '#151010'],
-  },
-  // 4. New Elemental & Seasonal Themes
-  {
-    id: 'valentine',
-    name: 'เทศกาลแห่งความรัก',
-    nameEn: 'Valentine & Sacred Love',
-    category: 'festival',
-    description: 'สระบัวสีชมพู กุหลาบแดง และประกายแสงสีทองอบอุ่นแห่งรักแท้',
-    palette: ['#e91e63', '#ff80ab', '#180714'],
-  },
-  {
-    id: 'midautumn',
-    name: 'เทศกาลไหว้พระจันทร์',
-    nameEn: 'Mid-Autumn Moon Harvest',
-    category: 'festival',
-    description: 'แสงจันทร์เพ็ญสีเหลืองนวล ครามราตรี และโคมไฟมงคล',
-    palette: ['#ffd54f', '#ffb300', '#0a1026'],
-  },
-  {
-    id: 'frost',
-    name: 'เหมันต์หิมะบริสุทธิ์',
-    nameEn: 'Sacred Frost & Crystal',
-    category: 'core',
-    description: 'ขาวประกายหิมะ ฟ้าไอซ์บลู และคริสตัลน้ำแข็งแห่งความสงบ',
-    palette: ['#80d8ff', '#e0f7fa', '#04101a'],
-  },
-  {
-    id: 'forest',
-    name: 'พนาลัยพฤกษาศักดิ์สิทธิ์',
-    nameEn: 'Sacred Emerald Grove',
-    category: 'cultural',
-    description: 'เขียวมรกตไพร ทองคำแสงตะวันลอดใบไม้ และจิตวิญญาณแห่งผืนป่า',
-    palette: ['#2e7d32', '#aed581', '#061a0b'],
-  },
-];
+export const ALL_THEMES: ThemeInfo[] = MYSTICAL_THEMES.map((t) => ({
+  id: t.id,
+  name: t.name,
+  category: t.category,
+  description: t.description,
+  palette: [t.bgColors.red, t.bgColors.gold, t.bgColors.bg],
+}));
 
 export function detectSmartTheme(): string {
   const now = new Date();

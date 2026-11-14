@@ -40,9 +40,8 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
   onToast,
   onOpenCard,
 }) => {
-  // Default to November 2569 (Nov 2026) as requested
-  const [selectedYearBE, setSelectedYearBE] = useState<number>(2569);
-  const [selectedMonth, setSelectedMonth] = useState<number>(11); // 1-12
+  const [selectedYearBE, setSelectedYearBE] = useState<number>(() => new Date().getFullYear() + 543);
+  const [selectedMonth, setSelectedMonth] = useState<number>(() => new Date().getMonth() + 1); // 1-12
   const [selectedBirthDay, setSelectedBirthDay] = useState<BirthDayId | 'none'>(
     initialBirthDay || 'none'
   );
@@ -431,11 +430,16 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
               aria-label="เลือกปี"
               title="เลือกปี"
             >
-              {Array.from({ length: Math.max(2575, selectedYearBE + 5) - Math.min(2567, selectedYearBE - 5) + 1 }, (_, i) => Math.min(2567, selectedYearBE - 5) + i).map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
+              {(() => {
+                const currentYearBE = new Date().getFullYear() + 543;
+                const minYear = Math.min(2567, currentYearBE - 5, selectedYearBE - 5);
+                const maxYear = Math.max(2575, currentYearBE + 5, selectedYearBE + 5);
+                return Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i).map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ));
+              })()}
             </select>
           </div>
 

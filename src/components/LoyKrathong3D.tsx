@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { Bridge } from '../bridge';
 import { isChantMuted } from '../utils/chantAudio';
+import { getSharedAudioContextSync } from '../utils/audioContext';
 
 interface LoyKrathong3DProps {
   bridge: Bridge;
@@ -97,7 +98,6 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
   const floatProgressRef = useRef<number>(0);
   const isFloatingRef = useRef<boolean>(false);
   isFloatingRef.current = isFloating;
-  const splashAudioCtxRef = useRef<AudioContext | null>(null);
 
   const disposeGroupResources = useCallback((obj: THREE.Object3D) => {
     const disposedGeos = new Set<THREE.BufferGeometry>();
@@ -127,13 +127,8 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
   const playWaterSplashSound = useCallback(() => {
     if (isChantMuted()) return;
     try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtx) return;
-      if (!splashAudioCtxRef.current) {
-        splashAudioCtxRef.current = new AudioCtx();
-      }
-      const ctx = splashAudioCtxRef.current;
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      const ctx = getSharedAudioContextSync();
+      if (!ctx) return;
 
       // Soft water ripple sweep
       const osc = ctx.createOscillator();
@@ -538,7 +533,7 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
     const timer = new THREE.Timer();
 
     function afterDraw(cb: () => void) {
-      if (isDisposed) return;
+      if (isDisposed || document.hidden) return;
       const gl = renderer.getContext() as WebGL2RenderingContext | null;
       if (!gl || typeof gl.fenceSync !== 'function') {
         animationFrameId = window.setTimeout(cb, 80);
@@ -547,7 +542,8 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
       const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
       gl.flush();
       const poll = () => {
-        if (isDisposed) {
+        if (isDisposed || document.hidden) {
+          animationFrameId = 0;
           if (sync && typeof gl.deleteSync === 'function') {
             gl.deleteSync(sync);
           }
@@ -567,9 +563,10 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
     }
 
     const tick = () => {
-      if (isDisposed) return;
+      animationFrameId = 0;
+      if (isDisposed || document.hidden) return;
       timer.update();
-      const delta = timer.getDelta();
+      const delta = Math.min(timer.getDelta(), 0.05);
       const time = timer.getElapsed();
 
       // Candle Flame Flicker animation
@@ -650,21 +647,43 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
 
       if (isSoftwareGl) {
         afterDraw(tick);
-      } else {
+      } else if (!isDisposed && !document.hidden) {
         animationFrameId = requestAnimationFrame(tick);
       }
     };
 
-    tick();
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (animationFrameId) {
+          if (isSoftwareGl) {
+            clearTimeout(animationFrameId);
+          } else {
+            cancelAnimationFrame(animationFrameId);
+          }
+          animationFrameId = 0;
+        }
+      } else if (!isDisposed && !animationFrameId) {
+        timer.update();
+        tick();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    if (!document.hidden) {
+      tick();
+    }
 
     // Cleanup on unmount
     return () => {
       isDisposed = true;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('resize', handleResize);
-      if (isSoftwareGl) {
-        clearTimeout(animationFrameId);
-      } else {
-        cancelAnimationFrame(animationFrameId);
+      if (animationFrameId) {
+        if (isSoftwareGl) {
+          clearTimeout(animationFrameId);
+        } else {
+          cancelAnimationFrame(animationFrameId);
+        }
       }
       disposeGroupResources(scene);
       if (scene.environment) {
@@ -674,10 +693,6 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
-      }
-      if (splashAudioCtxRef.current) {
-        splashAudioCtxRef.current.close().catch(() => {});
-        splashAudioCtxRef.current = null;
       }
     };
   }, [buildKrathongModel, disposeGroupResources]);

@@ -594,58 +594,54 @@ button.btn-toolbar-compact.btn-toolbar-reset:hover {
 /* Roll Dice Button (ทอยลูกเต๋า) */
 .sj-roll-btn {
   flex: 2;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  background: linear-gradient(180deg, #f7d57f 0%, #b87d22 100%) !important;
-  color: #1a0d05 !important;
-  border: 2px solid #fff0a8 !important;
-  border-radius: 14px !important;
-  box-shadow: 0 4px 0 #5f3a09, 0 6px 16px rgba(0, 0, 0, 0.5) !important;
-  font-size: 1.05rem !important;
-  font-weight: 900 !important;
-  padding: 12px 16px !important;
-  cursor: pointer !important;
-  pointer-events: auto !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #f7d57f 0%, #b87d22 100%);
+  color: #1a0d05;
+  border: 2px solid #fff0a8;
+  border-radius: 14px;
+  box-shadow: 0 4px 0 #5f3a09, 0 6px 16px rgba(0, 0, 0, 0.5);
+  font-size: 1.05rem;
+  font-weight: 900;
+  padding: 12px 16px;
+  cursor: pointer;
   min-height: 48px;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 .sj-roll-btn:hover:not(:disabled) {
   filter: brightness(1.12);
   transform: translateY(-2px);
-  box-shadow: 0 6px 0 #5f3a09, 0 8px 20px rgba(213, 166, 75, 0.4) !important;
+  box-shadow: 0 6px 0 #5f3a09, 0 8px 20px rgba(213, 166, 75, 0.4);
 }
 .sj-roll-btn:active:not(:disabled) {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 #5f3a09 !important;
+  box-shadow: 0 2px 0 #5f3a09;
 }
-.sj-roll-btn:disabled {
-  opacity: 0.45 !important;
+.sj-roll-btn:disabled,
+.sj-reset-btn:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
+  pointer-events: none;
   filter: grayscale(0.5);
-  box-shadow: none !important;
+  box-shadow: none;
 }
 
 /* Reset / Reroll Button (สุ่ม 9 วัดใหม่) */
 .sj-reset-btn {
   flex: 1;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  background: linear-gradient(180deg, #382017 0%, #1d0f0a 100%) !important;
-  color: #ffdca3 !important;
-  border: 1.5px solid #8c6439 !important;
-  border-radius: 14px !important;
-  box-shadow: 0 3px 0 #180c07 !important;
-  font-size: 0.88rem !important;
-  font-weight: 750 !important;
-  padding: 12px 14px !important;
-  cursor: pointer !important;
-  pointer-events: auto !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #382017 0%, #1d0f0a 100%);
+  color: #ffdca3;
+  border: 1.5px solid #8c6439;
+  border-radius: 14px;
+  box-shadow: 0 3px 0 #180c07;
+  font-size: 0.88rem;
+  font-weight: 750;
+  padding: 12px 14px;
+  cursor: pointer;
   min-height: 48px;
 }
 .sj-reset-btn:hover:not(:disabled) {

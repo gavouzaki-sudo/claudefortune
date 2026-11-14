@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { drawRoundedRect } from '../utils/canvasUtils';
 
 interface BurnTalismanProps {
   burnLevel: number; // 0, 1, 2, 3
@@ -296,7 +297,8 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
     };
 
     const render = () => {
-      if (!isRunning) return;
+      animationFrameIdRef.current = null;
+      if (!isRunning || document.hidden) return;
 
       const w = dimensions.width;
       const h = dimensions.height;
@@ -498,8 +500,7 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
 
       // 3A. REVEALED CHAMBER UNDERNEATH
       ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(talisLeft, talisTop, talisW, talisH, 7);
+      drawRoundedRect(ctx, talisLeft, talisTop, talisW, talisH, 7);
       ctx.clip();
 
       const chamGrad = ctx.createRadialGradient(talisCx, talisCy, 6, talisCx, talisCy, talisW);
@@ -744,8 +745,7 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
       // Outer Frame border of the talisman
       ctx.strokeStyle = curBurn >= 3 ? '#ffd700' : 'rgba(212, 175, 55, 0.45)';
       ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.roundRect(talisLeft, talisTop, talisW, talisH, 7);
+      drawRoundedRect(ctx, talisLeft, talisTop, talisW, talisH, 7);
       ctx.stroke();
 
       // =============================================================
@@ -906,15 +906,34 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
 
       ctx.restore(); // restore dpr scale
 
-      // Continue loop
-      animationFrameIdRef.current = requestAnimationFrame(render);
+      // Continue loop only while visible
+      if (isRunning && !document.hidden) {
+        animationFrameIdRef.current = requestAnimationFrame(render);
+      } else {
+        animationFrameIdRef.current = null;
+      }
     };
 
-    render();
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (animationFrameIdRef.current !== null) {
+          cancelAnimationFrame(animationFrameIdRef.current);
+          animationFrameIdRef.current = null;
+        }
+      } else if (isRunning && animationFrameIdRef.current === null) {
+        animationFrameIdRef.current = requestAnimationFrame(render);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    if (!document.hidden) {
+      render();
+    }
 
     return () => {
       isRunning = false;
-      if (animationFrameIdRef.current) {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (animationFrameIdRef.current !== null) {
         cancelAnimationFrame(animationFrameIdRef.current);
         animationFrameIdRef.current = null;
       }

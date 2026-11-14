@@ -12,6 +12,7 @@ import { saveJournalEntry } from '../utils/fortuneJournal';
 import { buildSacredJourneyCardData } from '../utils/cardDataBuilder';
 import type { CardData } from '../utils/luckyCardCanvas';
 import { useChantAudioState } from '../hooks/useChantAudioState';
+import { getSharedAudioContextSync } from '../utils/audioContext';
 
 interface GameState {
   version: number;
@@ -129,7 +130,6 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
   >(null);
 
   const [selectedWish, setSelectedWish] = useState<string>(WISH_TOPICS[0]);
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const timersRef = useRef<Set<number>>(new Set());
   const isMountedRef = useRef(true);
   const stateRef = useRef(state);
@@ -145,7 +145,7 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
     []
   );
 
-  // Unmount cleanup for timers and AudioContext
+  // Unmount cleanup for timers
   useEffect(() => {
     isMountedRef.current = true;
     const timers = timersRef.current;
@@ -153,10 +153,6 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
       isMountedRef.current = false;
       timers.forEach((id) => clearTimeout(id));
       timers.clear();
-      if (audioCtxRef.current) {
-        audioCtxRef.current.close().catch(() => {});
-        audioCtxRef.current = null;
-      }
     };
   }, []);
 
@@ -211,18 +207,8 @@ export const SacredJourney9Game: React.FC<SacredJourney9GameProps> = ({
     (type: 'dice' | 'step' | 'bell' | 'gong' | 'item') => {
       if (isMuted) return;
       try {
-        const AudioCtx =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        if (!AudioCtx) return;
-
-        if (!audioCtxRef.current) {
-          audioCtxRef.current = new AudioCtx();
-        }
-        const ctx = audioCtxRef.current;
-        if (ctx.state === 'suspended') {
-          ctx.resume();
-        }
+        const ctx = getSharedAudioContextSync();
+        if (!ctx) return;
 
         const now = ctx.currentTime;
 

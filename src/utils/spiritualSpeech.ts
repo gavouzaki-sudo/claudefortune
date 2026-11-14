@@ -8,6 +8,7 @@ import { stopChant } from './chantAudio';
 import { ambientSoundEngine } from './ambientSoundscapes';
 import { logger } from './logger';
 import { clamp } from './formatters';
+import { getSharedAudioContextSync } from './audioContext';
 
 export type SpiritualVoicePresetId = 'sinsei' | 'dharma' | 'meditation';
 export type SpeechEngineType = 'google' | 'native';
@@ -104,7 +105,6 @@ const isThaiVoice = (v: SpeechSynthesisVoice): boolean => {
 
 class SpiritualSpeechEngine {
   private synth: SpeechSynthesis | null = null;
-  private audioCtx: AudioContext | null = null;
   private audioPlayer: HTMLAudioElement | null = null;
 
   private state: SpiritualSpeechState = {
@@ -323,15 +323,8 @@ class SpiritualSpeechEngine {
 
   playTempleChime(): void {
     try {
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtx) return;
-      if (!this.audioCtx) this.audioCtx = new AudioCtx();
-      const ctx = this.audioCtx;
-      if (ctx.state !== 'running') {
-        ctx.resume().catch(() => {});
-      }
+      const ctx = getSharedAudioContextSync();
+      if (!ctx) return;
 
       const t0 = ctx.currentTime;
       const frequencies = [528, 1056, 1584];

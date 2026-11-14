@@ -108,3 +108,83 @@ export async function processImageToPixels(
     return null;
   }
 }
+
+/**
+ * Cross-browser rounded rectangle path helper.
+ * Uses native ctx.roundRect when supported and falls back to quadratic curves on older browsers.
+ */
+export function drawRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  radii: number | number[]
+): void {
+  ctx.beginPath();
+
+  const nativeRoundRect = (
+    ctx as CanvasRenderingContext2D & {
+      roundRect?: (
+        rx: number,
+        ry: number,
+        rw: number,
+        rh: number,
+        r: number | number[]
+      ) => void;
+    }
+  ).roundRect;
+
+  if (typeof nativeRoundRect === 'function') {
+    nativeRoundRect.call(ctx, x, y, w, h, radii);
+    return;
+  }
+
+  const maxR = Math.max(0, Math.min(Math.abs(w) / 2, Math.abs(h) / 2));
+  const clampR = (val: number): number => Math.max(0, Math.min(val, maxR));
+
+  let tl = 0;
+  let tr = 0;
+  let br = 0;
+  let bl = 0;
+
+  if (typeof radii === 'number') {
+    tl = tr = br = bl = clampR(radii);
+  } else if (Array.isArray(radii)) {
+    if (radii.length === 1) {
+      tl = tr = br = bl = clampR(radii[0] ?? 0);
+    } else if (radii.length === 2) {
+      tl = br = clampR(radii[0] ?? 0);
+      tr = bl = clampR(radii[1] ?? 0);
+    } else if (radii.length === 3) {
+      tl = clampR(radii[0] ?? 0);
+      tr = bl = clampR(radii[1] ?? 0);
+      br = clampR(radii[2] ?? 0);
+    } else if (radii.length >= 4) {
+      tl = clampR(radii[0] ?? 0);
+      tr = clampR(radii[1] ?? 0);
+      br = clampR(radii[2] ?? 0);
+      bl = clampR(radii[3] ?? 0);
+    }
+  }
+
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y);
+  if (tr > 0) ctx.quadraticCurveTo(x + w, y, x + w, y + tr);
+  else ctx.lineTo(x + w, y);
+
+  ctx.lineTo(x + w, y + h - br);
+  if (br > 0) ctx.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+  else ctx.lineTo(x + w, y + h);
+
+  ctx.lineTo(x + bl, y + h);
+  if (bl > 0) ctx.quadraticCurveTo(x, y + h, x, y + h - bl);
+  else ctx.lineTo(x, y + h);
+
+  ctx.lineTo(x, y + tl);
+  if (tl > 0) ctx.quadraticCurveTo(x, y, x + tl, y);
+  else ctx.lineTo(x, y);
+
+  ctx.closePath();
+}
+

@@ -2,7 +2,6 @@
 // Supports both WebAssembly (wasm/core.c) and an embedded 100% pure TypeScript engine
 // to ensure zero preview or runtime failures across all browser sandboxes and CSP environments.
 
-import { CORE_WASM_BASE64 } from "./wasm/coreWasmBytes";
 import { logger } from "./utils/logger";
 import { pad2, pad3, clamp } from "./utils/formatters";
 import type {
@@ -716,13 +715,33 @@ export class Bridge {
 
   static async load(): Promise<Bridge> {
     try {
-      const binaryString = atob(CORE_WASM_BASE64);
-      const len = binaryString.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+      if (typeof fetch !== "function") {
+        throw new Error("fetch is unavailable in this environment");
       }
-      const { instance } = await WebAssembly.instantiate(bytes.buffer, {});
+      const metaEnv = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env;
+      const base = metaEnv?.BASE_URL || "./";
+      const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+      const wasmUrl = `${normalizedBase}wasm/core.wasm`;
+
+      const response = await fetch(wasmUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} fetching ${wasmUrl}`);
+      }
+
+      let instance: WebAssembly.Instance;
+      const contentType = response.headers.get("content-type") || "";
+      if (
+        typeof WebAssembly.instantiateStreaming === "function" &&
+        contentType.includes("application/wasm")
+      ) {
+        const result = await WebAssembly.instantiateStreaming(response, {});
+        instance = result.instance;
+      } else {
+        const bytes = await response.arrayBuffer();
+        const result = await WebAssembly.instantiate(bytes, {});
+        instance = result.instance;
+      }
+
       logger.info("Loaded WebAssembly Divination Core successfully");
       return new Bridge(new WasmCoreEngine(instance));
     } catch (err) {
