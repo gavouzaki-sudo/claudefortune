@@ -567,11 +567,13 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
           ctx.font = 'bold 20px "Cinzel", serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillStyle = 'rgba(255, 140, 50, 0.45)';
-          ctx.filter = 'blur(3px)';
-          ctx.fillText(digit, dx, dy);
-          ctx.filter = 'none';
-          ctx.fillStyle = 'rgba(255, 180, 80, 0.7)';
+          ctx.shadowColor = 'rgba(255, 140, 50, 0.85)';
+          ctx.shadowBlur = 8;
+          ctx.fillStyle = 'rgba(255, 140, 50, 0.25)';
+          ctx.fillText(digit, dx - 1, dy);
+          ctx.fillText(digit, dx + 1, dy);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = 'rgba(255, 180, 80, 0.78)';
           ctx.font = 'bold 16px serif';
           ctx.fillText('?', dx, dy);
         } else {

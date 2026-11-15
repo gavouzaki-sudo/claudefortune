@@ -273,6 +273,8 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     });
   }, [allMonthDays, thaksaByDate, selectedBirthDay, avoidKalakini, selectedCategory, searchQuery]);
 
+  const filteredDayDates = useMemo(() => new Set(filteredDays.map((d) => d.date)), [filteredDays]);
+
 
 
   // Handle Save to Journal
@@ -565,7 +567,7 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
 
             {/* Month days */}
             {displayedMonthDays.map((day) => {
-              const isFilteredOut = !filteredDays.some((d) => d.date === day.date);
+              const isFilteredOut = !filteredDayDates.has(day.date);
               const thaksa =
                 selectedBirthDay !== 'none'
                   ? thaksaByDate.get(day.date)

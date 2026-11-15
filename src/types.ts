@@ -80,6 +80,7 @@ export interface OfferingResult {
 }
 
 export interface RemedyResult {
+  zodiac?: number;
   zodiac_name: string;
   year_name: string;
   year: number;

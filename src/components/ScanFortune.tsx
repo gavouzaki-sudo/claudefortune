@@ -105,7 +105,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
       ctx.fill();
     }
 
-    ptsRef.current.push([(x * 1000) / cv.width, (y * 1000) / cv.width, strokeRef.current]);
+    ptsRef.current.push([(x * 1000) / cv.width, (y * 1000) / cv.height, strokeRef.current]);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -128,7 +128,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
       ctx.stroke();
     }
     lastPosRef.current = [x, y];
-    ptsRef.current.push([(x * 1000) / cv.width, (y * 1000) / cv.width, strokeRef.current]);
+    ptsRef.current.push([(x * 1000) / cv.width, (y * 1000) / cv.height, strokeRef.current]);
   };
 
   const handlePointerUp = () => {

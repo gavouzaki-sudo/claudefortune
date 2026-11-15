@@ -59,9 +59,10 @@ EXPORT("wasm_heap_size") u32 wasm_heap_size(void) { return HEAP_SZ; }
 /* JSON writer                                                        */
 /* ------------------------------------------------------------------ */
 #define OUT_SZ 32768
+#define J_MAX_DEPTH 32
 static char out[OUT_SZ];
 static int op, overflow;
-static int stk[10], sp, pv;
+static int stk[J_MAX_DEPTH], sp, pv;
 
 static void oc(char c) {
   if (op < OUT_SZ - 1) out[op++] = c;
@@ -86,11 +87,13 @@ static void j_sep(void) {
 static void j_open(char c) {
   j_sep();
   oc(c);
-  if (sp < 10) stk[sp++] = 1;
+  if (sp < J_MAX_DEPTH) stk[sp++] = 1;
+  else overflow = 1;
 }
 static void j_close(char c) {
   oc(c);
   if (sp > 0) sp--;
+  else overflow = 1;
 }
 static void j_key(const char *k) {
   j_sep();
@@ -404,9 +407,13 @@ static u64 daily_seed(u32 salt) {
   return h;
 }
 static void put_num(int v, int digits) {
-  char t[8]; int n = digits;
+  char t[16];
+  if (digits < 1) digits = 1;
+  if (digits > 15) digits = 15;
+  u32 u = (v < 0) ? (u32)(-(v + 1)) + 1u : (u32)v;
+  int n = digits;
   t[n] = 0;
-  while (n--) { t[n] = (char)('0' + v % 10); v /= 10; }
+  while (n--) { t[n] = (char)('0' + (u % 10u)); u /= 10u; }
   j_str(t);
 }
 

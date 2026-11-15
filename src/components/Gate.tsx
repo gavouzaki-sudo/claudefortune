@@ -369,21 +369,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                 {/* Celestial Center Core Sigil & Selected Symbol Altar */}
                 <div
                   className="radial-menu-center-card celestial-center-sigil active-altar-card"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (activeSymbol && activeSystem) {
-                      completeSession(activeSymbol, activeSystem);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  title="คลิกเพื่ออัญเชิญ"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      if (activeSymbol && activeSystem) completeSession(activeSymbol, activeSystem);
-                    }
-                  }}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   {/* Top Bar with System Name & Close Button */}
                   <div className="radial-center-header">
@@ -406,7 +392,12 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
 
                   {/* Focused Zodiac Symbol: Name in Civilization Language */}
                   {activeSymbol && (
-                    <div className="center-symbol-focus animate-rise">
+                    <button
+                      type="button"
+                      className="center-symbol-focus animate-rise"
+                      title="คลิกเพื่ออัญเชิญ"
+                      onClick={() => completeSession(activeSymbol, activeSystem)}
+                    >
                       <div className="center-symbol-orb">
                         <span className="center-symbol-icon">{activeSymbol.symbol}</span>
                         <div className="center-symbol-glow" />
@@ -418,12 +409,12 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                           <span className="center-symbol-sub"> ({activeSymbol.name})</span>
                         )}
                       </h3>
-                    </div>
+                    </button>
                   )}
 
                   {/* Action Button: Short & Powerful */}
                   {activeSymbol && (
-                    <div className="center-action-row" onClick={(e) => e.stopPropagation()}>
+                    <div className="center-action-row">
                       <button
                         type="button"
                         className="btn primary center-confirm-btn"

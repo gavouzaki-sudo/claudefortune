@@ -383,7 +383,10 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
 
     // Procedural Studio Environment
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    const roomEnv = new RoomEnvironment();
+    const envTarget = pmremGenerator.fromScene(roomEnv, 0.04);
+    scene.environment = envTarget.texture;
+    roomEnv.dispose();
     pmremGenerator.dispose();
 
     // Lighting: Cool Moonlit River Night + Warm Candle Key Light
@@ -686,9 +689,8 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
         }
       }
       disposeGroupResources(scene);
-      if (scene.environment) {
-        scene.environment.dispose();
-      }
+      envTarget.dispose();
+      scene.environment = null;
       controls.dispose();
       renderer.dispose();
       if (container.contains(renderer.domElement)) {

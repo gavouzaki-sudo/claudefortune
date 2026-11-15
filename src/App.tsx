@@ -19,6 +19,7 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 import { ambientSoundEngine } from './utils/ambientSoundscapes';
 import { spiritualSpeechEngine } from './utils/spiritualSpeech';
 import { stopChant } from './utils/chantAudio';
+import { safeStorage } from './utils/storage';
 import type { CardData } from './utils/luckyCardCanvas';
 
 const FortuneCanvasBackground = lazy(() =>
@@ -137,9 +138,24 @@ export const App: React.FC = () => {
         if (!isMounted) return;
         b.setDate();
         b.seed();
-        setBridge(b);
 
-        // Gate (Civilization) is the initial home page
+        const savedSession = safeStorage.get<UserSession | null>('session', 'shrine.session', null);
+        if (
+          savedSession &&
+          typeof savedSession.symbolName === 'string' &&
+          typeof savedSession.year === 'number' &&
+          typeof savedSession.zodiac === 'number'
+        ) {
+          const resolvedZ = b.initSession(savedSession.symbolName, savedSession.year, savedSession.zodiac);
+          if (resolvedZ >= 0) {
+            const info = b.zodiacInfo(resolvedZ);
+            setSession({ ...savedSession, zodiac: resolvedZ, info });
+          } else {
+            safeStorage.remove('session', 'shrine.session');
+          }
+        }
+
+        setBridge(b);
       } catch (err) {
         logger.error('Failed during initial bridge/session loading:', err);
         if (isMounted) {
@@ -160,6 +176,7 @@ export const App: React.FC = () => {
     stopChant();
     ambientSoundEngine.setSoundscape('none');
     setSession(null);
+    safeStorage.remove('session', 'shrine.session');
     try {
       sessionStorage.removeItem('shrine.activeTab');
     } catch {
@@ -197,7 +214,10 @@ export const App: React.FC = () => {
       stopChant();
       if (!session) {
         const guestSession = createDefaultGuestSession();
-        if (guestSession) setSession(guestSession);
+        if (guestSession) {
+          safeStorage.set('session', 'shrine.session', guestSession);
+          setSession(guestSession);
+        }
       }
       setTab(targetTab);
       try {

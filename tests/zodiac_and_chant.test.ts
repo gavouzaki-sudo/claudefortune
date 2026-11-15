@@ -840,3 +840,341 @@ test('Period-locked unified lucky numbers & weekly prophecies work across Wasm a
     assert.notDeepEqual(sigSun.traits, sigMon.traits);
   }
 });
+
+test('Wasm vs JS Fallback full parity: zodiac table, imageScan elements/readings, setDate month, signature, and ScanFortune Y-axis', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const { Bridge } = await import('../src/bridge');
+
+  const rawWasm = await readFile(new URL('../public/wasm/core.wasm', import.meta.url));
+  const wasmBr = await Bridge.fromBytes(rawWasm);
+  const jsBr = await Bridge.fromBytes(new Uint8Array(0));
+
+  for (const br of [wasmBr, jsBr]) {
+    br.setDate(new Date(2026, 10, 15));
+    br.initSession('สมหญิง', 1992, 8);
+  }
+
+  // 1. All 12 zodiacs: name, animal, color, direction, and remedy must match between Wasm and JS
+  for (let z = 0; z < 12; z++) {
+    const wz = wasmBr.zodiacInfo(z);
+    const jz = jsBr.zodiacInfo(z);
+    assert.equal(jz.name, wz.name, `Zodiac ${z} name mismatch`);
+    assert.equal(jz.animal, wz.animal, `Zodiac ${z} animal mismatch`);
+    assert.equal(jz.color, wz.color, `Zodiac ${z} color mismatch`);
+    assert.equal(jz.direction, wz.direction, `Zodiac ${z} direction mismatch`);
+    assert.equal(jz.current_year_name, wz.current_year_name);
+    assert.equal(jz.current_year_index, wz.current_year_index);
+    assert.equal(jz.year, wz.year);
+
+    const wr = wasmBr.remedy(z, z % 4);
+    const jr = jsBr.remedy(z, z % 4);
+    assert.equal(jr.color, wr.color, `Remedy ${z} color mismatch`);
+    assert.equal(jr.direction, wr.direction, `Remedy ${z} direction mismatch`);
+    assert.equal(jr.relation, wr.relation, `Remedy ${z} relation mismatch`);
+  }
+
+  // 2. imageScan: Wasm & JS return identical element, fingerprint, scores, and reading across all 5 elements
+  const seenElements = new Set<string>();
+  for (let seed = 0; seed < 80 && seenElements.size < 5; seed++) {
+    const px = new Uint8Array(64).map((_, i) => (i * 17 + seed * 31) & 255);
+    for (const mode of [0, 1]) {
+      const ws = wasmBr.imageScan(px, mode);
+      const js = jsBr.imageScan(px, mode);
+      assert.equal(js.element, ws.element, `Element mismatch at seed=${seed}, mode=${mode}`);
+      assert.equal(js.fingerprint, ws.fingerprint, `Fingerprint mismatch at seed=${seed}, mode=${mode}`);
+      assert.deepEqual(js.scores, ws.scores, `Scores mismatch at seed=${seed}, mode=${mode}`);
+      assert.equal(js.reading, ws.reading, `Reading mismatch at seed=${seed}, mode=${mode}`);
+      assert.ok(
+        ws.reading.includes(ws.element),
+        `Reading for element "${ws.element}" must reference "${ws.element}", got: ${ws.reading}`
+      );
+      assert.ok(!ws.reading.includes('ทองคำ'), `Reading must not leak ทองคำ when element is ${ws.element}`);
+    }
+    seenElements.add(wasmBr.imageScan(px, 0).element);
+  }
+  assert.deepEqual(seenElements, new Set(['ไฟ', 'ดิน', 'โลหะ', 'น้ำ', 'ไม้']));
+
+  // 3. setDate month tracking in JS fallback affects weekly set and lucky numbers cleanly
+  jsBr.setDate(new Date(2026, 4, 10)); // May 10, 2026
+  const maySet = jsBr.getWeeklySetIndex();
+  const mayLucky = jsBr.luckyNumbers(2);
+  jsBr.setDate(new Date(2026, 10, 10)); // Nov 10, 2026
+  const novSet = jsBr.getWeeklySetIndex();
+  const novLucky = jsBr.luckyNumbers(2);
+  assert.notEqual(maySet, novSet, 'setDate must track month changes');
+  assert.notDeepEqual(mayLucky.two, novLucky.two);
+
+  // 4. signature: Wasm & JS parity across stroke geometries
+  const sigSamples: [number, number, number][][] = [
+    Array.from({ length: 20 }, (_, i) => [100 + i * 35, 800 - i * 30, i < 10 ? 0 : 1]),
+    Array.from({ length: 16 }, (_, i) => [200 + i * 10, 500 + (i % 2) * 10, 0]),
+    Array.from({ length: 24 }, (_, i) => [50 + i * 25, 100 + i * 30, Math.floor(i / 6)]),
+  ];
+  for (const pts of sigSamples) {
+    const wSig = wasmBr.signature(pts);
+    const jSig = jsBr.signature(pts);
+    assert.equal(jSig.strokes, wSig.strokes);
+    assert.deepEqual(jSig.traits, wSig.traits);
+    assert.deepEqual(jSig.scores, wSig.scores);
+  }
+
+  // 5. ScanFortune.tsx normalizes Y coordinate by cv.height (not cv.width)
+  const scanSrc = await readFile(new URL('../src/components/ScanFortune.tsx', import.meta.url), 'utf8');
+  assert.ok(!scanSrc.includes('(y * 1000) / cv.width'), 'ScanFortune.tsx must not divide y by cv.width');
+  const yNormMatches = scanSrc.match(/\(y \* 1000\) \/ cv\.height/g) ?? [];
+  assert.equal(yNormMatches.length, 2, 'ScanFortune.tsx must normalize y by cv.height in both pointerDown and pointerMove');
+});
+
+test('Regression: session restoration, 3D/Canvas resource hygiene, C buffer safety, ARIA nesting, and calendar Set lookup', async () => {
+  const { readFile } = await import('node:fs/promises');
+
+  const appSrc = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
+  assert.ok(appSrc.includes("safeStorage.get<UserSession | null>('session', 'shrine.session'"), 'App must restore shrine.session');
+  assert.ok(appSrc.includes("safeStorage.set('session', 'shrine.session', guestSession)"), 'openGuestTab must persist guest session');
+  assert.ok(appSrc.includes("safeStorage.remove('session', 'shrine.session')"), 'handleSessionChange must clear shrine.session');
+
+  const gateSrc = await readFile(new URL('../src/components/Gate.tsx', import.meta.url), 'utf8');
+  const centerCardSection = gateSrc.slice(gateSrc.indexOf('className="radial-menu-center-card'), gateSrc.indexOf('className="radial-symbols-wheel'));
+  assert.ok(!centerCardSection.includes('role="button"'), 'radial-menu-center-card must not wrap buttons with role="button"');
+
+  const loySrc = await readFile(new URL('../src/components/LoyKrathong3D.tsx', import.meta.url), 'utf8');
+  assert.ok(loySrc.includes('roomEnv.dispose()'), 'LoyKrathong3D must dispose RoomEnvironment after generating PMREM');
+  assert.ok(loySrc.includes('envTarget.dispose()'), 'LoyKrathong3D must dispose envTarget on unmount');
+
+  const burnSrc = await readFile(new URL('../src/components/BurnTalisman.tsx', import.meta.url), 'utf8');
+  assert.ok(!burnSrc.includes('ctx.filter'), 'BurnTalisman must not use ctx.filter in render loop');
+
+  const calSrc = await readFile(new URL('../src/components/AuspiciousCalendar.tsx', import.meta.url), 'utf8');
+  assert.ok(calSrc.includes('filteredDayDates.has(day.date)'), 'AuspiciousCalendar must use Set lookup instead of filteredDays.some');
+  assert.ok(!calSrc.includes('!filteredDays.some('), 'AuspiciousCalendar must not use O(N^2) filteredDays.some');
+
+  const coreC = await readFile(new URL('../wasm/core.c', import.meta.url), 'utf8');
+  assert.ok(coreC.includes('#define J_MAX_DEPTH 32'), 'wasm/core.c must expand JSON stack depth beyond 10');
+  assert.ok(coreC.includes('if (sp < J_MAX_DEPTH) stk[sp++] = 1;\n  else overflow = 1;'), 'j_open must mark overflow when depth exceeded');
+  assert.ok(coreC.includes('char t[16];') && coreC.includes('if (digits > 15) digits = 15;'), 'put_num must guard buffer bounds');
+});
+
+test('Full Wasm vs JS Fallback Parity Test across every Bridge method & validation rule', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const { Bridge } = await import('../src/bridge');
+  const {
+    STICK_VERSE_SETS,
+    STICK_ASPECT_SETS,
+    TAROT_MEANING_SETS,
+    CANDLE_PROPHECY_SETS,
+    FESTIVAL_BLESSING_SETS,
+  } = await import('../src/data/ritualProphecies');
+
+  const rawWasm = await readFile(new URL('../public/wasm/core.wasm', import.meta.url));
+  const wasmBr = await Bridge.fromBytes(rawWasm);
+  const jsBr = await Bridge.fromBytes(new Uint8Array(0));
+
+  // Uninitialized session error parity
+  assert.throws(() => wasmBr.zodiacInfo(-1));
+  assert.throws(() => jsBr.zodiacInfo(-1));
+  assert.throws(() => wasmBr.remedy(-1, 0));
+  assert.throws(() => jsBr.remedy(-1, 0));
+
+  // version()
+  assert.equal(jsBr.version(), wasmBr.version());
+
+  // setDate() + initSession() parity
+  const testDate = new Date(2026, 10, 18); // Wed Nov 18, 2026
+  wasmBr.setDate(testDate);
+  jsBr.setDate(testDate);
+
+  assert.equal(jsBr.initSession('ทดสอบ', 1500), wasmBr.initSession('ทดสอบ', 1500));
+  assert.equal(jsBr.initSession('ทดสอบ', 1990, 12), wasmBr.initSession('ทดสอบ', 1990, 12));
+  assert.equal(jsBr.initSession('ทดสอบ', 1990, -2), wasmBr.initSession('ทดสอบ', 1990, -2));
+  assert.equal(jsBr.initSession('กิตติ', 2000), wasmBr.initSession('กิตติ', 2000));
+  assert.equal(jsBr.initSession('กิตติ', 2543), wasmBr.initSession('กิตติ', 2543));
+  assert.equal(jsBr.initSession('กิตติ', 1995.8, 11.2), wasmBr.initSession('กิตติ', 1995.8, 11.2));
+
+  // zodiacInfo() full fields & invalid index parity
+  assert.throws(() => wasmBr.zodiacInfo(12));
+  assert.throws(() => jsBr.zodiacInfo(12));
+  for (let z = -1; z < 12; z++) {
+    const wz = wasmBr.zodiacInfo(z);
+    const jz = jsBr.zodiacInfo(z);
+    assert.equal(jz.index, wz.index);
+    assert.equal(jz.name, wz.name);
+    assert.equal(jz.animal, wz.animal);
+    assert.equal(jz.color, wz.color);
+    assert.equal(jz.direction, wz.direction);
+    assert.equal(jz.current_year_name, wz.current_year_name);
+    assert.equal(jz.current_year_index, wz.current_year_index);
+    assert.equal(jz.year, wz.year);
+  }
+
+  // drawStick() schema & single-source-of-truth dataset parity
+  const setIdx = wasmBr.getWeeklySetIndex();
+  assert.equal(jsBr.getWeeklySetIndex(), setIdx);
+  for (const br of [wasmBr, jsBr]) {
+    const stick = br.drawStick(350);
+    assert.ok(stick.stick >= 1 && stick.stick <= 28);
+    assert.ok(stick.level >= 0 && stick.level <= 3);
+    assert.equal(stick.level_name, ['ดีเยี่ยม', 'ดี', 'ปานกลาง', 'ควรระวัง'][stick.level]);
+    assert.equal(stick.verse, STICK_VERSE_SETS[stick.stick - 1][setIdx]);
+    assert.equal(stick.aspects.length, 4);
+    stick.aspects.forEach((asp, aIdx) => {
+      assert.equal(asp.name, ['การเงิน', 'ความรัก', 'สุขภาพ', 'การงาน'][aIdx]);
+      assert.equal(asp.text, STICK_ASPECT_SETS[stick.level][aIdx][setIdx]);
+    });
+  }
+
+  // drawTarot() count clamping, uniqueness, & dataset parity
+  for (const count of [0, 3, 99]) {
+    const wt = wasmBr.drawTarot(count);
+    const jt = jsBr.drawTarot(count);
+    const expectedLen = Math.max(1, Math.min(10, count));
+    assert.equal(wt.cards.length, expectedLen);
+    assert.equal(jt.cards.length, expectedLen);
+    assert.equal(new Set(wt.cards.map((c) => c.id)).size, expectedLen);
+    assert.equal(new Set(jt.cards.map((c) => c.id)).size, expectedLen);
+    for (const card of [...wt.cards, ...jt.cards]) {
+      const mSet = TAROT_MEANING_SETS[card.id][setIdx];
+      assert.equal(card.meaning, card.reversed ? mSet.rev : mSet.up);
+    }
+  }
+
+  // luckyNumbers() exact parity + invalid category throws
+  assert.throws(() => wasmBr.luckyNumbers(-1));
+  assert.throws(() => jsBr.luckyNumbers(-1));
+  assert.throws(() => wasmBr.luckyNumbers(3));
+  assert.throws(() => jsBr.luckyNumbers(3));
+  for (const cat of [0, 1, 2]) {
+    assert.deepEqual(jsBr.luckyNumbers(cat), wasmBr.luckyNumbers(cat));
+  }
+
+  // remedy() / badLuckRemedy() 12x4 matrix + error parity
+  assert.throws(() => wasmBr.remedy(12, 0));
+  assert.throws(() => jsBr.remedy(12, 0));
+  assert.throws(() => wasmBr.remedy(0, -1));
+  assert.throws(() => jsBr.remedy(0, -1));
+  assert.throws(() => wasmBr.remedy(0, 4));
+  assert.throws(() => jsBr.remedy(0, 4));
+  for (let z = -1; z < 12; z++) {
+    for (let p = 0; p < 4; p++) {
+      assert.deepEqual(jsBr.remedy(z, p), wasmBr.remedy(z, p));
+    }
+  }
+
+  // candle() / candleUnlock() exact parity
+  for (const ms of [-50, 0, 2500, 3999]) {
+    const wc = wasmBr.candle(ms);
+    const jc = jsBr.candle(ms);
+    assert.equal(jc.level, wc.level);
+    assert.equal(jc.unlocked, false);
+    assert.equal(wc.unlocked, false);
+    assert.equal(jc.remaining_ms, wc.remaining_ms);
+  }
+  for (const ms of [4000, 5000, 75000]) {
+    const wc = wasmBr.candle(ms);
+    const jc = jsBr.candle(ms);
+    assert.deepEqual(jc, wc);
+    assert.equal(jc.dedication, CANDLE_PROPHECY_SETS[setIdx].dedication);
+    assert.deepEqual(jc.mantra, CANDLE_PROPHECY_SETS[setIdx].mantra);
+  }
+
+  // getFestival() boundary date parity
+  const festDates: [number, number][] = [
+    [1, 1], [1, 14], [1, 15], [2, 28], [3, 15], [4, 1], [4, 13],
+    [7, 1], [10, 31], [11, 24], [12, 19], [12, 20], [12, 31],
+  ];
+  for (const [m, d] of festDates) {
+    assert.equal(jsBr.festival(m, d), wasmBr.festival(m, d), `Festival mismatch for ${m}/${d}`);
+  }
+
+  // festivalInfo() & blessing() exact parity + invalid id throws
+  assert.throws(() => wasmBr.festivalInfo(-1));
+  assert.throws(() => jsBr.festivalInfo(-1));
+  assert.throws(() => wasmBr.festivalInfo(6));
+  assert.throws(() => jsBr.festivalInfo(6));
+  assert.throws(() => wasmBr.blessing(-1));
+  assert.throws(() => jsBr.blessing(-1));
+  assert.throws(() => wasmBr.blessing(6));
+  assert.throws(() => jsBr.blessing(6));
+
+  for (let id = 0; id <= 5; id++) {
+    const wfi = wasmBr.festivalInfo(id);
+    const jfi = jsBr.festivalInfo(id);
+    assert.equal(jfi.name, wfi.name);
+    assert.equal(jfi.tagline, wfi.tagline);
+
+    const wb = wasmBr.blessing(id);
+    const jb = jsBr.blessing(id);
+    assert.equal(jb.title, FESTIVAL_BLESSING_SETS[id][setIdx].title);
+    assert.equal(jb.text, FESTIVAL_BLESSING_SETS[id][setIdx].text);
+    assert.equal(jb.title, wb.title);
+    assert.equal(jb.text, wb.text);
+    assert.equal(jb.lucky, wb.lucky);
+    if (id === 4) {
+      assert.ok([8, 18, 28, 66, 88, 168, 888].includes(wb.angpao!));
+      assert.ok([8, 18, 28, 66, 88, 168, 888].includes(jb.angpao!));
+    } else {
+      assert.equal(wb.angpao, undefined);
+      assert.equal(jb.angpao, undefined);
+    }
+  }
+
+  // offering() / digitalOffering() parity + crisis + error throws
+  assert.throws(() => wasmBr.offering(-1, 'test'));
+  assert.throws(() => jsBr.offering(-1, 'test'));
+  assert.throws(() => wasmBr.offering(6, 'test'));
+  assert.throws(() => jsBr.offering(6, 'test'));
+
+  const offerTexts = [
+    'กังวลเรื่องหนี้และเงิน',
+    'คิดถึงแฟนเรื่องความรัก',
+    'ป่วยนอนไม่หลับสุขภาพแย่',
+    'งานหนักมากเจ้านายเร่ง',
+    'ขอให้ครอบครัวมีความสุข',
+  ];
+  for (let type = 0; type <= 5; type++) {
+    for (const msg of offerTexts) {
+      const wo = wasmBr.offering(type, msg);
+      const jo = jsBr.offering(type, msg);
+      assert.equal(jo.offering, wo.offering);
+      assert.equal(jo.care, wo.care);
+      assert.equal(jo.category, wo.category);
+      assert.equal(jo.message, wo.message);
+      assert.equal(jo.lucky, wo.lucky);
+      assert.equal(jo.color, wo.color);
+      assert.ok((jo.merit ?? 0) >= 10 && (jo.merit ?? 0) <= 99);
+      assert.ok((wo.merit ?? 0) >= 10 && (wo.merit ?? 0) <= 99);
+    }
+  }
+  const wCare = wasmBr.offering(2, 'รู้สึกไม่อยากมีชีวิตแล้ว');
+  const jCare = jsBr.offering(2, 'รู้สึกไม่อยากมีชีวิตแล้ว');
+  assert.deepEqual(jCare, wCare);
+
+  // imageScan() & signature() exact parity + invalid input throws
+  assert.throws(() => wasmBr.imageScan(new Uint8Array(8), 0));
+  assert.throws(() => jsBr.imageScan(new Uint8Array(8), 0));
+  assert.throws(() => wasmBr.imageScan(new Uint8Array(32), 2));
+  assert.throws(() => jsBr.imageScan(new Uint8Array(32), 2));
+  const scanPixels = new Uint8Array(64).map((_, i) => (i * 29 + 13) & 255);
+  for (const mode of [0, 1]) {
+    const ws = wasmBr.imageScan(scanPixels, mode);
+    const js = jsBr.imageScan(scanPixels, mode);
+    assert.equal(js.element, ws.element);
+    assert.equal(js.fingerprint, ws.fingerprint);
+    assert.deepEqual(js.scores, ws.scores);
+    assert.equal(js.reading, ws.reading);
+  }
+
+  assert.throws(() => wasmBr.signature([[10, 20, 0]]));
+  assert.throws(() => jsBr.signature([[10, 20, 0]]));
+  const floatPts: [number, number, number][] = Array.from({ length: 18 }, (_, i) => [
+    120.7 + i * 28.4,
+    720.9 - i * 24.3 + (i % 3) * 15.6,
+    i < 9 ? 0 : 1,
+  ]);
+  const wSig = wasmBr.signature(floatPts);
+  const jSig = jsBr.signature(floatPts);
+  assert.equal(jSig.strokes, wSig.strokes);
+  assert.deepEqual(jSig.traits, wSig.traits);
+  assert.deepEqual(jSig.scores, wSig.scores);
+});
+
+

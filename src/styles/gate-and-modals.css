@@ -487,7 +487,7 @@
   pointer-events: auto;
   z-index: 40;
   backdrop-filter: none;
-  cursor: pointer;
+  cursor: default;
   transition: transform 0.2s ease;
 }
 
@@ -533,6 +533,15 @@
 
 .center-symbol-focus {
   margin: 0.25rem 0 0.35rem;
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
 }
 .center-symbol-orb {
   width: 48px;
