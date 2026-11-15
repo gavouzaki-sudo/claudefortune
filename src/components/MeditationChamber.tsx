@@ -12,19 +12,14 @@ import {
   getActiveChantId,
 } from '../utils/chantAudio';
 import { spiritualSpeechEngine } from '../utils/spiritualSpeech';
+import { MEDITATION_QUOTES_5 } from '../data/ritualProphecies';
+import { getWeeklyProphecySetIndex } from '../utils/prophecyCycle';
 
 interface MeditationChamberProps {
   systemId: string;
   systemName: string;
   onToast: (msg: string) => void;
 }
-
-const DHARMA_QUOTES = [
-  { pali: 'นตฺถิ สนฺติปรํ สุขํ', thai: 'สุขอื่นยิ่งกว่าความสงบไม่มี' },
-  { pali: 'จิตฺตํ ทนฺตํ สุขาวหํ', thai: 'จิตที่ฝึกดีแล้ว ย่อมนำความสุขมาให้' },
-  { pali: 'อโรคฺยา ปรมา ลาภา', thai: 'ความไม่มีโรคและความสงบแห่งจิต เป็นลาภอันประเสริฐ' },
-  { pali: 'สพฺเพ ตสนฺติ ทณฺฑสฺส', thai: 'สัตว์ทั้งหลายย่อมกลัวต่อความทุกข์ จงแผ่เมตตาแก่สรรพสัตว์' },
-];
 
 export const MeditationChamber: React.FC<MeditationChamberProps> = ({
   systemId,
@@ -40,7 +35,7 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
   const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
   const [timerRemaining, setTimerRemaining] = useState<number>(0);
   const [timerRunId, setTimerRunId] = useState<number>(0);
-  const [quoteIndex, setQuoteIndex] = useState<number>(0);
+  const [quoteIndex, setQuoteIndex] = useState<number>(() => getWeeklyProphecySetIndex());
 
   const timerRef = useRef<number | null>(null);
 
@@ -151,7 +146,7 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
 
   const isAudioPlaying = activeSoundscape !== 'none' || !!activeMusic;
 
-  const currentQuote = DHARMA_QUOTES[quoteIndex];
+  const currentQuote = MEDITATION_QUOTES_5[quoteIndex];
 
   return (
     <section id="meditation-chamber" className="ritual-frameless-stage meditation-stage">
@@ -167,10 +162,10 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
           </span>
         </div>
 
-        {/* Dharma quote of the day */}
+        {/* Dharma quote of the week */}
         <div
           className="dharma-quote-box"
-          onClick={() => setQuoteIndex((prev) => (prev + 1) % DHARMA_QUOTES.length)}
+          onClick={() => setQuoteIndex((prev) => (prev + 1) % MEDITATION_QUOTES_5.length)}
           title="แตะเพื่อเปลี่ยนคติธรรม"
         >
           <span className="quote-pali">"{currentQuote.pali}"</span>

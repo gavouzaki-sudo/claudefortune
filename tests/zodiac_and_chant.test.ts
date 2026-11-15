@@ -592,3 +592,251 @@ test('Thai Lottery: postponed draw schedule (2559–2569) resolves normal and ac
   assert.match(formatPostponedNote(decEntry), /16 ธันวาคม 2569/);
   assert.match(formatPostponedNote(decEntry), /พระราชพิธี/);
 });
+
+test('Weekly 5-set prophecy rotation follows Monday–Sunday schedule and loops cleanly after 5 weeks', async () => {
+  const { getWeeklyProphecySetIndex, getLotteryPeriodKey } = await import('../src/utils/prophecyCycle');
+
+  // Nov 15, 2026 is Sunday; Nov 16, 2026 is Monday; Nov 22, 2026 is Sunday; Nov 23, 2026 is Monday
+  const sunIdx = getWeeklyProphecySetIndex(new Date(2026, 10, 15));
+  const monW1Idx = getWeeklyProphecySetIndex(new Date(2026, 10, 16));
+  const wedW1Idx = getWeeklyProphecySetIndex(new Date(2026, 10, 18));
+  const sunW1Idx = getWeeklyProphecySetIndex(new Date(2026, 10, 22));
+  const monW2Idx = getWeeklyProphecySetIndex(new Date(2026, 10, 23));
+
+  assert.notEqual(sunIdx, monW1Idx, 'Sunday to Monday must rotate to next prophecy set');
+  assert.equal(monW1Idx, wedW1Idx, 'Monday and Wednesday of same week must share set');
+  assert.equal(monW1Idx, sunW1Idx, 'Monday through Sunday of same week must share set');
+  assert.equal(monW2Idx, (monW1Idx + 1) % 5, 'Next Monday must advance by 1 mod 5');
+
+  // Verify 5 consecutive weeks visit all 5 distinct indices and week 6 returns to week 1
+  const fiveWeeks = [0, 1, 2, 3, 4].map((w) =>
+    getWeeklyProphecySetIndex(new Date(2026, 10, 16 + w * 7))
+  );
+  assert.equal(new Set(fiveWeeks).size, 5, '5 consecutive weeks must cover all 5 distinct sets');
+  const week6Idx = getWeeklyProphecySetIndex(new Date(2026, 10, 16 + 5 * 7));
+  assert.equal(week6Idx, fiveWeeks[0], 'Week 6 must cycle back to Week 1 set');
+
+  // Verify calendar half-month lottery period keys (1-15 vs 16-30/31)
+  assert.equal(getLotteryPeriodKey(new Date(2026, 10, 1)), '2026-11-P1');
+  assert.equal(getLotteryPeriodKey(new Date(2026, 10, 15)), '2026-11-P1');
+  assert.equal(getLotteryPeriodKey(new Date(2026, 10, 16)), '2026-11-P2');
+  assert.equal(getLotteryPeriodKey(new Date(2026, 10, 30)), '2026-11-P2');
+  assert.equal(getLotteryPeriodKey(new Date(2026, 11, 31)), '2026-12-P2');
+});
+
+test('All ritual prophecy datasets contain strictly 5 non-duplicate sets', async () => {
+  const {
+    STICK_VERSE_SETS,
+    STICK_ASPECT_SETS,
+    TAROT_MEANING_SETS,
+    CANDLE_PROPHECY_SETS,
+    OFFERING_GUIDE_SETS,
+    REMEDY_SUMMARY_SETS,
+    REMEDY_PRACTICAL_SETS,
+    REMEDY_MERIT_SETS,
+    REMEDY_MANTRA_SETS,
+    FESTIVAL_BLESSING_SETS,
+    LOVE_FORTUNE_SETS,
+    IMAGE_SCAN_READINGS,
+    SIGNATURE_TRAIT_SETS,
+    MEDITATION_QUOTES_5,
+  } = await import('../src/data/ritualProphecies');
+
+  const assert5Unique = (items: readonly string[], label: string) => {
+    assert.equal(items.length, 5, `${label} must have 5 sets`);
+    assert.equal(new Set(items).size, 5, `${label} must have 5 distinct non-duplicate strings`);
+  };
+
+  assert.equal(STICK_VERSE_SETS.length, 28);
+  STICK_VERSE_SETS.forEach((sets, i) => assert5Unique(sets, `STICK_VERSE[${i}]`));
+
+  assert.equal(STICK_ASPECT_SETS.length, 4);
+  STICK_ASPECT_SETS.forEach((lvl, l) => {
+    assert.equal(lvl.length, 4);
+    lvl.forEach((asp, a) => assert5Unique(asp, `STICK_ASPECT[${l}][${a}]`));
+  });
+
+  assert.equal(TAROT_MEANING_SETS.length, 22);
+  TAROT_MEANING_SETS.forEach((cardSets, i) => {
+    assert5Unique(cardSets.map((c) => c.up), `TAROT[${i}].up`);
+    assert5Unique(cardSets.map((c) => c.rev), `TAROT[${i}].rev`);
+  });
+
+  assert5Unique(CANDLE_PROPHECY_SETS.map((c) => c.dedication), 'CANDLE.dedication');
+  assert5Unique(CANDLE_PROPHECY_SETS.map((c) => c.mantra.join('|')), 'CANDLE.mantra');
+
+  OFFERING_GUIDE_SETS.forEach((g, i) => assert5Unique(g, `OFFERING_GUIDE[${i}]`));
+  REMEDY_SUMMARY_SETS.forEach((s, i) => assert5Unique(s, `REMEDY_SUMMARY[${i}]`));
+  REMEDY_PRACTICAL_SETS.forEach((p, i) => assert5Unique(p, `REMEDY_PRACTICAL[${i}]`));
+  REMEDY_MERIT_SETS.forEach((m, i) => assert5Unique(m, `REMEDY_MERIT[${i}]`));
+  assert5Unique(REMEDY_MANTRA_SETS.map((m) => m.join('|')), 'REMEDY_MANTRA');
+
+  assert.equal(FESTIVAL_BLESSING_SETS.length, 6);
+  FESTIVAL_BLESSING_SETS.forEach((f, i) => {
+    assert5Unique(f.map((x) => `${x.title}|${x.text}`), `FESTIVAL_BLESSING[${i}]`);
+  });
+
+  (['single', 'crush', 'couple'] as const).forEach((status) => {
+    assert5Unique(
+      LOVE_FORTUNE_SETS[status].map((l) => `${l.verdict}|${l.prediction}|${l.mantra}`),
+      `LOVE_FORTUNE[${status}]`
+    );
+  });
+
+  IMAGE_SCAN_READINGS.forEach((modeArr, m) =>
+    modeArr.forEach((elemArr, e) => assert5Unique(elemArr, `IMAGE_SCAN[${m}][${e}]`))
+  );
+
+  SIGNATURE_TRAIT_SETS.size.forEach((arr, i) => assert5Unique(arr, `SIG.size[${i}]`));
+  SIGNATURE_TRAIT_SETS.rise.forEach((arr, i) => assert5Unique(arr, `SIG.rise[${i}]`));
+  SIGNATURE_TRAIT_SETS.jagged.forEach((arr, i) => assert5Unique(arr, `SIG.jagged[${i}]`));
+  assert5Unique(MEDITATION_QUOTES_5.map((q) => `${q.pali}|${q.thai}`), 'MEDITATION_QUOTES_5');
+});
+
+test('Period-locked unified lucky numbers & weekly prophecies work across Wasm and TS Bridges', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const { Bridge } = await import('../src/bridge');
+  const { getPeriodUnifiedLuckyNumbers } = await import('../src/utils/prophecyCycle');
+
+  // 1. Direct personalization and boundary tests for getPeriodUnifiedLuckyNumbers
+  const p1Day1 = getPeriodUnifiedLuckyNumbers({
+    date: { year: 2026, month: 11, day: 1 },
+    birthYear: 1995,
+    zodiac: 11,
+    userName: 'ทดสอบ',
+    deviceSeed: 'device-A',
+    useCache: false,
+  });
+  const p1Day15 = getPeriodUnifiedLuckyNumbers({
+    date: { year: 2026, month: 11, day: 15 },
+    birthYear: 1995,
+    zodiac: 11,
+    userName: 'ทดสอบ',
+    deviceSeed: 'device-A',
+    useCache: false,
+  });
+  assert.deepEqual(p1Day1, p1Day15, 'Days 1..15 must lock to identical numbers');
+
+  const p2Day16 = getPeriodUnifiedLuckyNumbers({
+    date: { year: 2026, month: 11, day: 16 },
+    birthYear: 1995,
+    zodiac: 11,
+    userName: 'ทดสอบ',
+    deviceSeed: 'device-A',
+    useCache: false,
+  });
+  const p2Day30 = getPeriodUnifiedLuckyNumbers({
+    date: { year: 2026, month: 11, day: 30 },
+    birthYear: 1995,
+    zodiac: 11,
+    userName: 'ทดสอบ',
+    deviceSeed: 'device-A',
+    useCache: false,
+  });
+  assert.deepEqual(p2Day16, p2Day30, 'Days 16..30 must lock to identical numbers');
+  assert.notEqual(p1Day1.primary2, p2Day16.primary2, 'Switching 15 -> 16 must change 2-digit lucky number');
+  assert.notEqual(p1Day1.primary3, p2Day16.primary3, 'Switching 15 -> 16 must change 3-digit lucky number');
+
+  // Different birthYear / zodiac / deviceSeed personalizes output
+  const diffUser = getPeriodUnifiedLuckyNumbers({
+    date: { year: 2026, month: 11, day: 1 },
+    birthYear: 1988,
+    zodiac: 4,
+    userName: 'ทดสอบ',
+    deviceSeed: 'device-A',
+    useCache: false,
+  });
+  const diffDevice = getPeriodUnifiedLuckyNumbers({
+    date: { year: 2026, month: 11, day: 1 },
+    birthYear: 1995,
+    zodiac: 11,
+    userName: 'ทดสอบ',
+    deviceSeed: 'device-B',
+    useCache: false,
+  });
+  assert.notEqual(
+    `${p1Day1.primary2}|${p1Day1.primary3}`,
+    `${diffUser.primary2}|${diffUser.primary3}`,
+    'Different birthYear/zodiac must personalize lucky numbers'
+  );
+  assert.notEqual(
+    `${p1Day1.primary2}|${p1Day1.primary3}`,
+    `${diffDevice.primary2}|${diffDevice.primary3}`,
+    'Different device must personalize lucky numbers'
+  );
+
+  // 2. Test both Wasm Bridge and JS Fallback Bridge unify all ritual lucky numbers
+  const rawWasm = await readFile(new URL('../public/wasm/core.wasm', import.meta.url));
+  const bridges = [await Bridge.fromBytes(rawWasm), await Bridge.fromBytes(new Uint8Array(0))];
+
+  for (const br of bridges) {
+    br.setDate(new Date(2026, 10, 15)); // Sun Nov 15, 2026 (P1)
+    br.initSession('สมชาย', 2538, 11); // B.E. 2538 -> 1995
+
+    const l0 = br.luckyNumbers(0);
+    const l1 = br.luckyNumbers(1);
+    const l2 = br.luckyNumbers(2);
+    const candle = br.candle(4500);
+    const candlePartial = br.candle(1000);
+    const coffin = br.blessing(2);
+    const loy = br.blessing(3);
+    const offer = br.offering(1, 'ขอให้การงานราบรื่น');
+    const crisis = br.offering(1, 'ฉันอยากตาย');
+
+    assert.ok(l0.two && l1.three && l2.two && l2.three && l2.run);
+    assert.deepEqual(l0.two, l2.two, 'LuckyNumbers 2-digit categories must agree');
+    assert.deepEqual(l1.three, l2.three, 'LuckyNumbers 3-digit categories must agree');
+
+    const primary2 = l2.two[0];
+    const primary3 = l2.three[0];
+    assert.equal(candle.unlocked, true);
+    assert.equal(candle.lucky2, primary2, 'Candle lucky2 must match unified period number');
+    assert.equal(candle.lucky3, primary3, 'Candle lucky3 must match unified period number');
+    assert.equal(coffin.lucky, primary2, 'Coffin card lucky number must match unified period number');
+    assert.equal(loy.lucky, primary2, 'Loy Krathong 3D lucky number must match unified period number');
+    assert.equal(offer.lucky, primary2, 'Offering lucky number must match unified period number');
+
+    assert.equal(candlePartial.unlocked, false);
+    assert.ok(!candlePartial.lucky2);
+
+    assert.equal(crisis.care, true);
+    assert.match(crisis.message, /1323/);
+    assert.equal(crisis.lucky, undefined);
+
+    // Move forward to Mon Nov 16, 2026 (P2 AND new Monday week)
+    br.setDate(new Date(2026, 10, 16));
+    const l2Next = br.luckyNumbers(2);
+    const coffinNext = br.blessing(2);
+    const loyNext = br.blessing(3);
+    const candleNext = br.candle(4500);
+
+    assert.notEqual(l2Next.two![0], primary2, 'Day 16 must change 2-digit lucky number');
+    assert.notEqual(l2Next.three![0], primary3, 'Day 16 must change 3-digit lucky number');
+    assert.equal(coffinNext.lucky, l2Next.two![0], 'Coffin must track new period unified number');
+    assert.equal(loyNext.lucky, l2Next.two![0], 'Loy Krathong must track new period unified number');
+    assert.equal(candleNext.lucky2, l2Next.two![0]);
+    assert.equal(candleNext.lucky3, l2Next.three![0]);
+
+    // Weekly prophecy text rotation on Monday transition
+    assert.notEqual(candle.dedication, candleNext.dedication, 'Candle dedication rotates on Monday');
+    assert.notEqual(coffin.text, coffinNext.text, 'Coffin blessing text rotates on Monday');
+    assert.notEqual(loy.text, loyNext.text, 'Loy Krathong blessing text rotates on Monday');
+
+    // Remedy, imageScan, and signature also rotate cleanly between Sun Nov 15 and Mon Nov 16
+    br.setDate(new Date(2026, 10, 15));
+    const remSun = br.remedy(6, 0);
+    const scanSun = br.imageScan(new Uint8Array(64).fill(42), 0);
+    const pts: [number, number, number][] = Array.from({ length: 12 }, (_, i) => [i * 30, 100 - i * 5, 0]);
+    const sigSun = br.signature(pts);
+
+    br.setDate(new Date(2026, 10, 16));
+    const remMon = br.remedy(6, 0);
+    const scanMon = br.imageScan(new Uint8Array(64).fill(42), 0);
+    const sigMon = br.signature(pts);
+
+    assert.notEqual(remSun.summary, remMon.summary);
+    assert.notEqual(remSun.practical, remMon.practical);
+    assert.notEqual(scanSun.reading, scanMon.reading);
+    assert.notDeepEqual(sigSun.traits, sigMon.traits);
+  }
+});

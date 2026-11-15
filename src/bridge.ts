@@ -4,6 +4,27 @@
 
 import { logger } from "./utils/logger";
 import { pad2, pad3, clamp } from "./utils/formatters";
+import {
+  getCalendarDateParts,
+  getWeeklyProphecySetIndex,
+  getPeriodUnifiedLuckyNumbers,
+  type CalendarDateParts,
+  type UnifiedLuckyNumbers,
+} from "./utils/prophecyCycle";
+import {
+  STICK_VERSE_SETS,
+  STICK_ASPECT_SETS,
+  TAROT_MEANING_SETS,
+  CANDLE_PROPHECY_SETS,
+  OFFERING_GUIDE_SETS,
+  REMEDY_SUMMARY_SETS,
+  REMEDY_PRACTICAL_SETS,
+  REMEDY_MERIT_SETS,
+  REMEDY_MANTRA_SETS,
+  FESTIVAL_BLESSING_SETS,
+  IMAGE_SCAN_READINGS,
+  SIGNATURE_TRAIT_SETS,
+} from "./data/ritualProphecies";
 import type {
   ZodiacInfo,
   StickResult,
@@ -708,6 +729,10 @@ class JsCoreEngine implements ICoreEngine {
 // -----------------------------------------------------------------------------
 export class Bridge {
   private engine: ICoreEngine;
+  private curDateParts: CalendarDateParts = getCalendarDateParts();
+  private birthYear = 2000;
+  private zodiac = 4;
+  private userName = "";
 
   private constructor(engine: ICoreEngine) {
     this.engine = engine;
@@ -766,11 +791,25 @@ export class Bridge {
     }
   }
 
+  getWeeklySetIndex(): number {
+    return getWeeklyProphecySetIndex(this.curDateParts);
+  }
+
+  getPeriodLucky(): UnifiedLuckyNumbers {
+    return getPeriodUnifiedLuckyNumbers({
+      date: this.curDateParts,
+      birthYear: this.birthYear,
+      zodiac: this.zodiac,
+      userName: this.userName,
+    });
+  }
+
   version(): number {
     return this.engine.version();
   }
 
   setDate(date: Date = new Date()): void {
+    this.curDateParts = getCalendarDateParts(date);
     try {
       this.engine.setDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
     } catch (err) {
@@ -779,7 +818,15 @@ export class Bridge {
   }
 
   initSession(name: string, birthYear: number, zodiac: number = -1): number {
-    return this.engine.initSession(name, birthYear, zodiac);
+    const res = this.engine.initSession(name, birthYear, zodiac);
+    if (res >= 0) {
+      let by = Math.floor(birthYear);
+      if (by > 2400) by -= 543;
+      this.birthYear = by;
+      this.zodiac = res;
+      this.userName = (name || "").trim();
+    }
+    return res;
   }
 
   zodiacInfo(zodiac: number = -1): ZodiacInfo {
@@ -787,23 +834,82 @@ export class Bridge {
   }
 
   drawStick(power: number): StickResult {
-    return this.engine.drawSiameseSticks(power);
+    const res = this.engine.drawSiameseSticks(power);
+    const setIdx = this.getWeeklySetIndex();
+    const stickIdx = clamp(res.stick - 1, 0, STICK_VERSE_SETS.length - 1);
+    const levelIdx = clamp(res.level, 0, STICK_ASPECT_SETS.length - 1);
+    return {
+      ...res,
+      verse: STICK_VERSE_SETS[stickIdx]?.[setIdx] ?? res.verse,
+      aspects: res.aspects.map((aspect, idx) => ({
+        name: aspect.name,
+        text: STICK_ASPECT_SETS[levelIdx]?.[idx]?.[setIdx] ?? aspect.text,
+      })),
+    };
   }
 
   drawTarot(count: number): TarotResult {
-    return this.engine.drawTarotCards(count);
+    const res = this.engine.drawTarotCards(count);
+    const setIdx = this.getWeeklySetIndex();
+    return {
+      cards: res.cards.map((card) => {
+        const meaningSet = TAROT_MEANING_SETS[card.id]?.[setIdx];
+        if (!meaningSet) return card;
+        return {
+          ...card,
+          meaning: card.reversed ? meaningSet.rev : meaningSet.up,
+        };
+      }),
+    };
   }
 
   luckyNumbers(category: number): LuckyNumbersResult {
-    return this.engine.generateLuckyNumbers(category);
+    const res = this.engine.generateLuckyNumbers(category);
+    const unified = this.getPeriodLucky();
+    const out: LuckyNumbersResult = {
+      note: res.note,
+    };
+    if (category === 0 || category === 2) {
+      out.two = [...unified.two];
+    }
+    if (category === 1 || category === 2) {
+      out.three = [...unified.three];
+    }
+    if (category === 2) {
+      out.run = [...unified.run];
+    }
+    return out;
   }
 
   badLuckRemedy(zodiac: number, problem: number): RemedyResult {
-    return this.engine.calculateBadLuckRemedy(zodiac, problem);
+    const res = this.engine.calculateBadLuckRemedy(zodiac, problem);
+    const setIdx = this.getWeeklySetIndex();
+    const safeRel = clamp(res.relation, 0, REMEDY_SUMMARY_SETS.length - 1);
+    const safeProb = clamp(problem, 0, REMEDY_PRACTICAL_SETS.length - 1);
+    return {
+      ...res,
+      summary: REMEDY_SUMMARY_SETS[safeRel]?.[setIdx] ?? res.summary,
+      practical: REMEDY_PRACTICAL_SETS[safeProb]?.[setIdx] ?? res.practical,
+      merit: REMEDY_MERIT_SETS[safeProb]?.[setIdx] ?? res.merit,
+      mantra: [...(REMEDY_MANTRA_SETS[setIdx] ?? res.mantra)],
+    };
   }
 
   candleUnlock(holdMs: number): CandleResult {
-    return this.engine.candleUnlock(holdMs);
+    const res = this.engine.candleUnlock(holdMs);
+    if (!res.unlocked) {
+      return res;
+    }
+    const setIdx = this.getWeeklySetIndex();
+    const unified = this.getPeriodLucky();
+    const candleSet = CANDLE_PROPHECY_SETS[setIdx];
+    return {
+      ...res,
+      dedication: candleSet?.dedication ?? res.dedication,
+      mantra: candleSet ? [...candleSet.mantra] : res.mantra,
+      lucky2: unified.primary2,
+      lucky3: unified.primary3,
+    };
   }
 
   getFestival(month: number, day: number): number {
@@ -815,19 +921,101 @@ export class Bridge {
   }
 
   drawBlessing(id: number): BlessingResult {
-    return this.engine.drawFestivalBlessing(id);
+    const res = this.engine.drawFestivalBlessing(id);
+    const setIdx = this.getWeeklySetIndex();
+    const unified = this.getPeriodLucky();
+    const safeId = clamp(id, 0, FESTIVAL_BLESSING_SETS.length - 1);
+    const bSet = FESTIVAL_BLESSING_SETS[safeId]?.[setIdx];
+    return {
+      ...res,
+      title: bSet?.title ?? res.title,
+      text: bSet?.text ?? res.text,
+      lucky: unified.primary2,
+    };
   }
 
   digitalOffering(type: number, text: string): OfferingResult {
-    return this.engine.processDigitalOffering(type, text);
+    const res = this.engine.processDigitalOffering(type, text);
+    if (res.care) {
+      return res;
+    }
+    const OFFER_CATS = ["การเงิน", "ความรัก", "สุขภาพ", "การงาน", "ทั่วไป"];
+    const catIdx = Math.max(0, OFFER_CATS.indexOf(res.category ?? "ทั่วไป"));
+    const setIdx = this.getWeeklySetIndex();
+    const unified = this.getPeriodLucky();
+    return {
+      ...res,
+      message: OFFERING_GUIDE_SETS[catIdx]?.[setIdx] ?? res.message,
+      lucky: unified.primary2,
+    };
   }
 
   imageScan(rgba: Uint8ClampedArray | Uint8Array, mode: number): ImageScanResult {
-    return this.engine.processImageScan(rgba, mode);
+    const res = this.engine.processImageScan(rgba, mode);
+    const ELEMENTS = ["ทองคำ", "น้ำ", "ไม้", "ไฟ", "ดิน"];
+    const elemIdx = Math.max(0, ELEMENTS.indexOf(res.element));
+    const setIdx = this.getWeeklySetIndex();
+    return {
+      ...res,
+      reading: IMAGE_SCAN_READINGS[mode]?.[elemIdx]?.[setIdx] ?? res.reading,
+    };
   }
 
   signature(points: [number, number, number][]): SignatureResult {
-    return this.engine.processSignature(points);
+    const res = this.engine.processSignature(points);
+    const n = points.length;
+    let minx = 1 << 30;
+    let maxx = -(1 << 30);
+    let miny = 1 << 30;
+    let maxy = -(1 << 30);
+    let lastS = -1;
+    let px = 0;
+    let py = 0;
+    let pdx = 0;
+    let pdy = 0;
+    let rev = 0;
+    let segs = 0;
+
+    for (let i = 0; i < n; i++) {
+      const [x, y, s] = points[i];
+      if (x < minx) minx = x;
+      if (x > maxx) maxx = x;
+      if (y < miny) miny = y;
+      if (y > maxy) maxy = y;
+      if (s !== lastS) {
+        lastS = s;
+      } else {
+        const dx = x - px;
+        const dy = y - py;
+        if (dx || dy) {
+          if (segs > 0 && dx * pdx + dy * pdy < 0) rev++;
+          pdx = dx;
+          pdy = dy;
+          segs++;
+        }
+      }
+      px = x;
+      py = y;
+    }
+
+    const w = maxx - minx;
+    const ht = maxy - miny;
+    const big = w > ht ? w : ht;
+    const size = big > 600 ? 2 : big < 250 ? 0 : 1;
+    const net = points[0][1] - points[n - 1][1];
+    const rise = ht > 20 && net * 4 > ht ? 2 : ht > 20 && -net * 4 > ht ? 0 : 1;
+    const jag = segs > 0 ? Math.floor((rev * 100) / segs) : 0;
+    const jc = jag > 35 ? 2 : jag < 15 ? 0 : 1;
+
+    const setIdx = this.getWeeklySetIndex();
+    return {
+      ...res,
+      traits: [
+        SIGNATURE_TRAIT_SETS.size[size][setIdx],
+        SIGNATURE_TRAIT_SETS.rise[rise][setIdx],
+        SIGNATURE_TRAIT_SETS.jagged[jc][setIdx],
+      ],
+    };
   }
 
   // Alias methods for component compatibility
