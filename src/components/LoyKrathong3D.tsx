@@ -5,6 +5,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import type { Bridge } from '../bridge';
 import { isChantMuted } from '../utils/chantAudio';
 import { getSharedAudioContextSync } from '../utils/audioContext';
+import { useLanguage } from '../context/LanguageContext';
 
 interface LoyKrathong3DProps {
   bridge: Bridge;
@@ -62,26 +63,33 @@ const KRATHONG_STYLES: KrathongConfig[] = [
   },
 ];
 
-const WISH_PRESETS = [
-  'ขอขมาพระแม่คงคา ชำระล้างเคราะห์ภัย',
-  'ขอให้ชีวิตร่มเย็น มีแต่ความสุข ความเจริญ',
-  'ขอให้เงินทองไหลมาเทมา ค้าขายร่ำรวย',
-  'ขอให้พบเจอความรักที่ดี ครอบครัวอบอุ่น',
-  'ขอให้สุขภาพร่างกายแข็งแรง ไร้โรคาพยาธิ',
-];
-
 export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
   bridge,
   onToast,
   onLaunchFireworks,
 }) => {
+  const { t, format } = useLanguage();
   const mountRef = useRef<HTMLDivElement>(null);
   const [selectedStyle, setSelectedStyle] = useState<KrathongStyle>('classic');
-  const [selectedWish, setSelectedWish] = useState<string>(WISH_PRESETS[0]);
+  const [selectedWishIdx, setSelectedWishIdx] = useState<number>(0);
   const [customWish, setCustomWish] = useState<string>('');
   const [isFloating, setIsFloating] = useState<boolean>(false);
   const [krathongCount, setKrathongCount] = useState<number>(0);
   const [isControlsCollapsed, setIsControlsCollapsed] = useState<boolean>(false);
+
+  const wishPresets = [
+    t.loyWishPreset0,
+    t.loyWishPreset1,
+    t.loyWishPreset2,
+    t.loyWishPreset3,
+    t.loyWishPreset4,
+  ];
+  const selectedWish = wishPresets[selectedWishIdx] || wishPresets[0];
+  const styleLabels: Record<KrathongStyle, { name: string; desc: string }> = {
+    classic: { name: t.loyStyleClassicName, desc: t.loyStyleClassicDesc },
+    lotus: { name: t.loyStyleLotusName, desc: t.loyStyleLotusDesc },
+    gold: { name: t.loyStyleGoldName, desc: t.loyStyleGoldDesc },
+  };
 
   // References for 3D state & animation loop
   const krathongGroupRef = useRef<THREE.Group | null>(null);
@@ -722,15 +730,15 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
       krathongGroupRef.current = newModel;
     }
 
-    onToast(`เปลี่ยนกระทงเป็น: ${KRATHONG_STYLES.find((s) => s.id === style)?.name}`);
+    onToast(format(t.loyToastStyleChanged, { name: styleLabels[style]?.name || '' }));
   };
 
-  // Handle Floating Krathong (ปล่อยลอยสู่สายน้ำ)
+  // Handle Floating Krathong
   const handleFloatKrathong = () => {
     if (isFloating) return;
 
     setIsFloating(true);
-    setIsControlsCollapsed(true); // ซ่อนเมนูด้านล่างทันทีเมื่อกดปล่อยกระทง
+    setIsControlsCollapsed(true);
     playWaterSplashSound();
     setKrathongCount((prev) => prev + 1);
 
@@ -742,19 +750,19 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
     try {
       const res = bridge.blessing(3);
       if (res?.lucky) {
-        onToast(`🪷 ปล่อยกระทงขอขมาสู่สายน้ำแล้ว · เลขมงคลวันเพ็ญ: ${res.lucky}`);
+        onToast(format(t.loyToastFloatedLucky, { lucky: res.lucky }));
       } else {
-        onToast('🪷 น้อมจิตอธิษฐาน ลอยกระทงขอขมาพระแม่คงคาสู่สายน้ำ...');
+        onToast(t.loyToastFloated);
       }
     } catch {
-      onToast('🪷 น้อมจิตอธิษฐาน ลอยกระทงขอขมาพระแม่คงคาสู่สายน้ำ...');
+      onToast(t.loyToastFloated);
     }
   };
 
   // Handle Reset / Float New Krathong
   const handleResetKrathong = () => {
     setIsFloating(false);
-    setIsControlsCollapsed(false); // แสดงเมนูสำหรับการเตรียมกระทงใบใหม่
+    setIsControlsCollapsed(false);
     floatProgressRef.current = 0;
 
     if (krathongGroupRef.current) {
@@ -768,7 +776,7 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
       controlsRef.current.update();
     }
 
-    onToast('นำกระทงใบใหม่มาเตรียมอธิษฐานลอยสู่สายน้ำ');
+    onToast(t.loyToastReset);
   };
 
   const finalWish = customWish.trim() || selectedWish;
@@ -780,12 +788,12 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
         ref={mountRef}
         className="loy-krathong-3d-canvas-container"
         role="region"
-        aria-label="แม่น้ำและกระทง 3 มิติยามค่ำคืนวันเพ็ญ"
+        aria-label={t.loyCanvasAria}
       />
 
       {/* Top Festival Header Badge: Compact & Frameless */}
       <div className="loy-3d-header-badge">
-        <span className="badge-seal">🌕 คืนเพ็ญเดือน ๑๒</span>
+        <span className="badge-seal">{t.loyMoonBadge}</span>
       </div>
 
       {/* Unified Bottom Control Dock (Zero Viewport Occlusion, Collapsible) */}
@@ -795,9 +803,9 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
             type="button"
             className="dock-toggle-btn"
             onClick={() => setIsControlsCollapsed((prev) => !prev)}
-            aria-label={isControlsCollapsed ? 'แสดงแผงควบคุม' : 'ซ่อนแผงควบคุม'}
+            aria-label={isControlsCollapsed ? t.loyDockShowAria : t.loyDockHideAria}
           >
-            {isControlsCollapsed ? '▴ แสดงเมนูกระทง' : '▾ ซ่อนเมนู (ชมวิวเต็มจอ)'}
+            {isControlsCollapsed ? t.loyDockShow : t.loyDockHide}
           </button>
         </div>
 
@@ -805,7 +813,7 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
           <div className="dock-content-inner">
             {/* Style Selector Pills */}
             <div className="dock-section">
-              <span className="dock-label">เลือกรูปแบบกระทง:</span>
+              <span className="dock-label">{t.loyStyleLabel}</span>
               <div className="krathong-style-pills">
                 {KRATHONG_STYLES.map((style) => (
                   <button
@@ -814,9 +822,10 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
                     className={`krathong-style-pill ${selectedStyle === style.id ? 'active' : ''}`}
                     onClick={() => handleSelectStyle(style.id)}
                     disabled={isFloating}
+                    title={styleLabels[style.id].desc}
                   >
                     <span>{style.icon}</span>
-                    <span>{style.name}</span>
+                    <span>{styleLabels[style.id].name}</span>
                   </button>
                 ))}
               </div>
@@ -824,15 +833,15 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
 
             {/* Wish Presets / Input */}
             <div className="dock-section">
-              <span className="dock-label">คำอธิษฐานขอพร:</span>
+              <span className="dock-label">{t.loyWishLabel}</span>
               <div className="wish-presets-row">
-                {WISH_PRESETS.slice(0, 3).map((w, idx) => (
+                {wishPresets.slice(0, 3).map((w, idx) => (
                   <button
                     key={idx}
                     type="button"
-                    className={`wish-preset-chip ${selectedWish === w && !customWish ? 'active' : ''}`}
+                    className={`wish-preset-chip ${selectedWishIdx === idx && !customWish ? 'active' : ''}`}
                     onClick={() => {
-                      setSelectedWish(w);
+                      setSelectedWishIdx(idx);
                       setCustomWish('');
                     }}
                     disabled={isFloating}
@@ -844,7 +853,7 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
               <input
                 type="text"
                 className="custom-wish-input"
-                placeholder="หรือพิมพ์คำอธิษฐานของคุณเอง..."
+                placeholder={t.loyCustomWishPlaceholder}
                 value={customWish}
                 onChange={(e) => setCustomWish(e.target.value)}
                 maxLength={80}
@@ -857,14 +866,14 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
               {isFloating ? (
                 <div className="floating-status-inline">
                   <span className="floating-wish-pill">
-                    ✨ “{finalWish}” กำลังลอยสู่สายน้ำ
+                    {format(t.loyFloatingStatus, { wish: finalWish })}
                   </span>
                   <button
                     type="button"
                     className="btn primary glow-gold btn-float-action"
                     onClick={handleResetKrathong}
                   >
-                    <span>🔄 นำกระทงใบใหม่มาลอย (ลอยแล้ว {krathongCount} ใบ)</span>
+                    <span>{format(t.loyFloatNewBtn, { count: krathongCount })}</span>
                   </button>
                 </div>
               ) : (
@@ -873,7 +882,7 @@ export const LoyKrathong3D: React.FC<LoyKrathong3DProps> = ({
                   className="btn primary glow-gold btn-float-action"
                   onClick={handleFloatKrathong}
                 >
-                  <span>🪷 ปล่อยกระทงสู่สายน้ำ</span>
+                  <span>{t.loyFloatStartBtn}</span>
                 </button>
               )}
             </div>

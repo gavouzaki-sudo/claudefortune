@@ -15,13 +15,15 @@ export const LuckyCardModal: React.FC<LuckyCardModalProps> = ({
   onClose,
   onToast,
 }) => {
-  const { t } = useLanguage();
+  const { lang, t, format } = useLanguage();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const activeUrlRef = useRef<string | null>(null);
   const onToastRef = useRef(onToast);
   onToastRef.current = onToast;
+  const errToastRef = useRef(t.cardGenErrorToast);
+  errToastRef.current = t.cardGenErrorToast;
 
   useEffect(() => {
     const revokeActiveUrl = () => {
@@ -41,7 +43,7 @@ export const LuckyCardModal: React.FC<LuckyCardModalProps> = ({
     let isCancelled = false;
     setLoading(true);
 
-    generateLuckyCardBlob(cardData)
+    generateLuckyCardBlob(cardData, lang)
       .then((blob) => {
         if (isCancelled) return;
         revokeActiveUrl();
@@ -55,7 +57,7 @@ export const LuckyCardModal: React.FC<LuckyCardModalProps> = ({
         console.error(err);
         if (!isCancelled) {
           setLoading(false);
-          onToastRef.current('ไม่สามารถสร้างรูปการ์ดได้ โปรดลองอีกครั้ง');
+          onToastRef.current(errToastRef.current);
         }
       });
 
@@ -63,7 +65,7 @@ export const LuckyCardModal: React.FC<LuckyCardModalProps> = ({
       isCancelled = true;
       revokeActiveUrl();
     };
-  }, [isOpen, cardData]);
+  }, [isOpen, cardData, lang]);
 
   if (!isOpen || !cardData) return null;
 
@@ -75,7 +77,7 @@ export const LuckyCardModal: React.FC<LuckyCardModalProps> = ({
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    onToast('บันทึกรูปภาพมงคลลงในอุปกรณ์แล้ว 🎴');
+    onToast(t.cardSavedDeviceToast);
   };
 
   const handleShare = async () => {
@@ -86,7 +88,7 @@ export const LuckyCardModal: React.FC<LuckyCardModalProps> = ({
       try {
         await navigator.share({
           title: t.cardTitle,
-          text: `${cardData.title} — บันทึกดวงชะตาจากศาลเจ้าแห่งโชคลาภ`,
+          text: format(t.cardShareText, { title: cardData.title }),
           files: [file],
         });
         onToast(t.cardShareSuccess);
@@ -159,7 +161,7 @@ export const LuckyCardModal: React.FC<LuckyCardModalProps> = ({
               <div className="lucky-card-preview-wrapper">
                 <img
                   src={imageUrl}
-                  alt="Lucky Fortune Card"
+                  alt={t.cardPreviewAlt}
                   className="lucky-card-img"
                 />
               </div>

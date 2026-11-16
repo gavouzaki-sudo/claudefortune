@@ -5,8 +5,12 @@ import { useToast } from './hooks/useToast';
 import { useThemeManager } from './hooks/useThemeManager';
 import { useFortuneJournal } from './hooks/useFortuneJournal';
 import { logger } from './utils/logger';
-import { ZODIAC_SYSTEMS } from './data/zodiacSystems';
-import { LanguageProvider } from './context/LanguageContext';
+import {
+  ZODIAC_SYSTEMS,
+  getLocalizedZodiacSystem,
+  getLocalizedZodiacItem,
+} from './data/zodiacSystems';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/Header';
 import { Ambient } from './components/Ambient';
@@ -64,9 +68,10 @@ const ThaiLotteryModal = lazy(() =>
   import('./components/ThaiLotteryModal').then((m) => ({ default: m.ThaiLotteryModal }))
 );
 
-export const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { lang, t } = useLanguage();
   const [bridge, setBridge] = useState<Bridge | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [hasLoadError, setHasLoadError] = useState(false);
   const [session, setSession] = useState<UserSession | null>(null);
   const [tab, setTab] = useState<DivinationTopic>(() => {
     try {
@@ -117,17 +122,22 @@ export const App: React.FC = () => {
   }, [showToast]);
 
   const handleOpenCard = useCallback((data: CardData) => {
+    const activeSys = session ? ZODIAC_SYSTEMS.find((s) => s.id === session.systemId) : undefined;
+    const activeItem = activeSys && session ? activeSys.items[session.zodiac] : undefined;
+    const locSys = activeSys ? getLocalizedZodiacSystem(activeSys, lang) : undefined;
+    const locItem = activeSys && activeItem ? getLocalizedZodiacItem(activeItem, activeSys.id, lang) : undefined;
+
     const enrichedData: CardData = {
       ...data,
-      systemName: data.systemName || session?.systemName,
-      symbolName: data.symbolName || session?.symbolName,
+      systemName: data.systemName || locSys?.name || session?.systemName,
+      symbolName: data.symbolName || locItem?.name || session?.symbolName,
       symbolIcon: data.symbolIcon || session?.symbolIcon,
-      element: data.element || session?.element,
+      element: data.element || locItem?.element || session?.element,
       aura: data.aura || session?.aura,
     };
     setActiveCardData(enrichedData);
     setIsCardModalOpen(true);
-  }, [session]);
+  }, [lang, session]);
 
   // Initialize bridge and restore saved session
   useEffect(() => {
@@ -159,9 +169,7 @@ export const App: React.FC = () => {
       } catch (err) {
         logger.error('Failed during initial bridge/session loading:', err);
         if (isMounted) {
-          setLoadError(
-            'ไม่สามารถโหลดแกนระบบ (WebAssembly) ได้ — โปรดใช้เบราว์เซอร์รุ่นใหม่และเปิดผ่านเว็บเซิร์ฟเวอร์'
-          );
+          setHasLoadError(true);
         }
       }
     })();
@@ -194,19 +202,21 @@ export const App: React.FC = () => {
     const z = bridge.initSession(zodItem?.origName || 'มะเมีย', curBe, defaultZ);
     const resolvedZ = z >= 0 ? z : defaultZ;
     const info = bridge.zodiacInfo(resolvedZ);
+    const locSys = thaiSys ? getLocalizedZodiacSystem(thaiSys, lang) : undefined;
+    const locItem = thaiSys && zodItem ? getLocalizedZodiacItem(zodItem, 'thai', lang) : undefined;
     return {
       systemId: 'thai',
-      systemName: thaiSys?.name || 'ไทย (12 นักษัตร)',
-      symbolName: zodItem?.name || 'มะเมีย (ม้าแก้ว)',
+      systemName: locSys?.name || thaiSys?.name || 'ไทย (12 นักษัตร)',
+      symbolName: locItem?.name || zodItem?.name || 'มะเมีย (ม้าแก้ว)',
       symbolIcon: zodItem?.symbol || '🐎',
-      element: zodItem?.element || 'ไฟ / ทองคำ',
+      element: locItem?.element || zodItem?.element || 'ไฟ / ทองคำ',
       aura: zodItem?.aura || 'ทองคำเรืองรอง',
       attribute: zodItem?.attribute || 'โชคลาภบารมี',
       year: curBe,
       zodiac: resolvedZ,
       info,
     };
-  }, [bridge]);
+  }, [bridge, lang]);
 
   const openGuestTab = useCallback(
     (targetTab: 'festival' | 'auspicious') => {
@@ -233,115 +243,112 @@ export const App: React.FC = () => {
   const handleOpenAuspicious = useCallback(() => openGuestTab('auspicious'), [openGuestTab]);
 
   return (
-    <LanguageProvider>
-      <ErrorBoundary fallbackMessage="เกิดข้อผิดพลาดในการโหลดองค์ประกอบศาลเจ้า">
-        <Ambient themeKey={activeThemeId} />
-        <Header
-          onGoHome={handleSessionChange}
-          hasActiveSession={!!session}
-        />
+    <ErrorBoundary fallbackMessage={t.appErrorBoundaryMain}>
+      <Ambient themeKey={activeThemeId} />
+      <Header
+        onGoHome={handleSessionChange}
+        hasActiveSession={!!session}
+      />
 
-        <main>
-          {loadError && (
-            <section className="panel gate shrine-loading-panel">
+      <main>
+        {hasLoadError && (
+          <section className="panel gate shrine-loading-panel">
+            <span className="shrine-loader-emblem" aria-hidden="true">⛩️</span>
+            <p className="error" style={{ marginTop: '1rem', color: 'var(--warn, #ffb36b)' }}>{t.appLoadError}</p>
+            <button
+              type="button"
+              className="btn gold"
+              style={{ marginTop: '1.25rem' }}
+              onClick={async () => {
+                setHasLoadError(false);
+                try {
+                  const b = await Bridge.load();
+                  b.setDate();
+                  b.seed();
+                  setBridge(b);
+                } catch (e) {
+                  logger.error('Retry bridge load failed:', e);
+                  setHasLoadError(true);
+                }
+              }}
+            >
+              {t.appRetryLoad}
+            </button>
+          </section>
+        )}
+
+        {!hasLoadError && !bridge && (
+          <section className="panel gate shrine-loading-panel">
+            <div className="shrine-gate-loader">
               <span className="shrine-loader-emblem" aria-hidden="true">⛩️</span>
-              <p className="error" style={{ marginTop: '1rem', color: 'var(--warn, #ffb36b)' }}>{loadError}</p>
-              <button
-                type="button"
-                className="btn gold"
-                style={{ marginTop: '1.25rem' }}
-                onClick={async () => {
-                  setLoadError(null);
+              <h2 className="shrine-loader-title">{t.appLoadingTitle}</h2>
+              <p className="shrine-loader-sub">{t.appLoadingSub}</p>
+              <div className="shrine-loader-track">
+                <div className="shrine-loader-bar" />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {!hasLoadError && bridge && !session && (
+          <>
+            <ErrorBoundary fallbackMessage={t.appErrorBoundaryGate}>
+              <Gate
+                bridge={bridge}
+                onSessionStart={(s) => {
+                  setSession(s);
+                  setTab('stick');
                   try {
-                    const b = await Bridge.load();
-                    b.setDate();
-                    b.seed();
-                    setBridge(b);
-                  } catch (e) {
-                    logger.error('Retry bridge load failed:', e);
-                    setLoadError(
-                      'ไม่สามารถโหลดแกนระบบ (WebAssembly) ได้ — โปรดใช้เบราว์เซอร์รุ่นใหม่และเปิดผ่านเว็บเซิร์ฟเวอร์'
-                    );
+                    sessionStorage.setItem('shrine.activeTab', 'stick');
+                  } catch {
+                    // Ignore
                   }
                 }}
+              />
+            </ErrorBoundary>
+            <div className="gate-bottom-journal-row">
+              <button
+                type="button"
+                className="btn gold btn-bottom-journal btn-gate-festival"
+                onClick={handleOpenFestival}
+                title={t.gateQuickFestivalTitle}
               >
-                เข้าสู่ศาลเจ้าอีกครั้ง
+                <span>{t.gateQuickFestival}</span>
               </button>
-            </section>
-          )}
 
-          {!loadError && !bridge && (
-            <section className="panel gate shrine-loading-panel">
-              <div className="shrine-gate-loader">
-                <span className="shrine-loader-emblem" aria-hidden="true">⛩️</span>
-                <h2 className="shrine-loader-title">กำลังเปิดประตูสู่ศาลเจ้าแห่งโชคลาภ</h2>
-                <p className="shrine-loader-sub">กำลังเชื่อมต่อแกนญาณและคำนวณตำแหน่งดวงดาว...</p>
-                <div className="shrine-loader-track">
-                  <div className="shrine-loader-bar" />
-                </div>
-              </div>
-            </section>
-          )}
+              <button
+                type="button"
+                className="btn gold btn-bottom-journal btn-gate-calendar"
+                onClick={handleOpenAuspicious}
+                title={t.gateQuickAuspiciousTitle}
+              >
+                <span>{t.gateQuickAuspicious}</span>
+              </button>
 
-          {!loadError && bridge && !session && (
-            <>
-              <ErrorBoundary fallbackMessage="เกิดข้อผิดพลาดบริเวณหน้าอารยธรรม">
-                <Gate
-                  bridge={bridge}
-                  onSessionStart={(s) => {
-                    setSession(s);
-                    setTab('stick');
-                    try {
-                      sessionStorage.setItem('shrine.activeTab', 'stick');
-                    } catch {
-                      // Ignore
-                    }
-                  }}
-                />
-              </ErrorBoundary>
-              <div className="gate-bottom-journal-row">
-                <button
-                  type="button"
-                  className="btn gold btn-bottom-journal btn-gate-festival"
-                  onClick={handleOpenFestival}
-                  title="ไหว้พระขอพร มหามงคล 9 วัด ทั่วไทย"
-                >
-                  <span>ไหว้พระ</span>
-                </button>
+              <button
+                type="button"
+                className="btn gold btn-bottom-journal btn-gate-lottery"
+                onClick={() => setIsLotteryOpen(true)}
+                title={t.gateQuickLotteryTitle}
+              >
+                <span>{t.gateQuickLottery}</span>
+              </button>
 
-                <button
-                  type="button"
-                  className="btn gold btn-bottom-journal btn-gate-calendar"
-                  onClick={handleOpenAuspicious}
-                  title="ปฏิทินวันมงคลและฤกษ์งามยามดี"
-                >
-                  <span>ดูฤกษ์</span>
-                </button>
+              <button
+                type="button"
+                className="btn gold btn-bottom-journal"
+                onClick={() => setIsJournalOpen(true)}
+                title={t.journalTitle}
+              >
+                <span>{t.gateQuickJournal}</span>
+                {journalCount > 0 && <span className="header-journal-badge">{journalCount}</span>}
+              </button>
+            </div>
+            <Footer />
+          </>
+        )}
 
-                <button
-                  type="button"
-                  className="btn gold btn-bottom-journal btn-gate-lottery"
-                  onClick={() => setIsLotteryOpen(true)}
-                  title="ผลสลากกินแบ่งรัฐบาล & ตรวจหวย"
-                >
-                  <span>หวย</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="btn gold btn-bottom-journal"
-                  onClick={() => setIsJournalOpen(true)}
-                  title="สมุดดวงชะตา"
-                >
-                  <span>ดวง</span>
-                  {journalCount > 0 && <span className="header-journal-badge">{journalCount}</span>}
-                </button>
-              </div>
-              <Footer />
-            </>
-          )}
-
-          {!loadError && bridge && session && (
+        {!hasLoadError && bridge && session && (
             <div id="app">
               <Suspense fallback={null}>
                 <FortuneCanvasBackground
@@ -371,13 +378,13 @@ export const App: React.FC = () => {
               />
 
               <div className="ritual-active-wrapper">
-                <ErrorBoundary fallbackMessage="เกิดข้อผิดพลาดชั่วคราวในพิธีกรรมส่วนนี้">
+                <ErrorBoundary fallbackMessage={t.appErrorBoundaryTab}>
                   <Suspense
                     fallback={
                       <section className="panel shrine-loading-panel">
                         <div className="shrine-gate-loader">
                           <span className="shrine-loader-emblem" aria-hidden="true">🏮</span>
-                          <p className="shrine-loader-sub">กำลังจัดเตรียมพิธีกรรม...</p>
+                          <p className="shrine-loader-sub">{t.appPreparingRitual}</p>
                         </div>
                       </section>
                     }
@@ -422,13 +429,17 @@ export const App: React.FC = () => {
                       <ScanFortune bridge={bridge} onToast={showToast} />
                     )}
 
-                    {tab === 'meditation' && (
-                      <MeditationChamber
-                        systemId={session.systemId}
-                        systemName={session.systemName}
-                        onToast={showToast}
-                      />
-                    )}
+                    {tab === 'meditation' && (() => {
+                      const medSys = ZODIAC_SYSTEMS.find((s) => s.id === session.systemId);
+                      const medSysName = medSys ? getLocalizedZodiacSystem(medSys, lang).name : session.systemName;
+                      return (
+                        <MeditationChamber
+                          systemId={session.systemId}
+                          systemName={medSysName}
+                          onToast={showToast}
+                        />
+                      );
+                    })()}
 
                     {tab === 'auspicious' && (
                       <AuspiciousCalendar
@@ -506,6 +517,11 @@ export const App: React.FC = () => {
 
         <OfflineIndicator />
       </ErrorBoundary>
-    </LanguageProvider>
   );
 };
+
+export const App: React.FC = () => (
+  <LanguageProvider>
+    <AppContent />
+  </LanguageProvider>
+);

@@ -20,7 +20,7 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
   onOpenCard,
   onToast,
 }) => {
-  const { t } = useLanguage();
+  const { t, format } = useLanguage();
   const {
     entries,
     removeEntry,
@@ -45,13 +45,13 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     removeEntry(id);
-    onToast('ลบรายการออกจากสมุดแล้ว');
+    onToast(t.journalDeletedToast);
   };
 
   const handleToggleBookmark = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const isNow = toggleBookmark(id);
-    onToast(isNow ? 'บันทึกในรายการโปรด ⭐' : 'ยกเลิกรายการโปรด');
+    onToast(isNow ? t.journalBookmarkAddToast : t.journalBookmarkRemoveToast);
   };
 
   const handleClearAll = () => {
@@ -61,7 +61,7 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
   const handleExecuteClearAll = () => {
     clearAllEntries();
     setShowClearConfirm(false);
-    onToast('ล้างประวัติดวงชะตาทั้งหมดแล้ว');
+    onToast(t.journalClearedToast);
   };
 
   const handleCancelClearAll = () => {
@@ -72,7 +72,7 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
     saveNote(id, noteText);
     setEditingNoteId(null);
     setNoteText('');
-    onToast('บันทึกคำอธิษฐานแล้ว ✨');
+    onToast(t.journalNoteSavedToast);
   };
 
   const convertToCardData = (entry: FortuneJournalEntry): CardData => {
@@ -121,7 +121,7 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
             <div>
               <h3>{t.journalTitle}</h3>
               <p className="journal-count-badge">
-                {entries.length} บันทึกชะตา
+                {format(t.journalRecordCount, { count: entries.length })}
               </p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
               type="button"
               className="journal-close-btn"
               onClick={onClose}
-              aria-label="ปิด"
+              aria-label={t.commonClose}
             >
               ✕
             </button>
@@ -208,7 +208,7 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
             className={`journal-tab-pill ${filter === 'auspicious' ? 'active' : ''}`}
             onClick={() => setFilter('auspicious')}
           >
-            🗓️ ฤกษ์มงคล
+            🗓️ {t.journalFilterAuspicious}
           </button>
           <button
             type="button"
@@ -250,8 +250,8 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
                         type="button"
                         className={`btn-entry-bookmark ${entry.bookmarked ? 'bookmarked' : ''}`}
                         onClick={(e) => handleToggleBookmark(entry.id, e)}
-                        title="บุ๊กมาร์ก"
-                        aria-label="บันทึกเป็นรายการโปรด"
+                        title={t.journalBookmarkTitle}
+                        aria-label={t.journalBookmarkAria}
                       >
                         {entry.bookmarked ? '★' : '☆'}
                       </button>
@@ -272,7 +272,7 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
                   {/* Personal Note */}
                   {entry.notes && (
                     <div className="journal-entry-saved-note">
-                      <span className="note-label">📝 คำขอพร/บันทึก:</span>
+                      <span className="note-label">{t.journalNotePrefix}</span>
                       <p className="note-text">{entry.notes}</p>
                     </div>
                   )}
@@ -295,14 +295,14 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
                           className="btn gold btn-sm"
                           onClick={() => handleSaveNote(entry.id)}
                         >
-                          บันทึก
+                          {t.commonSave}
                         </button>
                         <button
                           type="button"
                           className="btn ghost btn-sm"
                           onClick={() => setEditingNoteId(null)}
                         >
-                          ยกเลิก
+                          {t.commonCancel}
                         </button>
                       </div>
                     </div>
@@ -315,7 +315,7 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
                       className="btn gold btn-sm btn-journal-view-card"
                       onClick={() => onOpenCard(convertToCardData(entry))}
                     >
-                      <span>🎴 {t.journalViewCard}</span>
+                      <span>{t.journalViewCard}</span>
                     </button>
 
                     {editingNoteId !== entry.id && (
@@ -327,7 +327,7 @@ export const FortuneJournalModal: React.FC<FortuneJournalModalProps> = ({
                           setNoteText(entry.notes || '');
                         }}
                       >
-                        <span>✏️ {entry.notes ? 'แก้ไขบันทึก' : 'เพิ่มคำขอพร'}</span>
+                        <span>✏️ {entry.notes ? t.journalEditNote : t.journalAddWish}</span>
                       </button>
                     )}
                   </div>

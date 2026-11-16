@@ -4,13 +4,20 @@ import {
   generateMonthAuspiciousDays,
   getKalaYogaForYear,
   getThaksaRelation,
-  BIRTH_DAYS,
   WORK_CATEGORIES_INFO,
   THAI_MONTHS,
+  getLocalizedMonths,
+  getLocalizedWeekdays,
+  getLocalizedFullDayName,
+  getLocalizedBirthDays,
+  getLocalizedWorkCategories,
+  getLocalizedThaksaRelation,
+  getLocalizedDayDetails,
   type AuspiciousDay,
   type AuspiciousWorkCategory,
   type BirthDayId,
 } from '../data/auspiciousCalendarData';
+import { useLanguage } from '../context/LanguageContext';
 import { saveJournalEntry } from '../utils/fortuneJournal';
 import { buildAuspiciousCardData } from '../utils/cardDataBuilder';
 import type { CardData } from '../utils/luckyCardCanvas';
@@ -40,6 +47,12 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
   onToast,
   onOpenCard,
 }) => {
+  const { lang, t, format } = useLanguage();
+  const localizedMonths = useMemo(() => getLocalizedMonths(lang), [lang]);
+  const localizedWeekdays = useMemo(() => getLocalizedWeekdays(lang), [lang]);
+  const localizedBirthDays = useMemo(() => getLocalizedBirthDays(lang), [lang]);
+  const localizedCategories = useMemo(() => getLocalizedWorkCategories(lang), [lang]);
+
   const [selectedYearBE, setSelectedYearBE] = useState<number>(() => new Date().getFullYear() + 543);
   const [selectedMonth, setSelectedMonth] = useState<number>(() => new Date().getMonth() + 1); // 1-12
   const [selectedBirthDay, setSelectedBirthDay] = useState<BirthDayId | 'none'>(
@@ -117,18 +130,38 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     );
   }, [allMonthDays, selectedBirthDay]);
 
+  const localizedThaksaByDate = useMemo(() => {
+    if (selectedBirthDay === 'none') return new Map<string, ReturnType<typeof getThaksaRelation>>();
+    return new Map(
+      Array.from(thaksaByDate.entries()).map(([date, rel]) => [
+        date,
+        getLocalizedThaksaRelation(rel, selectedBirthDay, lang),
+      ])
+    );
+  }, [thaksaByDate, selectedBirthDay, lang]);
+
+  const formatYearLabel = useCallback(
+    (yearBE: number) => format(t.calYearPrefix, { yearBE, yearCE: yearBE - 543 }),
+    [format, t.calYearPrefix]
+  );
+
   // Month & Year Handlers
   const handleMonthChange = useCallback((newMonth: number) => {
     setSelectedMonth(newMonth);
     setInspectedDay(null);
-    onToast(`📅 เปลี่ยนเป็นเดือน ${THAI_MONTHS[newMonth - 1]} พ.ศ. ${selectedYearBE}`);
-  }, [onToast, selectedYearBE]);
+    onToast(
+      format(t.calToastMonth, {
+        month: localizedMonths[newMonth - 1] || THAI_MONTHS[newMonth - 1],
+        yearLabel: formatYearLabel(selectedYearBE),
+      })
+    );
+  }, [onToast, selectedYearBE, format, t.calToastMonth, localizedMonths, formatYearLabel]);
 
   const handleYearChange = useCallback((newYearBE: number) => {
     setSelectedYearBE(newYearBE);
     setInspectedDay(null);
-    onToast(`📅 เปลี่ยนเป็น พ.ศ. ${newYearBE}`);
-  }, [onToast]);
+    onToast(format(t.calToastYear, { yearLabel: formatYearLabel(newYearBE) }));
+  }, [onToast, format, t.calToastYear, formatYearLabel]);
 
   // Handle Escape key to dismiss day inspection modal
   useEffect(() => {
@@ -243,27 +276,38 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
         return true;
       }
 
-      // Searchable fields on the day object
+      // Searchable fields on the day object (multi-language)
+      const locDay = lang === 'th' ? null : getLocalizedDayDetails(day, lang);
       const searchableBlob = [
         day.dayOfMonth.toString(),
         `วันที่ ${day.dayOfMonth}`,
         day.date,
         day.dayNameTh,
+        locDay?.dayName || '',
         day.lunarDateTh,
+        locDay?.lunarDate || '',
         THAI_MONTHS[day.month - 1],
+        localizedMonths[day.month - 1] || '',
         day.yearBE.toString(),
         day.yearCE.toString(),
         day.thaiRukNameTh,
+        locDay?.thaiRukName || '',
         day.thaiRukHighlight,
+        locDay?.thaiRukHighlight || '',
         day.thaiRukMeaning,
+        locDay?.thaiRukMeaning || '',
         day.dithiName,
+        locDay?.dithiName || '',
         day.kalaYogaLabel,
+        locDay?.kalaYogaLabel || '',
         day.bestHours.primaryTime,
         day.bestHours.secondaryTime || '',
         day.bestHours.ubakongYama,
         day.auspiciousDirection,
+        locDay?.auspiciousDirection || '',
         day.luckyColors.join(' '),
-        day.suitableCategories.map((c) => WORK_CATEGORIES_INFO[c]?.titleTh || '').join(' '),
+        locDay?.luckyColors.join(' ') || '',
+        day.suitableCategories.map((c) => `${WORK_CATEGORIES_INFO[c]?.titleTh || ''} ${localizedCategories[c]?.title || ''}`).join(' '),
         Object.values(day.ceremonyTips).join(' '),
       ]
         .join(' ')
@@ -271,7 +315,7 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
 
       return searchableBlob.includes(rawQ);
     });
-  }, [allMonthDays, thaksaByDate, selectedBirthDay, avoidKalakini, selectedCategory, searchQuery]);
+  }, [allMonthDays, thaksaByDate, selectedBirthDay, avoidKalakini, selectedCategory, searchQuery, lang, localizedMonths, localizedCategories]);
 
   const filteredDayDates = useMemo(() => new Set(filteredDays.map((d) => d.date)), [filteredDays]);
 
@@ -279,55 +323,82 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
 
   // Handle Save to Journal
   const handleSaveToJournal = (day: AuspiciousDay) => {
+    const details = getLocalizedDayDetails(day, lang);
+    const monthLabel = localizedMonths[day.month - 1] || THAI_MONTHS[day.month - 1];
+    const dateTitle =
+      lang === 'th'
+        ? `ฤกษ์มงคล ${day.dayNameTh}ที่ ${day.dayOfMonth} ${monthLabel} ${day.yearBE}`
+        : `${t.topicAuspicious} · ${details.dayName}, ${monthLabel} ${day.dayOfMonth}, ${day.yearCE}`;
     saveJournalEntry({
       type: 'auspicious',
-      title: `ฤกษ์มงคล ${day.dayNameTh}ที่ ${day.dayOfMonth} ${THAI_MONTHS[day.month - 1]} ${day.yearBE}`,
-      summary: `${day.thaiRukNameTh} (${day.thaiRukHighlight}) · ยามมงคล: ${day.bestHours.primaryTime}`,
+      title: dateTitle,
+      summary: `${details.thaiRukName} (${details.thaiRukHighlight}) · ${details.bestHours.primaryTime}`,
       details: {
         date: day.date,
-        lunarDate: day.lunarDateTh,
-        thaiRuk: day.thaiRukNameTh,
-        dithi: day.dithiName,
-        bestHours: day.bestHours.primaryTime,
-        ubakong: day.bestHours.ubakongYama,
-        kalaYoga: day.kalaYogaLabel,
-        direction: day.auspiciousDirection,
-        luckyColors: day.luckyColors.join(', '),
-        tips: day.ceremonyTips,
+        lunarDate: details.lunarDate,
+        thaiRuk: details.thaiRukName,
+        dithi: details.dithiName,
+        bestHours: details.bestHours.primaryTime,
+        ubakong: details.bestHours.ubakongYama,
+        kalaYoga: details.kalaYogaLabel,
+        direction: details.auspiciousDirection,
+        luckyColors: details.luckyColors.join(', '),
+        tips: details.ceremonyTips,
       },
     });
-    onToast('บันทึกฤกษ์มงคลลงใน "สมุดดวง" เรียบร้อยแล้ว ✨');
+    onToast(t.calToastJournalSaved);
   };
 
   // Handle Copy Day Details
   const handleCopyDayDetails = (day: AuspiciousDay) => {
-    const thaksa = thaksaByDate.get(day.date);
+    const details = getLocalizedDayDetails(day, lang);
+    const thaksa = localizedThaksaByDate.get(day.date);
+    const bInfo = localizedBirthDays.find((b) => b.id === selectedBirthDay);
     const thaksaNote =
       selectedBirthDay !== 'none' && thaksa
-        ? `\n👤 สำหรับคนเกิด${BIRTH_DAYS.find((b) => b.id === selectedBirthDay)?.labelTh}: ${thaksa.nameTh} (${thaksa.advice})`
+        ? `\n${format(t.calCopyThaksaLine, {
+            birthDay: bInfo?.label || '',
+            relation: thaksa.nameTh,
+            advice: thaksa.advice,
+          })}`
         : '';
 
-    const text = `✨ ฤกษ์งามยามดีมหามงคล ✨
-📅 วันที่: ${day.dayNameTh}ที่ ${day.dayOfMonth} ${THAI_MONTHS[day.month - 1]} พ.ศ. ${day.yearBE}
-🌙 จันทรคติ: ${day.lunarDateTh}
-📜 ฤกษ์โหราศาสตร์: ${day.thaiRukNameTh} (${day.thaiRukHighlight})
-💫 ดิถี: ${day.dithiName}
-⏰ ช่วงเวลายามมงคล: ${day.bestHours.primaryTime} (${day.bestHours.ubakongYama})
-🧭 ทิศมงคลนำฤกษ์: ${day.auspiciousDirection}
-🎨 สีมงคล: ${day.luckyColors.join(', ')} (เลี่ยง: ${day.unluckyColors.join(', ')})
-🏷️ งานที่เหมาะสม: ${day.suitableCategories.map((c) => WORK_CATEGORIES_INFO[c].titleTh).join(', ')}${thaksaNote}
+    const monthLabel = localizedMonths[day.month - 1] || THAI_MONTHS[day.month - 1];
+    const dateLabel =
+      lang === 'th'
+        ? `${day.dayNameTh}ที่ ${day.dayOfMonth} ${monthLabel} ${formatYearLabel(day.yearBE)}`
+        : `${details.dayName}, ${day.dayOfMonth} ${monthLabel} ${formatYearLabel(day.yearBE)}`;
 
-— คำนวณตามหลักโหราศาสตร์ไทย ศาลเจ้าแห่งโชคลาภ Lucky Shrine`;
+    const text = [
+      t.calCopyHeader,
+      format(t.calCopyDate, { date: dateLabel }),
+      format(t.calCopyLunar, { lunar: details.lunarDate }),
+      format(t.calCopyRuk, { ruk: details.thaiRukName, highlight: details.thaiRukHighlight }),
+      format(t.calCopyDithi, { dithi: details.dithiName }),
+      format(t.calCopyHours, {
+        hours: details.bestHours.primaryTime,
+        ubakong: details.bestHours.ubakongYama,
+      }),
+      format(t.calCopyDirection, { direction: details.auspiciousDirection }),
+      `${format(t.calCopyColors, { lucky: details.luckyColors.join(', ') })}${format(t.calCopyAvoid, {
+        unlucky: details.unluckyColors.join(', '),
+      })}`,
+      `${format(t.calCopySuitable, {
+        categories: day.suitableCategories.map((c) => localizedCategories[c].title).join(', '),
+      })}${thaksaNote}`,
+      '',
+      t.calCopyFooter,
+    ].join('\n');
 
     if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
-      onToast('คัดลอกไม่สำเร็จ โปรดคัดลอกข้อความด้วยตนเอง');
+      onToast(t.calToastCopyFailed);
       return;
     }
 
     navigator.clipboard
       .writeText(text)
-      .then(() => onToast('คัดลอกรายละเอียดฤกษ์มงคลแล้ว สามารถวางใน Line หรือข้อความได้เลย 📋'))
-      .catch(() => onToast('คัดลอกไม่สำเร็จ โปรดคัดลอกข้อความด้วยตนเอง'));
+      .then(() => onToast(t.calToastCopied))
+      .catch(() => onToast(t.calToastCopyFailed));
   };
 
   const scrollTimerRef = useRef<number | null>(null);
@@ -344,7 +415,8 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
   // Handle Generate Lucky Card
   const handleOpenLuckyCard = (day: AuspiciousDay) => {
     if (!onOpenCard) return;
-    const cardData = buildAuspiciousCardData(day, THAI_MONTHS[day.month - 1]);
+    const monthName = localizedMonths[day.month - 1] || THAI_MONTHS[day.month - 1];
+    const cardData = buildAuspiciousCardData(day, monthName, lang);
     onOpenCard(cardData);
   };
 
@@ -359,35 +431,35 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     if (val === 'wedding') {
       setSelectedCategory('wedding');
       setSearchQuery('');
-      onToast('💍 แสดงฤกษ์แต่งงาน / จดทะเบียนสมรส');
+      onToast(t.calToastPresetWedding);
     } else if (val === 'house') {
       setSelectedCategory('house');
       setSearchQuery('');
-      onToast('🏡 แสดงฤกษ์ขึ้นบ้านใหม่ / ย้ายเข้าที่อยู่อาศัยใหม่');
+      onToast(t.calToastPresetHouse);
     } else if (val === 'vehicle_business') {
       setSelectedCategory('vehicle_business');
       setSearchQuery('');
-      onToast('🚗 แสดงฤกษ์ออกรถใหม่ / เปิดกิจการร้านค้า');
+      onToast(t.calToastPresetVehicle);
     } else if (val === 'merit') {
       setSelectedCategory('merit');
       setSearchQuery('');
-      onToast('🙏 แสดงฤกษ์ทำบุญประจำปี / ทำบุญบริษัท / ทำบุญบ้าน');
+      onToast(t.calToastPresetMerit);
     } else if (val === 'others') {
       setSelectedCategory('others');
       setSearchQuery('');
-      onToast('✨ แสดงฤกษ์มงคลอื่นๆ (เจรจาค้าขาย/ศัลยกรรม)');
+      onToast(t.calToastPresetOthers);
     } else if (val === 'thongchai_athipadi') {
       setSelectedCategory('all');
       setSelectedBirthDay('none');
       setAvoidKalakini(false);
       setSearchQuery('thongchai_athipadi');
-      onToast('⭐ แสดงเฉพาะวันธงชัยและวันอธิบดี');
+      onToast(t.calToastPresetThongchai);
     } else if (val === 'reset' || val === 'all') {
       setSelectedCategory('all');
       setSelectedBirthDay('none');
       setAvoidKalakini(false);
       setSearchQuery('');
-      onToast('รีเซ็ตแสดงวันมงคลทุกประเภท');
+      onToast(t.calToastPresetReset);
     }
     if (scrollTimerRef.current !== null) {
       clearTimeout(scrollTimerRef.current);
@@ -402,35 +474,35 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
     <div className="auspicious-container">
       {/* Calendar Grid View: Dropping toolbar directly at top, flush against the grid with NO intervening cards or boxes */}
       <div id="auspicious-results-section" className="auspicious-calendar-grid-view auspicious-calendar-view calendar-view-container">
-        {/* Compact Dropdown Toolbar Row: เดือน -> ปี -> ฤกษ์ -> วันกาลกิณี + จำนวนวัน */}
+        {/* Compact Dropdown Toolbar Row: Month -> Year -> Preset -> Birthday */}
         <div className="auspicious-compact-toolbar-row">
-          {/* 1. เดือน */}
-          <div className="dropdown-compact-item" title="เลือกเดือน">
+          {/* 1. Month */}
+          <div className="dropdown-compact-item" title={t.calSelectMonth}>
             <select
               id="month-select"
               className="dropdown-compact-select month-select"
               value={selectedMonth}
               onChange={(e) => handleMonthChange(Number(e.target.value))}
-              aria-label="เลือกเดือน"
-              title="เลือกเดือน"
+              aria-label={t.calSelectMonth}
+              title={t.calSelectMonth}
             >
-              {THAI_MONTHS.map((m, idx) => (
-                <option key={m} value={idx + 1}>
+              {localizedMonths.map((m, idx) => (
+                <option key={idx + 1} value={idx + 1}>
                   {m}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* 2. ปี */}
-          <div className="dropdown-compact-item" title="เลือกปี">
+          {/* 2. Year */}
+          <div className="dropdown-compact-item" title={t.calSelectYear}>
             <select
               id="year-select"
               className="dropdown-compact-select year-select"
               value={selectedYearBE}
               onChange={(e) => handleYearChange(Number(e.target.value))}
-              aria-label="เลือกปี"
-              title="เลือกปี"
+              aria-label={t.calSelectYear}
+              title={t.calSelectYear}
             >
               {(() => {
                 const currentYearBE = new Date().getFullYear() + 543;
@@ -438,35 +510,35 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
                 const maxYear = Math.max(2575, currentYearBE + 5, selectedYearBE + 5);
                 return Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i).map((y) => (
                   <option key={y} value={y}>
-                    {y}
+                    {lang === 'th' ? y : `${y - 543} (${y})`}
                   </option>
                 ));
               })()}
             </select>
           </div>
 
-          {/* 3. ฤกษ์ */}
-          <div className="dropdown-compact-item" title="เลือกฤกษ์มงคลยอดนิยม">
+          {/* 3. Preset */}
+          <div className="dropdown-compact-item" title={t.calSelectPreset}>
             <select
               id="preset-select"
               className="dropdown-compact-select preset-select"
               value={currentPresetValue}
               onChange={(e) => handlePresetChange(e.target.value)}
-              aria-label="เลือกฤกษ์มงคล"
-              title="เลือกฤกษ์มงคล"
+              aria-label={t.calSelectPreset}
+              title={t.calSelectPreset}
             >
-              <option value="all">✨ ฤกษ์: ทั้งหมด</option>
-              <option value="wedding">💍 ฤกษ์แต่งงาน</option>
-              <option value="house">🏡 ฤกษ์ขึ้นบ้านใหม่</option>
-              <option value="vehicle_business">🚗 ฤกษ์ออกรถ/เปิดร้าน</option>
-              <option value="merit">🙏 ฤกษ์ทำบุญ</option>
-              <option value="others">💎 ฤกษ์ศัลยกรรม/ค้าขาย</option>
-              <option value="thongchai_athipadi">⭐ วันธงชัย & อธิบดี</option>
-              <option value="reset">🔄 แสดงทุกวัน (รีเซ็ต)</option>
+              <option value="all">{t.calPresetAll}</option>
+              <option value="wedding">{t.calPresetWedding}</option>
+              <option value="house">{t.calPresetHouse}</option>
+              <option value="vehicle_business">{t.calPresetVehicleBusiness}</option>
+              <option value="merit">{t.calPresetMerit}</option>
+              <option value="others">{t.calPresetOthers}</option>
+              <option value="thongchai_athipadi">{t.calPresetThongchaiAthipadi}</option>
+              <option value="reset">{t.calPresetReset}</option>
             </select>
           </div>
 
-          {/* 4. วันกาลกิณี */}
+          {/* 4. Birth Day Kalakini */}
           <div className="dropdown-compact-item">
             <select
               id="birthday-select"
@@ -477,20 +549,29 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
                 setSelectedBirthDay(val);
                 if (val !== 'none') {
                   setAvoidKalakini(true);
-                  const bInfo = BIRTH_DAYS.find((b) => b.id === val);
+                  const bInfo = localizedBirthDays.find((b) => b.id === val);
                   if (bInfo) {
-                    onToast(`👤 เลือกคนเกิด${bInfo.labelTh}: หลีกเลี่ยงวัน${bInfo.kalakiniDayNameTh} (กาลกิณี)`);
+                    onToast(
+                      format(t.calToastBirth, {
+                        day: bInfo.label,
+                        kalakini: bInfo.kalakiniDayName,
+                      })
+                    );
                   }
                 } else {
-                  onToast('👤 แสดงทุกวันเกิด (ไม่ตัดวันกาลกิณี)');
+                  onToast(t.calToastBirthAll);
                 }
               }}
-              aria-label="เลือกวันเกิดเทียบทักษาตัดวันกาลกิณี"
+              aria-label={t.calBirthSelectAria}
             >
-              <option value="none">👤 เลี่ยงกาลกิณี: ทุกวันเกิด</option>
-              {BIRTH_DAYS.map((b) => (
+              <option value="none">{t.calBirthAllOpt}</option>
+              {localizedBirthDays.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.icon} เกิด{b.labelTh} (เลี่ยง{b.kalakiniDayNameTh})
+                  {format(t.calBirthItemOpt, {
+                    icon: b.icon,
+                    day: b.label,
+                    kalakini: b.kalakiniDayName,
+                  })}
                 </option>
               ))}
             </select>
@@ -500,10 +581,10 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
                 className="btn-clear-compact-select"
                 onClick={() => {
                   setSelectedBirthDay('none');
-                  onToast('🔄 แสดงทุกวันเกิด (ไม่ตัดวันกาลกิณี)');
+                  onToast(t.calToastBirthAll);
                 }}
-                title="รีเซ็ตเป็นแสดงทุกวันเกิด"
-                aria-label="รีเซ็ตเป็นแสดงทุกวันเกิด"
+                title={t.calBirthResetTitle}
+                aria-label={t.calBirthResetTitle}
               >
                 ✕
               </button>
@@ -520,18 +601,21 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
               const isLokawinasCol = w.dayOfWeek === kalaYoga.lokawinas;
 
               if (w.dayOfWeek === kalaYoga.thongchai) {
-                tag = '⭐ ธงชัย';
+                tag = t.calTagThongchai;
                 tagClass = 'tag-col-thongchai';
               } else if (w.dayOfWeek === kalaYoga.athipadi) {
-                tag = '👑 อธิบดี';
+                tag = t.calTagAthipadi;
                 tagClass = 'tag-col-athipadi';
               } else if (isUbathaCol) {
-                tag = '⚠️ อุบาทว์';
+                tag = t.calTagUbatha;
                 tagClass = 'tag-col-ubatha';
               } else if (isLokawinasCol) {
-                tag = '⛔ โลกาวินาศ';
+                tag = t.calTagLokawinas;
                 tagClass = 'tag-col-lokawinas';
               }
+
+              const fullWeekday = getLocalizedFullDayName(w.dayOfWeek, lang);
+              const shortWeekday = localizedWeekdays[w.dayOfWeek] || w.short;
 
               return (
                 <div
@@ -542,14 +626,21 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
                   style={{ borderTopColor: w.color }}
                   role="columnheader"
                 >
-                  <span className="weekday-name-full">{w.full}</span>
-                  <span className="weekday-name-short">{w.short}</span>
+                  <span className="weekday-name-full">{fullWeekday}</span>
+                  <span className="weekday-name-short">{shortWeekday}</span>
                   {tag ? (
-                    <span className={`weekday-kalayoga-tag ${tagClass}`} title={`กาลโยคประจำปี ${selectedYearBE}: ${w.full}เป็น${tag}`}>
+                    <span
+                      className={`weekday-kalayoga-tag ${tagClass}`}
+                      title={format(t.calColTooltip, {
+                        yearLabel: formatYearLabel(selectedYearBE),
+                        weekday: fullWeekday,
+                        tag,
+                      })}
+                    >
                       {tag}
                     </span>
                   ) : (
-                    <span className="weekday-kalayoga-tag tag-col-normal">วันปกติ</span>
+                    <span className="weekday-kalayoga-tag tag-col-normal">{t.calTagNormal}</span>
                   )}
                 </div>
               );
@@ -570,8 +661,9 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
               const isFilteredOut = !filteredDayDates.has(day.date);
               const thaksa =
                 selectedBirthDay !== 'none'
-                  ? thaksaByDate.get(day.date)
+                  ? localizedThaksaByDate.get(day.date)
                   : null;
+              const dayDetails = getLocalizedDayDetails(day, lang);
 
               const isUbatha = day.kalaYoga === 'ubatha';
               const isLokawinas = day.kalaYoga === 'lokawinas';
@@ -581,7 +673,10 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
                 isLokawinas ||
                 thaksa?.isKalakini;
 
-              const shortDayName = day.dayNameTh.replace('วัน', '');
+              const shortDayName =
+                lang === 'th'
+                  ? day.dayNameTh.replace('วัน', '')
+                  : localizedWeekdays[day.dayOfWeek] || '';
 
               return (
                 <div
@@ -611,37 +706,37 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
                       <span className="cell-weekday-label">{shortDayName}</span>
                     </div>
                     {day.kalaYoga === 'thongchai' && (
-                      <span className="cell-tag tag-thongchai">ธงชัย</span>
+                      <span className="cell-tag tag-thongchai">{t.calTagShortThongchai}</span>
                     )}
                     {day.kalaYoga === 'athipadi' && (
-                      <span className="cell-tag tag-athipadi">อธิบดี</span>
+                      <span className="cell-tag tag-athipadi">{t.calTagShortAthipadi}</span>
                     )}
                     {day.kalaYoga === 'ubatha' && (
-                      <span className="cell-tag tag-ubatha">อุบาทว์</span>
+                      <span className="cell-tag tag-ubatha">{t.calTagShortUbatha}</span>
                     )}
                     {day.kalaYoga === 'lokawinas' && (
-                      <span className="cell-tag tag-lokawinas">โลกาวินาศ</span>
+                      <span className="cell-tag tag-lokawinas">{t.calTagShortLokawinas}</span>
                     )}
                   </div>
 
                   <div className="cell-middle">
-                    <span className="cell-ruk-name" title={`${day.thaiRukNameTh}: ${day.thaiRukHighlight}`}>
-                      {day.thaiRukNameTh}
+                    <span className="cell-ruk-name" title={`${dayDetails.thaiRukName}: ${dayDetails.thaiRukHighlight}`}>
+                      {dayDetails.thaiRukName}
                     </span>
-                    <span className="cell-lunar" title={day.lunarDateTh}>
-                      {day.lunarPhaseThShort}
+                    <span className="cell-lunar" title={dayDetails.lunarDate}>
+                      {dayDetails.lunarPhaseShort}
                     </span>
                     {day.buddhistHolyDay && (
-                      <span className="cell-holy-badge" title={`วันพระ: ${day.lunarDateTh}`}>
-                        🪷 วันพระ
+                      <span className="cell-holy-badge" title={`${t.calHolyDayBadge}: ${dayDetails.lunarDate}`}>
+                        {t.calHolyDayBadge}
                       </span>
                     )}
                   </div>
 
                   <div className="cell-bottom-icons">
                     {day.suitableCategories.map((c) => (
-                      <span key={c} className="cell-cat-icon" title={WORK_CATEGORIES_INFO[c].titleTh}>
-                        {WORK_CATEGORIES_INFO[c].icon}
+                      <span key={c} className="cell-cat-icon" title={localizedCategories[c].title}>
+                        {localizedCategories[c].icon}
                       </span>
                     ))}
                   </div>
@@ -657,199 +752,207 @@ export const AuspiciousCalendar: React.FC<AuspiciousCalendarProps> = ({
           </div>
         </div>
 
-      {/* Day Inspection Modal (ป๊อปอัปเจาะลึกรายละเอียดวันมงคล) - Portaled to document.body to prevent double-frame nesting */}
+      {/* Day Inspection Modal - Portaled to document.body to prevent double-frame nesting */}
       {inspectedDay && typeof document !== 'undefined' && createPortal(
-        <div
-          className="auspicious-modal-overlay"
-          onClick={() => setInspectedDay(null)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className="auspicious-modal-sheet"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="modal-close-btn"
+        (() => {
+          const inspectedDetails = getLocalizedDayDetails(inspectedDay, lang);
+          const inspectedThaksa = localizedThaksaByDate.get(inspectedDay.date);
+          const inspectedMonth = localizedMonths[inspectedDay.month - 1] || THAI_MONTHS[inspectedDay.month - 1];
+          const modalDateLabel =
+            lang === 'th'
+              ? `${inspectedDay.dayNameTh}ที่ ${inspectedDay.dayOfMonth} ${inspectedMonth} ${formatYearLabel(inspectedDay.yearBE)}`
+              : `${inspectedDetails.dayName}, ${inspectedDay.dayOfMonth} ${inspectedMonth} ${formatYearLabel(inspectedDay.yearBE)}`;
+
+          return (
+            <div
+              className="auspicious-modal-overlay"
               onClick={() => setInspectedDay(null)}
-              aria-label="ปิดหน้าต่าง"
+              role="dialog"
+              aria-modal="true"
             >
-              ✕
-            </button>
-
-            {/* Modal Header */}
-            <div className="modal-sheet-header">
-              <div className="modal-date-tag">
-                {inspectedDay.dayNameTh}ที่ {inspectedDay.dayOfMonth}{' '}
-                {THAI_MONTHS[inspectedDay.month - 1]} พ.ศ. {inspectedDay.yearBE}
-              </div>
-              <h3 className="modal-title">{inspectedDay.thaiRukNameTh}</h3>
-              <p className="modal-subtitle">
-                {inspectedDay.lunarDateTh} · {inspectedDay.dithiName}
-              </p>
-            </div>
-
-            {/* Kala Yoga & Thaksa Alerts in Modal */}
-            <div className="modal-badges-row">
-              {inspectedDay.kalaYoga === 'thongchai' && (
-                <div className="modal-alert-pill thongchai">⭐ วันธงชัยแห่งปี (มงคลเลิศล้ำ)</div>
-              )}
-              {inspectedDay.kalaYoga === 'athipadi' && (
-                <div className="modal-alert-pill athipadi">👑 วันอธิบดีแห่งปี (เกียรติยศ อำนาจบารมี)</div>
-              )}
-              {inspectedDay.kalaYoga === 'ubatha' && (
-                <div className="modal-alert-pill ubatha">⚠️ วันอุบาทว์แห่งปี (ควรงดเว้นการมงคล)</div>
-              )}
-              {inspectedDay.kalaYoga === 'lokawinas' && (
-                <div className="modal-alert-pill lokawinas">⛔ วันโลกาวินาศแห่งปี (ห้ามประกอบพิธีเด็ดขาด)</div>
-              )}
-
-              {selectedBirthDay !== 'none' && (
-                <div
-                  className={`modal-alert-pill thaksa-${
-                    thaksaByDate.get(inspectedDay.date)?.badgeStyle
-                  }`}
+              <div
+                className="auspicious-modal-sheet"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  className="modal-close-btn"
+                  onClick={() => setInspectedDay(null)}
+                  aria-label={t.calModalCloseAria}
                 >
-                  {thaksaByDate.get(inspectedDay.date)?.badgeText}
-                </div>
-              )}
-            </div>
+                  ✕
+                </button>
 
-            {/* Body Information */}
-            <div className="modal-body-content">
-              {/* Nakshatra & Astronomical Dithi Details */}
-              <div className="modal-info-card">
-                <h4 className="info-card-title">✨ ข้อมูลดวงดาวและดิถีจันทรคติ</h4>
-                <div className="nakshatra-detail-row">
-                  <div className="nakshatra-box">
-                    <span className="nak-label">กลุ่มดาวนักษัตรที่เสวย:</span>
-                    <strong className="nak-val text-gold">นักษัตรที่ {inspectedDay.nakshatraNumber} ({inspectedDay.nakshatraNameTh})</strong>
-                  </div>
-                  <div className="nakshatra-box">
-                    <span className="nak-label">ดิถีจันทรคติ:</span>
-                    <strong className="nak-val">{inspectedDay.lunarDateTh}</strong>
-                  </div>
+                {/* Modal Header */}
+                <div className="modal-sheet-header">
+                  <div className="modal-date-tag">{modalDateLabel}</div>
+                  <h3 className="modal-title">{inspectedDetails.thaiRukName}</h3>
+                  <p className="modal-subtitle">
+                    {inspectedDetails.lunarDate} · {inspectedDetails.dithiName}
+                  </p>
                 </div>
-                <div className="info-card-highlight">
-                  พระจันทร์โคจรผ่าน ๒๗ กลุ่มดาวนักษัตรตามลำดับธรรมชาติ ส่งผลให้เกิด <strong>{inspectedDay.thaiRukNameTh}</strong> ในวันนี้
-                </div>
-              </div>
 
-              {/* Meaning & Highlight */}
-              <div className="modal-info-card">
-                <h4 className="info-card-title">📖 ความหมายและจุดเด่นของฤกษ์</h4>
-                <p className="info-card-desc">{inspectedDay.thaiRukMeaning}</p>
-                <div className="info-card-highlight">
-                  <strong>ความโดดเด่น:</strong> {inspectedDay.thaiRukHighlight}
-                </div>
-              </div>
+                {/* Kala Yoga & Thaksa Alerts in Modal */}
+                <div className="modal-badges-row">
+                  {inspectedDay.kalaYoga === 'thongchai' && (
+                    <div className="modal-alert-pill thongchai">{t.calModalThongchaiPill}</div>
+                  )}
+                  {inspectedDay.kalaYoga === 'athipadi' && (
+                    <div className="modal-alert-pill athipadi">{t.calModalAthipadiPill}</div>
+                  )}
+                  {inspectedDay.kalaYoga === 'ubatha' && (
+                    <div className="modal-alert-pill ubatha">{t.calModalUbathaPill}</div>
+                  )}
+                  {inspectedDay.kalaYoga === 'lokawinas' && (
+                    <div className="modal-alert-pill lokawinas">{t.calModalLokawinasPill}</div>
+                  )}
 
-              {/* Timing & Ubakong Yama */}
-              <div className="modal-info-card">
-                <h4 className="info-card-title">⏰ ช่วงเวลายามมงคลและยามอุบากอง</h4>
-                <div className="hours-grid">
-                  <div className="hour-stat-box">
-                    <span className="hour-label">ช่วงเวลาที่ดีที่สุด:</span>
-                    <span className="hour-val text-gold">{inspectedDay.bestHours.primaryTime}</span>
-                  </div>
-                  {inspectedDay.bestHours.secondaryTime && (
-                    <div className="hour-stat-box">
-                      <span className="hour-label">ช่วงเวลาสำรอง:</span>
-                      <span className="hour-val">{inspectedDay.bestHours.secondaryTime}</span>
+                  {selectedBirthDay !== 'none' && inspectedThaksa && (
+                    <div className={`modal-alert-pill thaksa-${inspectedThaksa.badgeStyle}`}>
+                      {inspectedThaksa.badgeText}
                     </div>
                   )}
-                  <div className="hour-stat-box full-width">
-                    <span className="hour-label">ศาสตร์ยามอุบากอง:</span>
-                    <span className="hour-val text-ok">{inspectedDay.bestHours.ubakongYama}</span>
-                  </div>
                 </div>
-              </div>
 
-              {/* Direction & Colors */}
-              <div className="modal-info-card">
-                <h4 className="info-card-title">🧭 ทิศและสีมงคลประจำวัน</h4>
-                <div className="directions-grid">
-                  <div className="dir-item">
-                    <span className="dir-label">ทิศมงคลนำฤกษ์:</span>
-                    <span className="dir-val">{inspectedDay.auspiciousDirection}</span>
-                  </div>
-                  <div className="dir-item">
-                    <span className="dir-label">สีมงคลเสริมโชค:</span>
-                    <span className="dir-val text-gold">{inspectedDay.luckyColors.join(', ')}</span>
-                  </div>
-                  <div className="dir-item">
-                    <span className="dir-label">สีที่ควรหลีกเลี่ยง:</span>
-                    <span className="dir-val text-bad">{inspectedDay.unluckyColors.join(', ')}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Suitable categories & Tips */}
-              <div className="modal-info-card">
-                <h4 className="info-card-title">🏷️ งานที่เหมาะสมและเคล็ดพิธี</h4>
-                <div className="modal-tips-list">
-                  {inspectedDay.suitableCategories.length > 0 ? (
-                    inspectedDay.suitableCategories.map((catKey) => (
-                      <div key={catKey} className="modal-tip-item">
-                        <span className="tip-cat-title">
-                          {WORK_CATEGORIES_INFO[catKey].icon} {WORK_CATEGORIES_INFO[catKey].titleTh}
-                        </span>
-                        <p className="tip-cat-content">
-                          {inspectedDay.ceremonyTips[catKey] || WORK_CATEGORIES_INFO[catKey].shortDesc}
-                        </p>
+                {/* Body Information */}
+                <div className="modal-body-content">
+                  {/* Nakshatra & Astronomical Dithi Details */}
+                  <div className="modal-info-card">
+                    <h4 className="info-card-title">{t.calModalAstroTitle}</h4>
+                    <div className="nakshatra-detail-row">
+                      <div className="nakshatra-box">
+                        <span className="nak-label">{t.calModalNakLabel}</span>
+                        <strong className="nak-val text-gold">
+                          {format(t.calModalNakVal, {
+                            num: inspectedDay.nakshatraNumber,
+                            name: inspectedDetails.nakshatraName,
+                          })}
+                        </strong>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-bad">
-                      วันนี้ตรงกับวันอุบาทว์หรือวันโลกาวินาศ ไม่เหมาะกับการจัดพิธีมงคลใดๆ
-                    </p>
+                      <div className="nakshatra-box">
+                        <span className="nak-label">{t.calModalDithiLabel}</span>
+                        <strong className="nak-val">{inspectedDetails.lunarDate}</strong>
+                      </div>
+                    </div>
+                    <div className="info-card-highlight">
+                      {format(t.calModalAstroHighlight, { ruk: inspectedDetails.thaiRukName })}
+                    </div>
+                  </div>
+
+                  {/* Meaning & Highlight */}
+                  <div className="modal-info-card">
+                    <h4 className="info-card-title">{t.calModalMeaningTitle}</h4>
+                    <p className="info-card-desc">{inspectedDetails.thaiRukMeaning}</p>
+                    <div className="info-card-highlight">
+                      <strong>{t.calModalHighlightPrefix}</strong> {inspectedDetails.thaiRukHighlight}
+                    </div>
+                  </div>
+
+                  {/* Timing & Ubakong Yama */}
+                  <div className="modal-info-card">
+                    <h4 className="info-card-title">{t.calModalHoursTitle}</h4>
+                    <div className="hours-grid">
+                      <div className="hour-stat-box">
+                        <span className="hour-label">{t.calModalPrimaryHour}</span>
+                        <span className="hour-val text-gold">{inspectedDetails.bestHours.primaryTime}</span>
+                      </div>
+                      {inspectedDetails.bestHours.secondaryTime && (
+                        <div className="hour-stat-box">
+                          <span className="hour-label">{t.calModalSecondaryHour}</span>
+                          <span className="hour-val">{inspectedDetails.bestHours.secondaryTime}</span>
+                        </div>
+                      )}
+                      <div className="hour-stat-box full-width">
+                        <span className="hour-label">{t.calModalUbakongLabel}</span>
+                        <span className="hour-val text-ok">{inspectedDetails.bestHours.ubakongYama}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Direction & Colors */}
+                  <div className="modal-info-card">
+                    <h4 className="info-card-title">{t.calModalDirColorTitle}</h4>
+                    <div className="directions-grid">
+                      <div className="dir-item">
+                        <span className="dir-label">{t.calModalDirectionLabel}</span>
+                        <span className="dir-val">{inspectedDetails.auspiciousDirection}</span>
+                      </div>
+                      <div className="dir-item">
+                        <span className="dir-label">{t.calModalLuckyColorLabel}</span>
+                        <span className="dir-val text-gold">{inspectedDetails.luckyColors.join(', ')}</span>
+                      </div>
+                      <div className="dir-item">
+                        <span className="dir-label">{t.calModalUnluckyColorLabel}</span>
+                        <span className="dir-val text-bad">{inspectedDetails.unluckyColors.join(', ')}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Suitable categories & Tips */}
+                  <div className="modal-info-card">
+                    <h4 className="info-card-title">{t.calModalTipsTitle}</h4>
+                    <div className="modal-tips-list">
+                      {inspectedDay.suitableCategories.length > 0 ? (
+                        inspectedDay.suitableCategories.map((catKey) => (
+                          <div key={catKey} className="modal-tip-item">
+                            <span className="tip-cat-title">
+                              {localizedCategories[catKey].icon} {localizedCategories[catKey].title}
+                            </span>
+                            <p className="tip-cat-content">
+                              {inspectedDetails.ceremonyTips[catKey] || localizedCategories[catKey].shortDesc}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-bad">{t.calModalTabooDayDesc}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Prohibitions */}
+                  {inspectedDetails.prohibitions.length > 0 && (
+                    <div className="modal-prohibitions-box">
+                      <strong>{t.calModalProhibitionTitle}</strong>
+                      <ul>
+                        {inspectedDetails.prohibitions.map((p, idx) => (
+                          <li key={idx}>{p}</li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
                 </div>
-              </div>
 
-              {/* Prohibitions */}
-              {inspectedDay.prohibitions.length > 0 && (
-                <div className="modal-prohibitions-box">
-                  <strong>🚫 ข้อพึงระวังตามโบราณาจารย์:</strong>
-                  <ul>
-                    {inspectedDay.prohibitions.map((p, idx) => (
-                      <li key={idx}>{p}</li>
-                    ))}
-                  </ul>
+                {/* Modal Bottom Actions */}
+                <div className="modal-sheet-footer">
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => handleCopyDayDetails(inspectedDay)}
+                  >
+                    {t.calModalCopyBtn}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn gold"
+                    onClick={() => handleSaveToJournal(inspectedDay)}
+                  >
+                    {t.calModalSaveBtn}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn red"
+                    onClick={() => {
+                      handleOpenLuckyCard(inspectedDay);
+                      setInspectedDay(null);
+                    }}
+                  >
+                    {t.calModalCardBtn}
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
-
-            {/* Modal Bottom Actions */}
-            <div className="modal-sheet-footer">
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={() => handleCopyDayDetails(inspectedDay)}
-              >
-                📋 คัดลอกรายละเอียด
-              </button>
-              <button
-                type="button"
-                className="btn gold"
-                onClick={() => handleSaveToJournal(inspectedDay)}
-              >
-                📖 บันทึกลงสมุดดวง
-              </button>
-              <button
-                type="button"
-                className="btn red"
-                onClick={() => {
-                  handleOpenLuckyCard(inspectedDay);
-                  setInspectedDay(null);
-                }}
-              >
-                🎴 สร้างการ์ดมงคล
-              </button>
-            </div>
-          </div>
-        </div>,
+          );
+        })(),
         document.body
       )}
     </div>

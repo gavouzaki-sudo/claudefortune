@@ -1,21 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   getLatestLotteryResult,
   getLotteryResultByDate,
   checkTicketWin,
+  formatLotteryDateByLang,
+  getLocalizedPrizeName,
+  getLocalizedDrawPostponedNote,
   type LotteryDisplayData,
   type CheckTicketResult,
 } from '../utils/lotteryApi';
 import {
-  LOTTERY_DRAW_DAY_OPTIONS,
   getActualDrawDateIso,
+  getLocalizedShortMonths,
+  getLocalizedLotteryDrawDayOptions,
+  formatLocalizedShortDate,
 } from '../data/postponedLotteryDraws';
+import type { SupportedLang } from '../data/translations';
+import { useLanguage } from '../context/LanguageContext';
 import { logger } from '../utils/logger';
-
-const THAI_MONTHS_SHORT = [
-  'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
-  'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
-] as const;
 
 interface DrawPreset {
   day: string;
@@ -24,8 +26,9 @@ interface DrawPreset {
   label: string;
 }
 
-function getRecentDrawPresets(now: Date = new Date()): DrawPreset[] {
+function getRecentDrawPresets(lang: SupportedLang, now: Date = new Date()): DrawPreset[] {
   const presets: DrawPreset[] = [];
+  const shortMonths = getLocalizedShortMonths(lang);
   let yearCe = now.getFullYear();
   let month = now.getMonth() + 1;
   let day = now.getDate() >= 16 ? 16 : 1;
@@ -35,11 +38,18 @@ function getRecentDrawPresets(now: Date = new Date()): DrawPreset[] {
     const actualIso = getActualDrawDateIso(nominalIso);
     const [actY, actM, actD] = actualIso.split('-').map((v) => parseInt(v, 10));
     const actYearBe = actY + 543;
+    const label =
+      lang === 'th'
+        ? `${actD} ${shortMonths[actM - 1]} ${String(actYearBe).slice(-2)}`
+        : lang === 'zh'
+        ? `${actY}/${actM}/${actD}`
+        : `${actD} ${shortMonths[actM - 1]} ${String(actY).slice(-2)}`;
+
     presets.push({
       day: String(actD).padStart(2, '0'),
       month: String(actM).padStart(2, '0'),
       yearBe: String(actYearBe),
-      label: `${actD} ${THAI_MONTHS_SHORT[actM - 1]} ${String(actYearBe).slice(-2)}`,
+      label,
     });
     if (day === 16) {
       day = 1;
@@ -66,6 +76,7 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
   onClose,
   onToast,
 }) => {
+  const { lang, t, format } = useLanguage();
   const [loading, setLoading] = useState<boolean>(true);
   const [lotteryData, setLotteryData] = useState<LotteryDisplayData | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -80,7 +91,12 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
   const [selectedMonth, setSelectedMonth] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
   const [selectedYear, setSelectedYear] = useState<string>(() => String(new Date().getFullYear() + 543));
   const currentYearBE = new Date().getFullYear() + 543;
-  const recentPresets = getRecentDrawPresets();
+  const recentPresets = getRecentDrawPresets(lang);
+  const shortMonths = getLocalizedShortMonths(lang);
+  const dayOptions = getLocalizedLotteryDrawDayOptions(lang);
+  const numLocale = lang === 'th' ? 'th-TH' : lang === 'zh' ? 'zh-CN' : 'en-US';
+  const errFetchRef = useRef(t.lottoErrorFetch);
+  errFetchRef.current = t.lottoErrorFetch;
 
   // Load latest lottery draw on open
   useEffect(() => {
@@ -100,7 +116,7 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
       .catch((err) => {
         if (!isMounted) return;
         logger.error('Error fetching latest lottery:', err);
-        setErrorMsg('ไม่สามารถดึงข้อมูลจากสำนักงานสลากฯ ได้ชั่วคราว');
+        setErrorMsg(errFetchRef.current);
         setLoading(false);
       });
 
@@ -118,9 +134,9 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
     try {
       const data = await getLatestLotteryResult();
       setLotteryData(data);
-      onToast('ดึงผลสลากกินแบ่งรัฐบาลงวดล่าสุดเรียบร้อย ✨');
+      onToast(t.lottoToastRefreshed);
     } catch {
-      setErrorMsg('เกิดข้อผิดพลาดในการดึงข้อมูล');
+      setErrorMsg(t.lottoErrorRefresh);
     } finally {
       setLoading(false);
     }
@@ -134,10 +150,11 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
       const data = await getLotteryResultByDate(day, month, yearBeOrCe);
       setLotteryData(data);
       setShowDatePicker(false);
-      onToast(`แสดงผลสลากงวดวันที่ ${data.formattedThaiDate} ✨`);
+      const dateStr = formatLotteryDateByLang(data.rawDate, lang) || data.formattedThaiDate;
+      onToast(format(t.lottoToastDateFound, { date: dateStr }));
     } catch (err: any) {
-      setErrorMsg(err.message || 'ไม่พบข้อมูลงวดที่เลือก');
-      onToast('ไม่พบข้อมูลสลากงวดที่ระบุ');
+      setErrorMsg(lang === 'th' ? err?.message || t.lottoErrorNotFound : t.lottoErrorNotFound);
+      onToast(t.lottoToastDateMissing);
     } finally {
       setLoading(false);
     }
@@ -148,17 +165,24 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
     if (!lotteryData) return;
     const clean = checkInput.replace(/\D/g, '');
     if (clean.length !== 6) {
-      onToast('กรุณากรอกเลขสลากให้ครบ 6 หลัก');
+      onToast(t.lottoToastNeed6Digits);
       return;
     }
     const result = checkTicketWin(clean, lotteryData);
     setCheckResult(result);
     if (result.isWon) {
-      onToast(`🎉 ขอแสดงความยินดี! ถูกรางวัลรวม ${result.totalReward.toLocaleString('th-TH')} บาท`);
+      onToast(format(t.lottoToastWon, { amount: result.totalReward.toLocaleString(numLocale) }));
     } else {
-      onToast('งวดนี้ยังไม่ถูกรางวัล ขอให้โชคดีในงวดหน้าครับ ✨');
+      onToast(t.lottoToastNotWon);
     }
   };
+
+  const bannerDateText = loading
+    ? t.lottoLoadingShort
+    : lotteryData
+    ? formatLotteryDateByLang(lotteryData.rawDate, lang) || lotteryData.formattedThaiDate
+    : t.lottoPendingInfo;
+  const displayPostponedNote = lotteryData ? getLocalizedDrawPostponedNote(lotteryData, lang) : undefined;
 
   return (
     <div
@@ -166,29 +190,29 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="ผลสลากกินแบ่งรัฐบาล"
+      aria-label={t.lottoTitle}
     >
       <div className="lottery-card-single-view" onClick={(e) => e.stopPropagation()}>
         {/* Top Header Bar: Maroon Background (Classic Thai Broadcast Style) */}
         <div className="lottery-broadcast-header">
           <div className="lottery-header-title-box">
-            <h2 className="lottery-broadcast-title">ผลสลากกินแบ่งรัฐบาล</h2>
+            <h2 className="lottery-broadcast-title">{t.lottoTitle}</h2>
           </div>
           <div className="lottery-header-ctrl-group">
             <button
               type="button"
               className="lottery-mini-ctrl-btn"
               onClick={() => setShowDatePicker((prev) => !prev)}
-              title="เลือกงวดวันที่"
+              title={t.lottoToggleDateTitle}
             >
-              <span>📅 {showDatePicker ? 'ปิด' : 'งวด'}</span>
+              <span>📅 {showDatePicker ? t.lottoDateBtnClose : t.lottoDateBtnOpen}</span>
             </button>
             <button
               type="button"
               className="lottery-mini-ctrl-btn"
               onClick={handleRefreshLatest}
               disabled={loading}
-              title="ดึงงวดล่าสุด"
+              title={t.lottoRefreshTitle}
             >
               <span>🔄</span>
             </button>
@@ -196,8 +220,8 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
               type="button"
               className="lottery-close-square-btn"
               onClick={onClose}
-              title="ปิดหน้าต่าง"
-              aria-label="ปิด"
+              title={t.commonClose}
+              aria-label={t.cardClose}
             >
               ✕
             </button>
@@ -207,10 +231,10 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
         {/* Date Sub-Banner: Deep Green Background */}
         <div className="lottery-date-banner">
           <p className="lottery-date-text">
-            งวดประจำวันที่ {loading ? 'กำลังโหลด...' : lotteryData?.formattedThaiDate || 'รออัปเดตข้อมูล'}
+            {format(t.lottoDrawBannerPrefix, { date: bannerDateText })}
           </p>
-          {!loading && lotteryData?.postponedNote && (
-            <p className="lottery-postponed-note">📅 {lotteryData.postponedNote}</p>
+          {!loading && displayPostponedNote && (
+            <p className="lottery-postponed-note">📅 {displayPostponedNote}</p>
           )}
         </div>
 
@@ -232,9 +256,9 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
                 type="button"
                 className="btn-quick-date"
                 onClick={() => handleSearchByDate('01', '03', '2567')}
-                title="ข้อมูลงวดอ้างอิงออฟไลน์"
+                title={t.lottoQuickOfflineRefTitle}
               >
-                1 มี.ค. 67
+                {lang === 'th' ? '1 มี.ค. 67' : formatLocalizedShortDate('2024-03-01', lang)}
               </button>
             </div>
             <form
@@ -248,9 +272,9 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
                 value={selectedDay}
                 onChange={(e) => setSelectedDay(e.target.value)}
                 className="compact-date-select"
-                aria-label="เลือกวันที่"
+                aria-label={t.lottoDaySelectAria}
               >
-                {LOTTERY_DRAW_DAY_OPTIONS.map((opt) => (
+                {dayOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -260,23 +284,19 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="compact-date-select"
-                aria-label="เลือกเดือน"
+                aria-label={t.lottoMonthSelectAria}
               >
-                <option value="01">ม.ค. (01)</option>
-                <option value="02">ก.พ. (02)</option>
-                <option value="03">มี.ค. (03)</option>
-                <option value="04">เม.ย. (04)</option>
-                <option value="05">พ.ค. (05)</option>
-                <option value="06">มิ.ย. (06)</option>
-                <option value="07">ก.ค. (07)</option>
-                <option value="08">ส.ค. (08)</option>
-                <option value="09">ก.ย. (09)</option>
-                <option value="10">ต.ค. (10)</option>
-                <option value="11">พ.ย. (11)</option>
-                <option value="12">ธ.ค. (12)</option>
+                {shortMonths.map((mLabel, idx) => {
+                  const val = String(idx + 1).padStart(2, '0');
+                  return (
+                    <option key={val} value={val}>
+                      {mLabel} ({val})
+                    </option>
+                  );
+                })}
               </select>
               <div className="compact-year-field">
-                <span className="compact-year-prefix">พ.ศ.</span>
+                <span className="compact-year-prefix">{t.lottoYearPrefix}</span>
                 <input
                   type="number"
                   min="2540"
@@ -285,11 +305,11 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
                   onChange={(e) => setSelectedYear(e.target.value)}
                   className="compact-year-input"
                   placeholder={String(currentYearBE)}
-                  aria-label="ปี พ.ศ."
+                  aria-label={t.lottoYearAria}
                 />
               </div>
               <button type="submit" className="btn-compact-submit" disabled={loading}>
-                ค้นหา
+                {t.lottoSearchBtn}
               </button>
             </form>
           </div>
@@ -300,7 +320,7 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
           {loading ? (
             <div className="lottery-board-loading">
               <span className="spinner-icon">🌀</span>
-              <p>กำลังเชื่อมต่อข้อมูลสลากฯ...</p>
+              <p>{t.lottoConnecting}</p>
             </div>
           ) : errorMsg ? (
             <div className="lottery-board-error">
@@ -308,29 +328,27 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
             </div>
           ) : lotteryData ? (
             <div className="lottery-board-grid">
-              {/* Left Column (รางวัลที่ 1 on top, เลขหน้า 3 ตัว & เลขท้าย 3 ตัว below) */}
+              {/* Left Column */}
               <div className="board-col-left">
-                {/* รางวัลที่ 1 Card */}
+                {/* 1st Prize Card */}
                 <div className="board-card card-first-prize">
-                  <span className="board-card-title">รางวัลที่ 1</span>
-                  <div className="board-digits-first" aria-label={`รางวัลที่ 1 คือ ${lotteryData.first}`}>
+                  <span className="board-card-title">{t.lottoFirstPrize}</span>
+                  <div className="board-digits-first" aria-label={`${t.lottoFirstPrize}: ${lotteryData.first}`}>
                     {lotteryData.first}
                   </div>
                 </div>
 
-                {/* Sub-Prizes Row: เลขหน้า 3 ตัว & เลขท้าย 3 ตัว side by side */}
+                {/* Sub-Prizes Row: Front 3 & Back 3 side by side */}
                 <div className="board-sub-row">
-                  {/* เลขหน้า 3 ตัว */}
                   <div className="board-card card-sub-prize">
-                    <span className="board-card-title">เลขหน้า 3 ตัว</span>
+                    <span className="board-card-title">{t.lottoLast3Front}</span>
                     <div className="board-digits-3digit">
                       {lotteryData.last3f.join('  ')}
                     </div>
                   </div>
 
-                  {/* เลขท้าย 3 ตัว */}
                   <div className="board-card card-sub-prize">
-                    <span className="board-card-title">เลขท้าย 3 ตัว</span>
+                    <span className="board-card-title">{t.lottoLast3Back}</span>
                     <div className="board-digits-3digit">
                       {lotteryData.last3b.join('  ')}
                     </div>
@@ -338,11 +356,11 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
                 </div>
               </div>
 
-              {/* Right Column: เลขท้าย 2 ตัว (Tall Card with Giant Digits matching reference image) */}
+              {/* Right Column: Last 2 Digits */}
               <div className="board-col-right">
                 <div className="board-card card-last2-prize">
-                  <span className="board-card-title">เลขท้าย 2 ตัว</span>
-                  <div className="board-digits-last2" aria-label={`เลขท้าย 2 ตัว คือ ${lotteryData.last2}`}>
+                  <span className="board-card-title">{t.lottoLast2}</span>
+                  <div className="board-digits-last2" aria-label={`${t.lottoLast2}: ${lotteryData.last2}`}>
                     {lotteryData.last2}
                   </div>
                 </div>
@@ -351,7 +369,7 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
           ) : null}
         </div>
 
-        {/* Compact Single-Row Ticket Checker (Optimized for One-Screen Mobile View) */}
+        {/* Compact Single-Row Ticket Checker */}
         <div className="lottery-compact-checker-section">
           <form className="compact-checker-form" onSubmit={handleCheckTicket}>
             <div className="compact-checker-input-group">
@@ -363,7 +381,7 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
                 inputMode="numeric"
                 value={checkInput}
                 onChange={(e) => setCheckInput(e.target.value.replace(/\D/g, ''))}
-                placeholder="กรอกเลขสลาก 6 หลัก..."
+                placeholder={t.lottoInputPlaceholder}
                 className="compact-checker-input"
               />
               <button
@@ -371,7 +389,7 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
                 className="compact-checker-btn"
                 disabled={checkInput.length !== 6}
               >
-                ตรวจสลาก
+                {t.lottoCheckBtn}
               </button>
             </div>
           </form>
@@ -389,10 +407,16 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
                     <span className="banner-icon">🎉</span>
                     <div className="banner-text">
                       <span className="banner-title">
-                        ยินดีด้วย! ถูกรางวัลรวม <b>{checkResult.totalReward.toLocaleString('th-TH')}</b> บาท
+                        {format(t.lottoWonTitle, {
+                          amount: checkResult.totalReward.toLocaleString(numLocale),
+                        })}
                       </span>
                       <span className="banner-sub">
-                        ({checkResult.wonPrizes.map((p) => `${p.prizeName} [${p.matchedNumber}]`).join(', ')})
+                        {format(t.lottoWonPrizesList, {
+                          list: checkResult.wonPrizes
+                            .map((p) => `${getLocalizedPrizeName(p.prizeName, lang)} [${p.matchedNumber}]`)
+                            .join(', '),
+                        })}
                       </span>
                     </div>
                   </>
@@ -401,11 +425,9 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
                     <span className="banner-icon">🪷</span>
                     <div className="banner-text">
                       <span className="banner-title">
-                        เลข {checkResult.ticketNumber} ไม่ถูกรางวัลในงวดนี้
+                        {format(t.lottoNotWonTitle, { ticket: checkResult.ticketNumber })}
                       </span>
-                      <span className="banner-sub">
-                        ขอเป็นกำลังใจให้ท่าน มีโชคใหญ่ในงวดหน้านะครับ
-                      </span>
+                      <span className="banner-sub">{t.lottoNotWonSub}</span>
                     </div>
                   </>
                 )}
@@ -414,7 +436,7 @@ export const ThaiLotteryModal: React.FC<ThaiLotteryModalProps> = ({
                 type="button"
                 className="banner-dismiss-btn"
                 onClick={() => setCheckResult(null)}
-                title="ปิดผลตรวจ"
+                title={t.lottoCloseCheckAria}
               >
                 ✕
               </button>

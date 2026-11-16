@@ -1,13 +1,11 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { playWoodClatter } from '../utils/chantAudio';
+import { useLanguage } from '../context/LanguageContext';
 
 type PuaPoiResultType = 'sheng' | 'yin' | 'xiao';
 
 interface PuaPoiResult {
   type: PuaPoiResultType;
-  title: string;
-  subtitle: string;
-  meaning: string;
   block1Flat: boolean; // true = หงาย, false = คว่ำ
   block2Flat: boolean;
 }
@@ -27,6 +25,7 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
   onReshakeStick,
   onToast,
 }) => {
+  const { t, format } = useLanguage();
   const [tossing, setTossing] = useState<boolean>(false);
   const [result, setResult] = useState<PuaPoiResult | null>(null);
   const [tossCount, setTossCount] = useState<number>(0);
@@ -49,7 +48,7 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
         className={`pua-block ${isLeft ? 'block-left' : 'block-right'} ${
           isFlat ? 'face-flat' : 'face-convex'
         } ${tossing ? 'is-tossing' : ''}`}
-        aria-label={isFlat ? 'ไม้ปัวปวยด้านหงาย (หน้าเรียบ)' : 'ไม้ปัวปวยด้านคว่ำ (หลังนูน)'}
+        aria-label={isFlat ? t.puaBlockFlatAria : t.puaBlockConvexAria}
       >
         <svg
           viewBox="0 0 120 180"
@@ -199,7 +198,7 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
           )}
         </svg>
         <span className="pua-block-tag">
-          {isFlat ? 'หงาย (หยาง)' : 'คว่ำ (หยิน)'}
+          {isFlat ? t.puaBlockFlatTag : t.puaBlockConvexTag}
         </span>
       </div>
     );
@@ -238,10 +237,6 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
         const firstIsFlat = Math.random() < 0.5;
         outcome = {
           type: 'sheng',
-          title: 'เซ้งปวย (1 คว่ำ 1 หงาย)',
-          subtitle: 'เทพเจ้าเห็นชอบ — ชะตานี้เป็นของท่าน!',
-          meaning:
-            'สิ่งศักดิ์สิทธิ์และเทพเจ้าประจำศาลทรงอนุญาตและรับรองว่า ไม้เซียมซีใบนี้เป็นคำทำนายที่แท้จริงของท่านในวันนี้ น้อมรับคำทำนายเพื่อความเป็นสิริมงคล',
           block1Flat: firstIsFlat,
           block2Flat: !firstIsFlat,
         };
@@ -249,10 +244,6 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
         // Yinbei (อิ่มปวย)
         outcome = {
           type: 'yin',
-          title: 'อิ่มปวย (คว่ำทั้งคู่)',
-          subtitle: 'เทพเจ้าไม่เห็นชอบ — ใบนี้ยังไม่ใช่ของท่าน',
-          meaning:
-            'สิ่งศักดิ์สิทธิ์ทรงชี้แนะว่าจิตใจของท่านอาจยังมีความกังวลหรือวอกแวกในขณะเขย่า แนะนำให้ตั้งจิตระลึกถึงพระพุทธคุณแล้วเขย่ากระบอกเซียมซีใหม่อีกครั้ง',
           block1Flat: false,
           block2Flat: false,
         };
@@ -260,10 +251,6 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
         // Xiaobei (เชี่ยวปวย)
         outcome = {
           type: 'xiao',
-          title: 'เชี่ยวปวย (หงายทั้งคู่)',
-          subtitle: 'เทพเจ้าทรงพระสรวล — ยังไม่แน่ชัด',
-          meaning:
-            'สิ่งศักดิ์สิทธิ์ทรงยิ้มรับด้วยความเมตตา แต่คำอธิษฐานอาจยังไม่ชัดเจน หรือผลยังแปรเปลี่ยนได้ตามความเพียร จงสูดหายใจลึกๆ ตั้งจิตให้มั่นแล้วโยนไม้ใหม่อีกครั้ง',
           block1Flat: true,
           block2Flat: true,
         };
@@ -274,14 +261,22 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
       setTossing(false);
 
       if (outcome.type === 'sheng') {
-        onToast('✨ เซ้งปวย! เทพเจ้าทรงเห็นชอบ อนุญาตให้อ่านคำทำนาย');
+        onToast(t.puaShengToast);
       } else if (outcome.type === 'yin') {
-        onToast('🏮 อิ่มปวย — เทพเจ้ายังไม่อนุญาต แนะนำให้เขย่าเซียมซีใหม่');
+        onToast(t.puaYinToast);
       } else {
-        onToast('😊 เชี่ยวปวย — เทพเจ้าทรงสรวล ตั้งจิตแล้วโยนใหม่อีกครั้ง');
+        onToast(t.puaXiaoToast);
       }
     }, 650);
-  }, [tossing, onToast]);
+  }, [tossing, onToast, t.puaShengToast, t.puaYinToast, t.puaXiaoToast]);
+
+  const outcomeCopy = result
+    ? result.type === 'sheng'
+      ? { title: t.puaShengTitle, subtitle: t.puaShengSub, meaning: t.puaShengMeaning }
+      : result.type === 'yin'
+      ? { title: t.puaYinTitle, subtitle: t.puaYinSub, meaning: t.puaYinMeaning }
+      : { title: t.puaXiaoTitle, subtitle: t.puaXiaoSub, meaning: t.puaXiaoMeaning }
+    : null;
 
   return (
     <div className="pua-poi-container">
@@ -289,36 +284,36 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
       <div className="pua-poi-header">
         <div className="pua-poi-badge-row">
           <span className="pua-stick-tag">
-            ไม้เซียมซี: <b>ใบที่ {stickNumber}</b> {stickTitle ? `· ${stickTitle}` : ''}
+            <b>{format(t.puaStickTag, { stickNumber })}</b> {stickTitle ? `· ${stickTitle}` : ''}
           </span>
           <button
             type="button"
             className="pua-info-btn"
             onClick={() => setShowInfo((s) => !s)}
-            title="ปัวปวยคืออะไร?"
-            aria-label="คำอธิบายไม้ปัวปวย"
+            title={t.puaInfoBtnTitle}
+            aria-label={t.puaInfoBtnTitle}
           >
-            ปัวปวย
+            {t.puaInfoBtn}
           </button>
         </div>
 
-        <h3 className="pua-title">เสี่ยงทายไม้ปัวปวย (筊杯)</h3>
+        <h3 className="pua-title">{t.puaTitle}</h3>
         <p className="pua-instruction">
-          ตั้งจิตอธิษฐานถามเทพเจ้าว่า <i>&ldquo;เซียมซีใบที่ {stickNumber} นี้ ใช่คำทำนายของข้าพเจ้าหรือไม่?&rdquo;</i>
+          <i>{format(t.puaInstruction, { stickNumber })}</i>
         </p>
 
         {showInfo && (
           <div className="pua-info-card">
-            <h4>📖 กฎการเสี่ยงทายไม้ปัวปวยตามประเพณี:</h4>
+            <h4>{t.puaRulesTitle}</h4>
             <ul>
               <li>
-                <b>เซ้งปวย (1 คว่ำ 1 หงาย):</b> เทพเจ้าเห็นชอบ &rarr; ได้รับคำทำนายจริงแท้
+                <b>{t.puaRuleShengLabel}</b> {t.puaRuleShengDesc}
               </li>
               <li>
-                <b>อิ่มปวย (คว่ำทั้งคู่):</b> เทพเจ้าไม่เห็นชอบ &rarr; ให้เขย่ากระบอกเซียมซีใหม่
+                <b>{t.puaRuleYinLabel}</b> {t.puaRuleYinDesc}
               </li>
               <li>
-                <b>เชี่ยวปวย (หงายทั้งคู่):</b> เทพเจ้าทรงสรวล (ยิ้ม) &rarr; จิตยังไม่นิ่ง ให้โยนใหม่อีกครั้ง
+                <b>{t.puaRuleXiaoLabel}</b> {t.puaRuleXiaoDesc}
               </li>
             </ul>
           </div>
@@ -326,7 +321,7 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
       </div>
 
       {/* Blocks Visual Stage (Compact on mobile, responsive) */}
-      <div className="pua-blocks-stage" role="region" aria-label="แท่นวางไม้ปัวปวย">
+      <div className="pua-blocks-stage" role="region" aria-label={t.puaStageAria}>
         <div className="pua-mat">
           {/* Block 1 (Left) */}
           {renderWoodenBlock(
@@ -340,7 +335,7 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
               {tossing ? '⚡' : result?.type === 'sheng' ? '✓' : '神'}
             </span>
             {tossCount > 0 && (
-              <span className="pua-toss-count">โยนครั้งที่ {tossCount}</span>
+              <span className="pua-toss-count">{format(t.puaTossCount, { count: tossCount })}</span>
             )}
           </div>
 
@@ -353,65 +348,65 @@ export const PuaPoi: React.FC<PuaPoiProps> = ({
       </div>
 
       {/* Outcome Banner */}
-      {result && !tossing && (
+      {result && outcomeCopy && !tossing && (
         <div className={`pua-result-banner banner-${result.type}`} aria-live="polite">
           <div className="pua-result-header">
             <span className="pua-result-icon">
               {result.type === 'sheng' ? '🎉' : result.type === 'yin' ? '🏮' : '✨'}
             </span>
             <div>
-              <div className="pua-result-title">{result.title}</div>
-              <div className="pua-result-sub">{result.subtitle}</div>
+              <div className="pua-result-title">{outcomeCopy.title}</div>
+              <div className="pua-result-sub">{outcomeCopy.subtitle}</div>
             </div>
           </div>
-          <p className="pua-result-meaning">{result.meaning}</p>
+          <p className="pua-result-meaning">{outcomeCopy.meaning}</p>
         </div>
       )}
 
       {/* Action Buttons Row - Optimized for Mobile Thumb Reach */}
       <div className="pua-actions-row">
-        {/* Case 1: Shengbei (Approved / เซ้งปวย / 1 คว่ำ 1 หงาย) -> Choice between 'อ่าน' and 'ฟัง' */}
+        {/* Case 1: Shengbei -> Choice between Read and Listen */}
         {result?.type === 'sheng' ? (
           <div className="pua-choice-buttons-grid">
             <button
               type="button"
               className="btn primary btn-pua-read glow-gold"
               onClick={() => onConfirmFortune('read')}
-              title="อ่านคำทำนายด้วยตนเอง (แสดงเฉพาะข้อความ)"
+              title={t.stickReadMode}
             >
               <span className="btn-pua-icon">📖</span>
-              <span className="btn-pua-text">อ่าน</span>
+              <span className="btn-pua-text">{t.puaReadChoice}</span>
             </button>
             <button
               type="button"
               className="btn gold btn-pua-listen glow-amber"
               onClick={() => onConfirmFortune('listen')}
-              title="ฟังเสียงสวดคำทำนาย (สุ่มเสียงซินแส/ธรรมบรรยาย แล้วเริ่มอ่านทันที)"
+              title={t.stickListenMode}
             >
               <span className="btn-pua-icon">🔊</span>
-              <span className="btn-pua-text">ฟัง</span>
+              <span className="btn-pua-text">{t.puaListenChoice}</span>
             </button>
           </div>
         ) : result?.type === 'yin' ? (
-          /* Case 2: Yinbei (Disapproved / อิ่มปวย / คว่ำทั้งคู่) -> Must reshake cylinder, NO toss button */
+          /* Case 2: Yinbei -> Must reshake cylinder, NO toss button */
           <button
             type="button"
             className="btn primary btn-pua-primary btn-pua-reshake-prominent"
             onClick={onReshakeStick}
             disabled={tossing}
-            title="เทพเจ้าไม่เห็นชอบกับใบนี้ ต้องเริ่มเขย่ากระบอกเซียมซีใหม่"
+            title={t.puaRuleYinDesc}
           >
-            <span>🔄 เขย่ากระบอกเซียมซีใหม่</span>
+            <span>{t.puaReshakeBtn}</span>
           </button>
         ) : (
-          /* Case 3: Initial or Xiaobei (เชี่ยวปวย / หงายทั้งคู่) -> Toss button */
+          /* Case 3: Initial or Xiaobei -> Toss button */
           <button
             type="button"
             className="btn primary btn-pua-primary"
             onClick={handleToss}
             disabled={tossing}
           >
-            <span>{tossing ? 'กำลังโยนหมุนเวียน...' : tossCount === 0 ? '🎲 โยนไม้ปัวปวยเสี่ยงทาย' : '🎲 โยนไม้ปัวปวยอีกครั้ง'}</span>
+            <span>{tossing ? t.puaTossingBtn : tossCount === 0 ? t.puaTossFirstBtn : t.puaTossAgainBtn}</span>
           </button>
         )}
       </div>

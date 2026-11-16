@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { UserSession } from '../types';
 import { SpiritualTTSPlayer } from './SpiritualTTSPlayer';
-import { LOVE_FORTUNE_SETS, type LoveReadingSet } from '../data/ritualProphecies';
+import { getLocalizedLoveReading } from '../data/ritualProphecies';
+import { getLocalizedZodiacItem, ZODIAC_SYSTEMS } from '../data/zodiacSystems';
 import { getWeeklyProphecySetIndex } from '../utils/prophecyCycle';
+import { useLanguage } from '../context/LanguageContext';
 
 interface LoveFortuneProps {
   session: UserSession;
@@ -10,8 +12,12 @@ interface LoveFortuneProps {
 }
 
 export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) => {
+  const { t, lang, format } = useLanguage();
   const [selectedStatus, setSelectedStatus] = useState<'single' | 'crush' | 'couple'>('single');
-  const [reading, setReading] = useState<LoveReadingSet | null>(null);
+  const [readingMeta, setReadingMeta] = useState<{
+    status: 'single' | 'crush' | 'couple';
+    setIdx: number;
+  } | null>(null);
   const [isReading, setIsReading] = useState(false);
   const divinateTimerRef = useRef<number | null>(null);
 
@@ -29,45 +35,54 @@ export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) =>
       clearTimeout(divinateTimerRef.current);
     }
     setIsReading(true);
-    setReading(null);
+    setReadingMeta(null);
 
     divinateTimerRef.current = window.setTimeout(() => {
       divinateTimerRef.current = null;
       const setIdx = getWeeklyProphecySetIndex();
-      const pool = LOVE_FORTUNE_SETS[selectedStatus] || LOVE_FORTUNE_SETS.single;
-      const chosen = pool[setIdx] || pool[0];
-      setReading(chosen);
+      const chosen = getLocalizedLoveReading(selectedStatus, setIdx, lang);
+      setReadingMeta({ status: selectedStatus, setIdx });
       setIsReading(false);
-      onToast(`✨ ดวงความรักคลี่คลาย: คะแนนรัก ${chosen.score}%`);
+      onToast(format(t.loveToastDone, { score: chosen.score }));
     }, 850);
   };
+
+  const reading = readingMeta
+    ? getLocalizedLoveReading(readingMeta.status, readingMeta.setIdx, lang)
+    : null;
+
+  const matchedSystem = ZODIAC_SYSTEMS.find((s) => s.id === session.systemId);
+  const matchedItem = matchedSystem?.items.find((i) => i.id === session.zodiac);
+  const localizedSymbolName = matchedItem
+    ? getLocalizedZodiacItem(matchedItem, session.systemId, lang).name
+    : session.symbolName;
 
   return (
     <section id="love-fortune" className="ritual-frameless-stage love-fortune-panel">
       {/* Relationship Status Selector */}
       <div className="status-selector-row">
-        <label className="status-choice-label">สถานะหัวใจของคุณ:</label>
+        <label className="status-choice-label">{t.loveStatusLabel}</label>
         <div className="status-button-group">
           <button
             type="button"
             className={`btn-status ${selectedStatus === 'single' ? 'active' : ''}`}
             onClick={() => setSelectedStatus('single')}
           >
-            🌸 คนโสด (ตามหารักแท้)
+            {t.loveStatusSingle}
           </button>
           <button
             type="button"
             className={`btn-status ${selectedStatus === 'crush' ? 'active' : ''}`}
             onClick={() => setSelectedStatus('crush')}
           >
-            💌 คนแอบชอบ (วัดใจ)
+            {t.loveStatusCrush}
           </button>
           <button
             type="button"
             className={`btn-status ${selectedStatus === 'couple' ? 'active' : ''}`}
             onClick={() => setSelectedStatus('couple')}
           >
-            💍 คนมีคู่ (เสริมสายใย)
+            {t.loveStatusCouple}
           </button>
         </div>
       </div>
@@ -81,9 +96,9 @@ export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) =>
           disabled={isReading}
         >
           {isReading ? (
-            <span>กำลังส่องจิตผ่านเงาจันทร์... 🌙</span>
+            <span>{t.loveDiviningBtn}</span>
           ) : (
-            <span>🪷 เสี่ยงทายดวงความรัก ➔</span>
+            <span>{t.loveDivineBtn}</span>
           )}
         </button>
       </div>
@@ -92,8 +107,8 @@ export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) =>
       {reading && (
         <div className="result love-result-card animate-rise">
           <div className="love-card-header">
-            <span className="love-badge">{reading.status} ({session.symbolName})</span>
-            <span className="love-score-badge">ความสมพงษ์ {reading.score}%</span>
+            <span className="love-badge">{reading.status} ({localizedSymbolName})</span>
+            <span className="love-score-badge">{format(t.loveScoreLabel, { score: reading.score })}</span>
           </div>
 
           <h3 className="love-verdict-title">{reading.verdict}</h3>
@@ -102,32 +117,32 @@ export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) =>
           {/* Spiritual Voice Reader for Love Oracle & Mantra */}
           <SpiritualTTSPlayer
             textToRead={[
-              `คำทำนายดวงความรัก ${reading.status}`,
+              format(t.loveTtsHeading, { status: reading.status }),
               reading.verdict,
               reading.prediction,
-              `ธาตุคู่แท้ที่สมพงษ์: ${reading.soulmateElement}`,
-              `ลักษณะเด่นคู่ชะตา: ${reading.soulmateTrait}`,
-              `บทสวดพระคาถาเสริมเมตตามหาเสน่ห์:`,
+              `${t.loveSoulmateElement}: ${reading.soulmateElement}`,
+              `${t.loveSoulmateTrait}: ${reading.soulmateTrait}`,
+              t.loveTtsMantraPrefix,
               reading.mantra,
             ].join('\n')}
-            title="เสียงสวดมนต์เมตตามหานิยม & ดวงความรัก"
-            subtitle="สดับรับฟังเสียงสวดพระคาถาเมตตามหาเสน่ห์และคำทำนายคู่แท้"
+            title={t.loveTtsTitle}
+            subtitle={t.loveTtsSubtitle}
             initialExpanded={false}
           />
 
           <div className="love-traits-grid">
             <div className="trait-box">
-              <span className="trait-title">ธาตุคู่แท้ที่สมพงษ์</span>
+              <span className="trait-title">{t.loveSoulmateElement}</span>
               <span className="trait-value">{reading.soulmateElement}</span>
             </div>
             <div className="trait-box">
-              <span className="trait-title">ลักษณะเด่นของคู่ชะตา</span>
+              <span className="trait-title">{t.loveSoulmateTrait}</span>
               <span className="trait-value">{reading.soulmateTrait}</span>
             </div>
           </div>
 
           <div className="love-mantra-box">
-            <span className="mantra-label">บทสวดมนต์เสริมเมตตามหาเสน่ห์ประจำดวงชะตา:</span>
+            <span className="mantra-label">{t.loveMantraLabel}</span>
             <p className="mantra-text">"{reading.mantra}"</p>
           </div>
         </div>
@@ -135,3 +150,4 @@ export const LoveFortune: React.FC<LoveFortuneProps> = ({ session, onToast }) =>
     </section>
   );
 };
+

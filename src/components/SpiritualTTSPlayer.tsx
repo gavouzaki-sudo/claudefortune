@@ -5,6 +5,7 @@ import {
   isMobileDevice,
   type SpiritualSpeechState,
 } from '../utils/spiritualSpeech';
+import { useLanguage } from '../context/LanguageContext';
 
 interface SpiritualTTSPlayerProps {
   /** The full text to read (e.g. poem verse + prophecy details) */
@@ -25,6 +26,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
   subtitle,
   showTextLines = false,
 }) => {
+  const { t, format } = useLanguage();
   const [speechState, setSpeechState] = useState<SpiritualSpeechState>(
     spiritualSpeechEngine.getState()
   );
@@ -85,7 +87,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
                 {subtitle && <p className="spiritual-tts-sub">{subtitle}</p>}
               </>
             ) : (
-              <h4 className="spiritual-tts-title">{subtitle || 'สดับรับฟัง'}</h4>
+              <h4 className="spiritual-tts-title">{subtitle || t.ttsDefaultSubtitle}</h4>
             )}
           </div>
         </div>
@@ -96,27 +98,27 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               type="button"
               className="btn-tts-action-primary"
               onClick={handlePlay}
-              title={speechState.isUnsupported ? 'ลองฟังเสียงอ่านอีกครั้ง' : 'เริ่มฟังเสียงอ่านคำทำนาย'}
+              title={speechState.isUnsupported ? t.ttsRetryTitle : t.ttsPlayTitle}
             >
-              <span>▶ อ่าน</span>
+              <span>{t.ttsPlay}</span>
             </button>
           ) : speechState.isPaused ? (
             <button
               type="button"
               className="btn-tts-action-primary"
               onClick={handlePlay}
-              title="อ่านต่อ"
+              title={t.ttsResume}
             >
-              <span>▶ อ่านต่อ</span>
+              <span>{t.ttsResume}</span>
             </button>
           ) : (
             <button
               type="button"
               className="btn-tts-action-pause"
               onClick={handlePause}
-              title="หยุดชั่วคราว"
+              title={t.ttsPause}
             >
-              <span>⏸ พัก</span>
+              <span>{t.ttsPause}</span>
             </button>
           )}
 
@@ -125,9 +127,9 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               type="button"
               className="btn-tts-action-stop"
               onClick={handleStop}
-              title="หยุดอ่าน"
+              title={t.ttsStop}
             >
-              <span>⏹ หยุด</span>
+              <span>{t.ttsStop}</span>
             </button>
           )}
         </div>
@@ -141,8 +143,8 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
             <div className="unsupported-msg-wrap">
               <span className="unsupported-icon">⚠️</span>
               <div>
-                <div className="unsupported-title">ไม่รองรับเสียงพูด</div>
-                <div className="unsupported-desc">อุปกรณ์หรือเบราว์เซอร์นี้ไม่รองรับระบบเสียงพูด</div>
+                <div className="unsupported-title">{t.ttsUnsupportedTitle}</div>
+                <div className="unsupported-desc">{t.ttsUnsupportedDesc}</div>
               </div>
             </div>
             <button
@@ -152,51 +154,51 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
                 spiritualSpeechEngine.speak(textToRead, { withChime: false });
               }}
             >
-              ลองใหม่
+              {t.ttsRetry}
             </button>
           </div>
         )}
 
         {/* Voice Engine Toggle Selector */}
         <div className="spiritual-engine-selector-row">
-          <span className="selector-label">ระบบเสียง:</span>
-          <div className="spiritual-engine-selector" role="group" aria-label="เลือกระบบเสียงอ่าน">
+          <span className="selector-label">{t.ttsEngineLabel}</span>
+          <div className="spiritual-engine-selector" role="group" aria-label={t.ttsEngineGroupAria}>
             <button
               type="button"
               className={`btn-engine-toggle ${speechState.engineType === 'google' ? 'active' : ''}`}
               onClick={() => spiritualSpeechEngine.setEngineType('google')}
-              title="เสียงอ่านภาษาไทย Google Translate (ออกเสียงชัดเจนเป็นธรรมชาติ)"
+              title={t.ttsMobileHintGoogle}
             >
-              <span>🌐 Google Translate</span>
+              <span>{t.ttsEngineGoogle}</span>
             </button>
             <button
               type="button"
               className={`btn-engine-toggle ${speechState.engineType === 'native' ? 'active' : ''}`}
               onClick={() => spiritualSpeechEngine.setEngineType('native')}
-              title="เสียงสังเคราะห์ในตัวเครื่อง (Web Speech API)"
+              title={t.ttsMobileHintNative}
             >
-              <span>🎙️ เสียงในเครื่อง</span>
+              <span>{t.ttsEngineNative}</span>
             </button>
           </div>
         </div>
 
-        {/* Speed Adjustment Selector Row: 1.35x option removed & current speed status display removed per request */}
+        {/* Speed Adjustment Selector Row */}
         <div className="spiritual-speed-selector-row">
           <div className="speed-label-wrap">
-            <span className="selector-label">ความเร็วเสียง:</span>
+            <span className="selector-label">{t.ttsSpeedLabel}</span>
           </div>
-          <div className="spiritual-speed-selector" role="group" aria-label="ปรับความเร็วเสียงอ่าน">
+          <div className="spiritual-speed-selector" role="group" aria-label={t.ttsSpeedGroupAria}>
             {[
-              { val: 0.9, label: '0.9x ช้า' },
-              { val: 1.0, label: '1.0x ปกติ' },
-              { val: 1.2, label: '1.2x(เร็ว)' },
+              { val: 0.9, label: t.ttsSpeedSlow },
+              { val: 1.0, label: t.ttsSpeedNormal },
+              { val: 1.2, label: t.ttsSpeedFast },
             ].map((opt) => (
               <button
                 key={opt.val}
                 type="button"
                 className={`btn-speed-toggle ${speechState.googleTtsSpeed === opt.val ? 'active' : ''}`}
                 onClick={() => spiritualSpeechEngine.setGoogleTtsSpeed(opt.val)}
-                title={`ตั้งความเร็วเสียงเป็น ${opt.val} เท่า`}
+                title={format(t.ttsSpeedTitle, { speed: opt.val })}
               >
                 <span>{opt.label}</span>
               </button>
@@ -204,29 +206,29 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
           </div>
         </div>
 
-        {/* Active persona indicator: speed status value omitted per request */}
+        {/* Active persona indicator */}
         {speechState.isUnsupported ? (
           <div className="spiritual-active-persona-pill spiritual-unsupported-pill">
-            <span className="persona-badge">⚠️ ไม่รองรับเสียงพูด</span>
-            <span className="persona-note">อุปกรณ์หรือเบราว์เซอร์ไม่รองรับระบบเสียงพูด</span>
+            <span className="persona-badge">⚠️ {t.ttsUnsupportedTitle}</span>
+            <span className="persona-note">{t.ttsUnsupportedDesc}</span>
           </div>
         ) : isCurrentTextActive ? (
           <div className="spiritual-active-persona-pill">
             {speechState.engineType === 'google' ? (
               <>
                 <span className="persona-badge">
-                  🌐 เสียงอ่าน: Google Translate
+                  {t.ttsPersonaGoogle}
                 </span>
                 <span className="persona-note">
-                  {activePreset.icon} สุ่มท่วงทำนอง: {activePreset.title}
+                  {activePreset.icon} {format(t.ttsPersonaStyle, { preset: activePreset.title })}
                 </span>
               </>
             ) : (
               <>
                 <span className="persona-badge">
-                  {activePreset.icon} ท่วงทำนองสุ่ม: {activePreset.title}
+                  {activePreset.icon} {format(t.ttsPersonaNative, { preset: activePreset.title })}
                 </span>
-                <span className="persona-note">สุ่มอัตโนมัติ · เว้นวรรคสงบใจ</span>
+                <span className="persona-note">{t.ttsPersonaNote}</span>
               </>
             )}
           </div>
@@ -249,12 +251,12 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               )}
               <span className="verse-reading-status">
                 {speechState.isUnsupported
-                  ? '⚠️ ไม่รองรับเสียงพูด'
+                  ? `⚠️ ${t.ttsUnsupportedTitle}`
                   : speechState.isPaused
-                  ? '⏸ พักการอ่านชั่วคราว — กดปุ่มเพื่ออ่านต่อ'
+                  ? t.ttsStatusPaused
                   : speechState.engineType === 'google'
-                  ? `🌐 กำลังอ่านคำทำนายด้วยเสียง Google Translate (ท่วงทำนอง${activePreset.title})...`
-                  : `📿 กำลังสวดบรรยายด้วยเสียง${activePreset.title}...`}
+                  ? format(t.ttsStatusReadingGoogle, { preset: activePreset.title })
+                  : format(t.ttsStatusReadingNative, { preset: activePreset.title })}
               </span>
             </div>
 
@@ -273,7 +275,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
                         // Click line to jump recitation directly
                         spiritualSpeechEngine.speak(textToRead, { startLine: idx, withChime: false });
                       }}
-                      title="คลิกเพื่อเริ่มอ่านจากวรรคนี้"
+                      title={t.ttsLineJumpTitle}
                     >
                       {isLineActive && <span className="line-golden-cursor">✨</span>}
                       {line}
@@ -293,25 +295,25 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               className="btn-toggle-mobile-hint"
               onClick={() => setShowMobileTip((prev) => !prev)}
             >
-              <span>📱 ข้อแนะนำเสียงบนมือถือ {showMobileTip ? '▲' : '▼'}</span>
+              <span>{t.ttsMobileHintToggle} {showMobileTip ? '▲' : '▼'}</span>
             </button>
             {showMobileTip && (
               <div className="mobile-hint-content">
                 <p>
-                  🔊 <b>ข้อแนะนำสำหรับการฟังเสียงบนมือถือ:</b>
+                  <b>{t.ttsMobileHintHeading}</b>
                 </p>
                 <ul>
                   <li>
-                    <b>ระบบเสียง Google Translate:</b> ให้เสียงภาษาไทยที่ชัดเจนเป็นธรรมชาติ สตรีมสดจาก Google Translate พร้อมระบบสุ่มท่วงทำนอง
+                    <b>Google Translate:</b> {t.ttsMobileHintGoogle}
                   </li>
                   <li>
-                    <b>ระบบเสียงในเครื่อง:</b> ใช้งานเอนจินเสียงสังเคราะห์ของระบบ (Web Speech API) ทำงานได้โดยตรง
+                    <b>{t.ttsEngineNative}:</b> {t.ttsMobileHintNative}
                   </li>
                   <li>
-                    <b>iPhone / iPad:</b> โปรดตรวจดูสวิตช์ปิดเสียง (Silent Mode Switch) ด้านข้างตัวเครื่องว่าไม่ได้เปิดแถบสีส้มอยู่
+                    <b>iPhone / iPad:</b> {t.ttsMobileHintIos}
                   </li>
                   <li>
-                    <b>Android:</b> โปรดเพิ่มระดับเสียงของ <u>มีเดีย (Media Volume)</u> ในการตั้งค่าเสียงของเครื่อง
+                    <b>Android:</b> {t.ttsMobileHintAndroid}
                   </li>
                 </ul>
               </div>

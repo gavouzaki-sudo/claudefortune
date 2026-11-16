@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bridge } from '../bridge';
 import type { UserSession } from '../types';
-import { ZODIAC_SYSTEMS, type ZodiacSystem, type ZodiacItem } from '../data/zodiacSystems';
+import {
+  ZODIAC_SYSTEMS,
+  GATE_SYSTEM_NODES,
+  getLocalizedZodiacSystem,
+  getLocalizedZodiacItem,
+  type ZodiacSystem,
+  type ZodiacItem,
+} from '../data/zodiacSystems';
 import {
   playChant,
   stopChant,
@@ -16,22 +23,22 @@ interface GateProps {
 // Spatial coordinates for the 10 astrology systems distributed in a celestial ring around the canvas
 const SYSTEM_LOCATIONS: Record<
   string,
-  { x: number; y: number; halo: string; label: string; sub: string }
+  { x: number; y: number; halo: string }
 > = {
-  western: { x: 22, y: 20, halo: '#7986cb', label: 'ยุโรป / สากล', sub: '12 จักรราศี' },
-  native_american: { x: 50, y: 12, halo: '#ff7043', label: 'อินเดียแดง', sub: 'โทเท็มสัตว์วิญญาณ' },
-  vedic: { x: 78, y: 20, halo: '#ff9900', label: 'อินเดีย', sub: 'โหราศาสตร์พระเวท' },
-  islamic: { x: 86, y: 40, halo: '#00e676', label: 'อิสลาม / อาหรับ', sub: '12 บุรุจดวงดาว' },
-  burmese: { x: 85, y: 64, halo: '#ba68c8', label: 'พม่า', sub: 'มหาภูติ 8 สัตว์' },
-  aztec_mayan: { x: 75, y: 86, halo: '#26c6da', label: 'แอซเท็ก / มายา', sub: 'ปฏิทินสุริยะ' },
-  vietnamese: { x: 50, y: 88, halo: '#ffca28', label: 'เวียดนาม', sub: '12 สัตว์ศักดิ์สิทธิ์' },
-  egyptian: { x: 25, y: 86, halo: '#ffd700', label: 'อียิปต์โบราณ', sub: 'ทวยเทพแห่งไนล์' },
-  thai: { x: 15, y: 64, halo: '#f5c542', label: 'ไทย', sub: '12 นักษัตรสยาม' },
-  chinese: { x: 14, y: 40, halo: '#ff3b30', label: 'จีน', sub: '12 นักษัตรมังกรฟ้า' },
+  western: { x: 22, y: 20, halo: '#7986cb' },
+  native_american: { x: 50, y: 12, halo: '#ff7043' },
+  vedic: { x: 78, y: 20, halo: '#ff9900' },
+  islamic: { x: 86, y: 40, halo: '#00e676' },
+  burmese: { x: 85, y: 64, halo: '#ba68c8' },
+  aztec_mayan: { x: 75, y: 86, halo: '#26c6da' },
+  vietnamese: { x: 50, y: 88, halo: '#ffca28' },
+  egyptian: { x: 25, y: 86, halo: '#ffd700' },
+  thai: { x: 15, y: 64, halo: '#f5c542' },
+  chinese: { x: 14, y: 40, halo: '#ff3b30' },
 };
 
 export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   // Hierarchical Level: null initially, showing all 10 distributed systems
   // When user taps/hovers a system, it expands into a circular radial menu
   const [expandedSystemId, setExpandedSystemId] = useState<string | null>(null);
@@ -97,22 +104,20 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
 
     const z = bridge.initSession(chosenItem.name, currentBeYear, wasmZodiacId);
     if (z < 0) {
-      setError(
-        z === -2
-          ? 'ปีเกิดไม่ถูกต้อง (ใส่ระหว่าง พ.ศ. 2443–2700 หรือ ค.ศ. 1900–2157)'
-          : 'ข้อมูลไม่ถูกต้อง ลองตรวจสอบอีกครั้ง'
-      );
+      setError(t.commonErrorRetry);
       return;
     }
 
     stopChant();
     const info = bridge.zodiacInfo(z);
+    const sysLoc = getLocalizedZodiacSystem(system, lang);
+    const itemLoc = getLocalizedZodiacItem(chosenItem, system.id, lang);
     const session: UserSession = {
       systemId: system.id,
-      systemName: system.name,
-      symbolName: chosenItem.name,
+      systemName: sysLoc.name,
+      symbolName: itemLoc.name,
       symbolIcon: chosenItem.symbol,
-      element: chosenItem.element,
+      element: itemLoc.element,
       aura: chosenItem.aura,
       attribute: chosenItem.attribute,
       year: currentBeYear,
@@ -241,51 +246,55 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
             {/* Cosmic Celestial Bodies (Earth, Mars, Saturn, Galaxy & Famous Stars) */}
             <div className="c-galaxy-dust" />
 
-            <div className="celestial-body c-body-earth" title="โลก (Earth)">
+            <div className="celestial-body c-body-earth" title={t.gateBodyEarth}>
               <div className="planet-atmosphere" />
               <span className="planet-icon">🌍</span>
-              <span className="body-label">โลก</span>
+              <span className="body-label">{t.gateBodyEarth}</span>
             </div>
 
-            <div className="celestial-body c-body-mars" title="ดาวอังคาร (Mars)">
+            <div className="celestial-body c-body-mars" title={t.gateBodyMars}>
               <div className="planet-glow" />
               <span className="planet-icon">🔴</span>
-              <span className="body-label">ดาวอังคาร</span>
+              <span className="body-label">{t.gateBodyMars}</span>
             </div>
 
-            <div className="celestial-body c-body-saturn" title="ดาวเสาร์ (Saturn)">
+            <div className="celestial-body c-body-saturn" title={t.gateBodySaturn}>
               <div className="saturn-ring" />
               <span className="planet-icon">🪐</span>
-              <span className="body-label">ดาวเสาร์</span>
+              <span className="body-label">{t.gateBodySaturn}</span>
             </div>
 
-            <div className="celestial-star c-star-polaris" title="ดาวเหนือ (Polaris)">
+            <div className="celestial-star c-star-polaris" title={t.gateStarPolaris}>
               <span className="star-spike" />
               <span className="star-sparkle">✦</span>
-              <span className="body-label">ดาวเหนือ</span>
+              <span className="body-label">{t.gateStarPolaris}</span>
             </div>
 
-            <div className="celestial-star c-star-sirius" title="ดาวซิริอุส (Sirius)">
+            <div className="celestial-star c-star-sirius" title={t.gateStarSirius}>
               <span className="star-spike" />
               <span className="star-sparkle">✨</span>
-              <span className="body-label">ซิริอุส</span>
+              <span className="body-label">{t.gateStarSirius}</span>
             </div>
 
-            <div className="celestial-star c-star-betelgeuse" title="ดาวเบเทลจุส (Betelgeuse)">
+            <div className="celestial-star c-star-betelgeuse" title={t.gateStarBetelgeuse}>
               <span className="star-glow" />
               <span className="star-sparkle">⭐</span>
-              <span className="body-label">เบเทลจุส</span>
+              <span className="body-label">{t.gateStarBetelgeuse}</span>
             </div>
 
-            <div className="celestial-cluster c-cluster-pleiades" title="กระจุกดาวลูกไก่ (Pleiades)">
+            <div className="celestial-cluster c-cluster-pleiades" title={t.gateClusterPleiades}>
               <span className="cluster-stars">✧✦✧</span>
-              <span className="body-label">กระจุกดาวลูกไก่</span>
+              <span className="body-label">{t.gateClusterPleiades}</span>
             </div>
           </div>
 
           {/* 10 Astrology System Nodes Distributed on Canvas */}
           {ZODIAC_SYSTEMS.map((sys) => {
-            const loc = SYSTEM_LOCATIONS[sys.id] || { x: 50, y: 50, halo: '#e8b94a', label: sys.name, sub: sys.region };
+            const coords = SYSTEM_LOCATIONS[sys.id] || { x: 50, y: 50, halo: '#e8b94a' };
+            const sysLoc = getLocalizedZodiacSystem(sys, lang);
+            const nodeText = GATE_SYSTEM_NODES[sys.id];
+            const nodeLabel = nodeText ? nodeText.label[lang] : sysLoc.name;
+            const nodeSub = nodeText ? nodeText.sub[lang] : sysLoc.region;
             const isExpanded = expandedSystemId === sys.id;
             const isHovered = hoveredSystemId === sys.id;
 
@@ -296,9 +305,9 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                 className={`system-node ${isExpanded ? 'is-expanded' : ''} ${isHovered ? 'is-hovered' : ''}`}
                 style={
                   {
-                    left: `${loc.x}%`,
-                    top: `${loc.y}%`,
-                    '--node-halo': loc.halo,
+                    left: `${coords.x}%`,
+                    top: `${coords.y}%`,
+                    '--node-halo': coords.halo,
                   } as React.CSSProperties
                 }
                 onClick={() => handleOpenSystem(sys.id)}
@@ -306,7 +315,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                 onMouseLeave={() => setHoveredSystemId(null)}
                 role="button"
                 tabIndex={0}
-                aria-label={`${t.topicCivilization} ${sys.name}`}
+                aria-label={`${t.topicCivilization} ${sysLoc.name}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
@@ -323,8 +332,8 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
 
                 {/* Node Tag */}
                 <div className="system-tag">
-                  <span className="tag-name">{loc.label}</span>
-                  <span className="tag-sub">{loc.sub}</span>
+                  <span className="tag-name">{nodeLabel}</span>
+                  <span className="tag-sub">{nodeSub}</span>
                 </div>
               </div>
             );
@@ -377,7 +386,9 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                   <div className="radial-center-header">
                     <span className="center-sys-badge">
                       <span className="center-icon">{activeSystem.icon}</span>
-                      <span className="center-sys-name">{activeSystem.name}</span>
+                      <span className="center-sys-name">
+                        {getLocalizedZodiacSystem(activeSystem, lang).name}
+                      </span>
                     </span>
                     <button
                       type="button"
@@ -393,26 +404,29 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                   </div>
 
                   {/* Focused Zodiac Symbol: Name in Civilization Language */}
-                  {activeSymbol && (
-                    <button
-                      type="button"
-                      className="center-symbol-focus animate-rise"
-                      title={t.gateSelectSymbol}
-                      onClick={() => completeSession(activeSymbol, activeSystem)}
-                    >
-                      <div className="center-symbol-orb">
-                        <span className="center-symbol-icon">{activeSymbol.symbol}</span>
-                        <div className="center-symbol-glow" />
-                      </div>
+                  {activeSymbol && (() => {
+                    const activeItemLoc = getLocalizedZodiacItem(activeSymbol, activeSystem.id, lang);
+                    return (
+                      <button
+                        type="button"
+                        className="center-symbol-focus animate-rise"
+                        title={t.gateSelectSymbol}
+                        onClick={() => completeSession(activeSymbol, activeSystem)}
+                      >
+                        <div className="center-symbol-orb">
+                          <span className="center-symbol-icon">{activeSymbol.symbol}</span>
+                          <div className="center-symbol-glow" />
+                        </div>
 
-                      <h3 className="center-symbol-title">
-                        {activeSymbol.origName || activeSymbol.name}
-                        {activeSymbol.origName && activeSymbol.name !== activeSymbol.origName && (
-                          <span className="center-symbol-sub"> ({activeSymbol.name})</span>
-                        )}
-                      </h3>
-                    </button>
-                  )}
+                        <h3 className="center-symbol-title">
+                          {activeItemLoc.primaryLabel}
+                          {activeItemLoc.secondaryLabel && (
+                            <span className="center-symbol-sub"> ({activeItemLoc.secondaryLabel})</span>
+                          )}
+                        </h3>
+                      </button>
+                    );
+                  })()}
 
                   {/* Action Button: Short & Powerful */}
                   {activeSymbol && (
@@ -447,6 +461,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                     const posX = Math.round(Math.cos(angleRad) * radiusX);
                     const posY = Math.round(Math.sin(angleRad) * radiusY);
                     const isSelected = activeSymbolIndex === idx;
+                    const itemLoc = getLocalizedZodiacItem(item, activeSystem.id, lang);
 
                     return (
                       <div
@@ -479,7 +494,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                         }}
                         role="button"
                         tabIndex={0}
-                        aria-label={`${item.name} (${item.origName || ''})`}
+                        aria-label={`${itemLoc.name}${item.origName ? ` (${item.origName})` : ''}`}
                       >
                         <div className="satellite-token">
                           <div className="token-aura" />
@@ -487,7 +502,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                           {isSelected && <span className="satellite-star-badge">✦</span>}
                         </div>
                         <div className="satellite-tag">
-                          <span className="sat-name">{item.origName || item.name}</span>
+                          <span className="sat-name">{itemLoc.primaryLabel}</span>
                         </div>
                       </div>
                     );

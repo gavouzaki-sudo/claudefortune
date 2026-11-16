@@ -1177,4 +1177,200 @@ test('Full Wasm vs JS Fallback Parity Test across every Bridge method & validati
   assert.deepEqual(jSig.scores, wSig.scores);
 });
 
+test('Phase 3 i18n: locale placeholder parity, localized data modules, and card builders across TH/EN/ZH', async () => {
+  const { TRANSLATIONS } = await import('../src/data/translations');
+  const {
+    ZODIAC_SYSTEMS,
+    GATE_SYSTEM_NODES,
+    getLocalizedZodiacSystem,
+    getLocalizedZodiacItem,
+  } = await import('../src/data/zodiacSystems');
+  const {
+    getLocalizedLoveReading,
+    getLocalizedMeditationQuote,
+    getLocalizedElementName,
+    getLocalizedTarotTitle,
+  } = await import('../src/data/ritualProphecies');
+  const {
+    ALL_TEMPLES,
+    TEMPLE_TILE_IDS,
+    GAME_EVENTS,
+    getLocalizedRegion,
+    getLocalizedProvince,
+    getLocalizedWishTopics,
+    getLocalizedGameEvent,
+    getLocalizedTemple,
+  } = await import('../src/data/sacredTemplesData');
+  const {
+    generateMonthAuspiciousDays,
+    getThaksaRelation,
+    getLocalizedMonths,
+    getLocalizedWeekdays,
+    getLocalizedBirthDays,
+    getLocalizedWorkCategories,
+    getLocalizedDayDetails,
+    getLocalizedThaksaRelation,
+  } = await import('../src/data/auspiciousCalendarData');
+  const {
+    resolvePostponedDraw,
+    getLocalizedShortMonths,
+    getLocalizedLotteryDrawDayOptions,
+    formatLocalizedShortDate,
+    formatPostponedNoteByLang,
+  } = await import('../src/data/postponedLotteryDraws');
+  const {
+    formatLotteryDateByLang,
+    getLocalizedPrizeName,
+  } = await import('../src/utils/lotteryApi');
+  const {
+    buildStickCardData,
+    buildTarotCardData,
+    buildLuckyNumbersCardData,
+    buildAuspiciousCardData,
+    buildSacredJourneyCardData,
+    TAROT_GLYPHS,
+  } = await import('../src/utils/cardDataBuilder');
+
+  const langs = ['th', 'en', 'zh'] as const;
+
+  // 1. Dictionary values non-empty & {placeholder} parity across all languages
+  const extractPlaceholders = (s: string) =>
+    [...(s.match(/\{[a-zA-Z0-9_]+\}/g) || [])].sort().join(',');
+
+  for (const k of Object.keys(TRANSLATIONS.th) as (keyof typeof TRANSLATIONS.th)[]) {
+    const thVal = TRANSLATIONS.th[k];
+    const enVal = TRANSLATIONS.en[k];
+    const zhVal = TRANSLATIONS.zh[k];
+    assert.ok(thVal.length > 0, `Empty TH value for ${k}`);
+    assert.ok(enVal.length > 0, `Empty EN value for ${k}`);
+    assert.ok(zhVal.length > 0, `Empty ZH value for ${k}`);
+    if (k === 'calYearPrefix') {
+      assert.equal(extractPlaceholders(thVal), '{yearBE}');
+      assert.equal(extractPlaceholders(enVal), '{yearBE},{yearCE}');
+      assert.equal(extractPlaceholders(zhVal), '{yearBE},{yearCE}');
+    } else {
+      assert.equal(extractPlaceholders(enVal), extractPlaceholders(thVal), `Placeholder mismatch in EN key: ${k}`);
+      assert.equal(extractPlaceholders(zhVal), extractPlaceholders(thVal), `Placeholder mismatch in ZH key: ${k}`);
+    }
+  }
+
+  // 2. Zodiac systems & items localization
+  for (const sys of ZODIAC_SYSTEMS) {
+    assert.ok(GATE_SYSTEM_NODES[sys.id], `Missing GATE_SYSTEM_NODES entry for ${sys.id}`);
+    for (const lang of langs) {
+      assert.ok(GATE_SYSTEM_NODES[sys.id].label[lang].length > 0);
+      assert.ok(GATE_SYSTEM_NODES[sys.id].sub[lang].length > 0);
+      const locSys = getLocalizedZodiacSystem(sys, lang);
+      assert.ok(locSys.name.length > 0 && locSys.region.length > 0);
+      for (const item of sys.items) {
+        const locItem = getLocalizedZodiacItem(item, sys.id, lang);
+        assert.ok(locItem.name.length > 0);
+        assert.ok(locItem.primaryLabel.length > 0);
+        assert.ok(locItem.element.length > 0);
+      }
+    }
+  }
+  assert.notEqual(
+    getLocalizedZodiacSystem(ZODIAC_SYSTEMS[0], 'en').name,
+    getLocalizedZodiacSystem(ZODIAC_SYSTEMS[0], 'th').name
+  );
+  assert.notEqual(
+    getLocalizedZodiacSystem(ZODIAC_SYSTEMS[0], 'zh').name,
+    getLocalizedZodiacSystem(ZODIAC_SYSTEMS[0], 'en').name
+  );
+
+  // 3. Love fortune, meditation quotes, elements, and tarot titles
+  for (const lang of langs) {
+    for (const status of ['single', 'crush', 'couple'] as const) {
+      for (let i = 0; i < 5; i++) {
+        const reading = getLocalizedLoveReading(status, i, lang);
+        assert.ok(reading.verdict.length > 0 && reading.prediction.length > 0 && reading.mantra.length > 0);
+      }
+    }
+    for (let i = 0; i < 5; i++) {
+      const q = getLocalizedMeditationQuote(i, lang);
+      assert.ok(q.pali.length > 0 && q.thai.length > 0);
+    }
+    assert.ok(getLocalizedElementName('ธาตุไฟ', lang).length > 0);
+    assert.ok(getLocalizedElementName('ธาตุน้ำ', lang).length > 0);
+    for (let id = 0; id < 22; id++) {
+      assert.ok(getLocalizedTarotTitle(id, 'ไพ่', 'Card', lang).length > 0);
+    }
+  }
+  assert.equal(getLocalizedTarotTitle(0, 'เดอะฟูล', 'The Fool', 'en'), 'The Fool');
+  assert.match(getLocalizedTarotTitle(0, 'เดอะฟูล', 'The Fool', 'zh'), /愚者/);
+
+  // 4. Sacred temples metadata, provinces, regions, wishes, events
+  const eventIds = Object.keys(GAME_EVENTS).map(Number);
+  assert.ok(TEMPLE_TILE_IDS.length === 9);
+  for (const lang of langs) {
+    assert.equal(getLocalizedWishTopics(lang).length, 6);
+    assert.ok(getLocalizedRegion('กลาง', lang).length > 0);
+    assert.ok(getLocalizedProvince('เชียงใหม่', lang).length > 0);
+    for (const eid of eventIds) {
+      const ev = getLocalizedGameEvent(eid, lang);
+      assert.ok(ev && ev.name.length > 0 && ev.desc.length > 0);
+    }
+    const locTemple = getLocalizedTemple(ALL_TEMPLES[0], lang);
+    assert.ok(locTemple.name.startsWith('วัด'));
+    assert.ok(locTemple.province.length > 0 && locTemple.region.length > 0 && locTemple.blessing.length > 0);
+  }
+  assert.equal(getLocalizedTemple(ALL_TEMPLES[0], 'en').region.includes('ภาค'), false);
+
+  // 5. Auspicious calendar localization
+  const novDays = generateMonthAuspiciousDays(2569, 11);
+  const sampleDay = novDays[23];
+  for (const lang of langs) {
+    assert.equal(getLocalizedMonths(lang).length, 12);
+    assert.equal(getLocalizedWeekdays(lang).length, 7);
+    assert.equal(getLocalizedBirthDays(lang).length, 8);
+    const cats = getLocalizedWorkCategories(lang);
+    assert.ok(cats.wedding.title.length > 0 && cats.others.title.length > 0);
+    const locDay = getLocalizedDayDetails(sampleDay, lang);
+    assert.ok(locDay.dayName.length > 0 && locDay.lunarDate.length > 0 && locDay.thaiRukName.length > 0);
+    assert.ok(locDay.bestHours.ubakongYama.length > 0 && locDay.luckyColors.length > 0);
+    const thaksa = getLocalizedThaksaRelation(getThaksaRelation('sunday', 5), 'sunday', lang);
+    assert.equal(thaksa.isKalakini, true);
+    assert.ok(thaksa.advice.length > 0 && thaksa.badgeText.length > 0 && thaksa.nameTh.length > 0);
+  }
+
+  // 6. Lottery & Postponed draws localization
+  const postponed = resolvePostponedDraw('2026-12-17');
+  assert.ok(postponed);
+  for (const lang of langs) {
+    assert.equal(getLocalizedShortMonths(lang).length, 12);
+    assert.equal(getLocalizedLotteryDrawDayOptions(lang).length, 31);
+    assert.ok(formatLocalizedShortDate('2026-11-01', lang).length > 0);
+    assert.ok(formatLotteryDateByLang('2026-11-01', lang).length > 0);
+    assert.ok(formatPostponedNoteByLang(postponed, lang).length > 0);
+    assert.ok(getLocalizedPrizeName('รางวัลที่ 1', lang).length > 0);
+  }
+  assert.equal(getLocalizedPrizeName('รางวัลที่ 1', 'en'), '1st Prize');
+  assert.equal(getLocalizedPrizeName('รางวัลที่ 1', 'zh'), '一等奖');
+
+  // 7. Card data builders across languages
+  const sampleStick = {
+    stick: 8,
+    title: 'สิริมงคล',
+    level: 0,
+    level_name: 'ดีเยี่ยม',
+    verse: 'ก้าวหน้ามั่นคง',
+    aspects: [{ name: 'การเงิน', text: 'คล่องตัว' }],
+  };
+  const sampleTarot = [{ id: 0, name: 'เดอะฟูล', en: 'The Fool', reversed: false, meaning: 'เริ่มต้นใหม่' }];
+  for (const lang of langs) {
+    const sCard = buildStickCardData(sampleStick, lang);
+    const { cardData: tCard } = buildTarotCardData(sampleTarot, 1, TAROT_GLYPHS, { 1: ['Daily'] }, lang);
+    const { cardData: nCard } = buildLuckyNumbersCardData('89', 0, lang);
+    const aCard = buildAuspiciousCardData(sampleDay, getLocalizedMonths(lang)[10], lang);
+    const sjCard = buildSacredJourneyCardData([{ name: ALL_TEMPLES[0].name, province: 'Bangkok' }], 330, 'Peace', lang);
+    assert.ok(sCard.title.length > 0);
+    assert.ok(tCard.title.length > 0);
+    assert.ok(nCard.title.length > 0);
+    assert.ok(aCard.title.length > 0 && aCard.details.auspiciousInfo?.thaiRukName);
+    assert.ok(sjCard.title.length > 0 && sjCard.details.remedyInfo?.advice);
+  }
+});
+
+
 

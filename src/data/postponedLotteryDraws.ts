@@ -133,3 +133,72 @@ export function formatShortThaiDate(isoDate: string): string {
 export function formatPostponedNote(entry: PostponedDrawEntry): string {
   return `เลื่อนจาก ${formatShortThaiDate(entry.normalDate)} — ${entry.reason}`;
 }
+
+import type { SupportedLang } from './translations';
+
+export const SHORT_MONTHS_BY_LANG: Record<SupportedLang, readonly string[]> = {
+  th: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'],
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  zh: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+};
+
+const POSTPONED_REASON_LOCALIZED: Record<string, { en: string; zh: string }> = {
+  'ตรงกับวันครูแห่งชาติ': { en: 'Rescheduled for National Teachers’ Day', zh: '因逢泰国教师节顺延' },
+  'ตรงกับวันแรงงานแห่งชาติ': { en: 'Rescheduled for National Labor Day', zh: '因逢国际劳动节顺延' },
+  'เลื่อนออกเร็วขึ้นรับเทศกาลปีใหม่': { en: 'Moved forward for New Year holiday', zh: '因新年假期提前开奖' },
+  'ตรงกับวันมาฆบูชา': { en: 'Rescheduled for Makha Bucha Day', zh: '因逢万佛节顺延' },
+  'ตรงกับวันอาสาฬหบูชา': { en: 'Rescheduled for Asahna Bucha Day', zh: '因逢三宝佛节顺延' },
+  'เลื่อนออกรางวัลเนื่องจากสถานการณ์โควิด-19': { en: 'Postponed due to COVID-19 measures', zh: '因疫情管控顺延开奖' },
+  'ตรงกับวันขึ้นปีใหม่ (ยกเลิกออก 30 ธ.ค. 2567)': { en: 'Rescheduled for New Year’s Day (Dec 30 draw moved)', zh: '因逢元旦假期顺延（原12月30日改期）' },
+  'ตรงกับวันขึ้นปีใหม่': { en: 'Rescheduled for New Year’s Day', zh: '因逢元旦顺延' },
+  'พระราชพิธีถวายพระเพลิงพระบรมศพฯ': { en: 'Rescheduled for Royal Cremation Ceremony', zh: '因皇家仪式顺延' },
+};
+
+export function getLocalizedShortMonths(lang: SupportedLang): readonly string[] {
+  return SHORT_MONTHS_BY_LANG[lang] || SHORT_MONTHS_BY_LANG.th;
+}
+
+export function getLocalizedLotteryDrawDayOptions(
+  lang: SupportedLang
+): ReadonlyArray<{ value: string; label: string }> {
+  if (lang === 'th') return LOTTERY_DRAW_DAY_OPTIONS;
+  const stdTag = lang === 'en' ? 'Std' : '常规';
+  const altTag = lang === 'en' ? 'Adj' : '顺延';
+  return Array.from({ length: 31 }, (_, idx) => {
+    const val = String(idx + 1).padStart(2, '0');
+    if (val === '01' || val === '16') {
+      return { value: val, label: `${val} (${stdTag})` };
+    }
+    if (FREQUENT_POSTPONED_DAYS.has(val)) {
+      return { value: val, label: `${val} (${altTag})` };
+    }
+    return { value: val, label: val };
+  });
+}
+
+export function formatLocalizedShortDate(isoDate: string, lang: SupportedLang): string {
+  if (lang === 'th') return formatShortThaiDate(isoDate);
+  const [yStr, mStr, dStr] = isoDate.split('-');
+  const y = parseInt(yStr, 10);
+  const m = parseInt(mStr, 10);
+  const d = parseInt(dStr, 10);
+  const monthName = SHORT_MONTHS_BY_LANG[lang]?.[m - 1] || '';
+  if (lang === 'zh') {
+    return `${y}年${m}月${d}日`;
+  }
+  return `${d} ${monthName} ${y}`;
+}
+
+export function formatPostponedNoteByLang(
+  entry: PostponedDrawEntry,
+  lang: SupportedLang
+): string {
+  if (lang === 'th') return formatPostponedNote(entry);
+  const localizedReason = POSTPONED_REASON_LOCALIZED[entry.reason]?.[lang] || entry.reason;
+  const dateLabel = formatLocalizedShortDate(entry.normalDate, lang);
+  if (lang === 'en') {
+    return `Rescheduled from ${dateLabel} — ${localizedReason}`;
+  }
+  return `原定 ${dateLabel} 改期 — ${localizedReason}`;
+}
+

@@ -28,7 +28,7 @@ interface SiameseSticksProps {
 type StickRitualStep = 'cylinder' | 'puapoi' | 'prophecy';
 
 export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, onOpenCard }) => {
-  const { t } = useLanguage();
+  const { lang, t, format } = useLanguage();
   const [step, setStep] = useState<StickRitualStep>('cylinder');
   const [prophecyMode, setProphecyMode] = useState<'read' | 'listen'>('read');
   const [shakeMeter, setShakeMeter] = useState(0);
@@ -99,7 +99,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
     } catch (err) {
       logger.error('Error drawing Siamese stick:', err);
       if (isMountedRef.current) {
-        onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
+        onToast(t.commonErrorRetry);
       }
     } finally {
       shakeValueRef.current = 0;
@@ -109,7 +109,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
         setBusy(false);
       }
     }
-  }, [bridge, onToast, t.stickFallenNotice, t.stickPuaPoiPrompt, waitMs]);
+  }, [bridge, onToast, t.commonErrorRetry, t.stickFallenNotice, t.stickPuaPoiPrompt, waitMs]);
 
   const addShake = useCallback(
     (amount: number) => {
@@ -216,7 +216,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
 
   const handleSaveAndShare = () => {
     if (!result) return;
-    const cardData = buildStickCardData(result);
+    const cardData = buildStickCardData(result, lang);
     if (!isJournalSaved) {
       saveJournalEntry({
         type: 'stick',
@@ -331,23 +331,23 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
           <div className="prophecy-header-row">
             <div className="prophecy-title-block">
               <h3>
-                ใบที่ {result.stick} · {result.title}
+                {format(t.stickNumberLabel, { num: result.stick })} · {result.title}
               </h3>
               <p className="prophecy-level-line">
-                ผลเซียมซี{' '}
+                {t.stickResultLabel}{' '}
                 <span className={`badge lv${result.level}`}>
                   {result.level_name}
                 </span>
                 {puaPoiVerified && (
-                  <span className="badge-pua-verified" title="ผ่านการโยนไม้ปัวปวยยืนยันความศักดิ์สิทธิ์">
-                    ✓ ปัวปวยยืนยันแล้ว
+                  <span className="badge-pua-verified" title={t.stickPuaVerifiedTitle}>
+                    {t.stickPuaVerifiedBadge}
                   </span>
                 )}
               </p>
             </div>
           </div>
 
-          <div className="prophecy-mode-switch-row" role="tablist" aria-label="รูปแบบการรับคำทำนาย">
+          <div className="prophecy-mode-switch-row" role="tablist" aria-label={t.stickModeAria}>
             <button
               type="button"
               className={`btn-prophecy-mode ${prophecyMode === 'read' ? 'is-active' : ''}`}
@@ -355,7 +355,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
                 setProphecyMode('read');
                 spiritualSpeechEngine.stop();
               }}
-              title="แสดงเฉพาะข้อความคำทำนาย"
+              title={t.stickReadTitle}
             >
               <span>📖 {t.stickReadMode}</span>
             </button>
@@ -373,7 +373,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
                   spiritualSpeechEngine.speak(fullText, { withChime: true });
                 }
               }}
-              title="สุ่มเสียงและเริ่มอ่านออกเสียงทันที"
+              title={t.stickListenTitle}
             >
               <span>🔊 {t.stickListenMode}</span>
             </button>
@@ -382,10 +382,16 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
           {prophecyMode === 'listen' && (
             <SpiritualTTSPlayer
               textToRead={formatStickReading(result)}
-              subtitle="สดับรับฟัง"
+              subtitle={t.ttsDefaultSubtitle}
               initialExpanded={true}
               showTextLines={false}
             />
+          )}
+
+          {lang !== 'th' && (
+            <p className="note" style={{ marginBottom: '0.65rem' }}>
+              {t.oracleThaiFallbackNote}
+            </p>
           )}
 
           <p className="verse">{result.verse}</p>

@@ -1,3 +1,5 @@
+import type { SupportedLang } from './locales/types';
+
 // Thai Astrological Calendar & Auspicious Timing Engine (โหราศาสตร์ไทย & ปฏิทินฤกษ์มงคล)
 // Complete calculations for Kala Yoga, Maha Thaksa, 9 Thai Ruk (นพดลฤกษ์ทั้ง ๙), 27 Nakshatras, Continuous Lunar Dithi, and Auspicious Categories
 
@@ -861,3 +863,726 @@ export function generateMonthAuspiciousDays(inputYear: number, month: number): A
 
   return result;
 }
+
+// ---------------------------------------------------------------------------
+// Multilingual Localization Helpers for Auspicious Calendar (TH / EN / ZH)
+// ---------------------------------------------------------------------------
+export const MONTHS_BY_LANG: Record<SupportedLang, readonly string[]> = {
+  th: THAI_MONTHS,
+  en: [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ],
+  zh: [
+    '一月', '二月', '三月', '四月', '五月', '六月',
+    '七月', '八月', '九月', '十月', '十一月', '十二月',
+  ],
+};
+
+export const WEEKDAYS_BY_LANG: Record<SupportedLang, readonly string[]> = {
+  th: ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'],
+  en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  zh: ['日', '一', '二', '三', '四', '五', '六'],
+};
+
+const FULL_DAY_NAMES_BY_LANG: Record<SupportedLang, readonly string[]> = {
+  th: ['วันอาทิตย์', 'วันจันทร์', 'วันอังคาร', 'วันพุธ', 'วันพฤหัสบดี', 'วันศุกร์', 'วันเสาร์'],
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  zh: ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'],
+};
+
+export function getLocalizedMonths(lang: SupportedLang): readonly string[] {
+  return MONTHS_BY_LANG[lang];
+}
+
+export function getLocalizedWeekdays(lang: SupportedLang): readonly string[] {
+  return WEEKDAYS_BY_LANG[lang];
+}
+
+export function getLocalizedFullDayName(dayOfWeek: number, lang: SupportedLang): string {
+  return FULL_DAY_NAMES_BY_LANG[lang][dayOfWeek] || FULL_DAY_NAMES_BY_LANG[lang][0];
+}
+
+const BIRTH_DAY_LOCALE: Record<BirthDayId, {
+  en: { label: string; planet: string; kalakini: string; sri: string };
+  zh: { label: string; planet: string; kalakini: string; sri: string };
+}> = {
+  sunday: {
+    en: { label: 'Sunday', planet: 'Sun (1)', kalakini: 'Friday', sri: 'Wednesday (Day)' },
+    zh: { label: '星期日生', planet: '日曜 (1)', kalakini: '星期五', sri: '星期三（日间）' },
+  },
+  monday: {
+    en: { label: 'Monday', planet: 'Moon (2)', kalakini: 'Sunday', sri: 'Saturday' },
+    zh: { label: '星期一生', planet: '月曜 (2)', kalakini: '星期日', sri: '星期六' },
+  },
+  tuesday: {
+    en: { label: 'Tuesday', planet: 'Mars (3)', kalakini: 'Monday', sri: 'Thursday' },
+    zh: { label: '星期二生', planet: '火曜 (3)', kalakini: '星期一', sri: '星期四' },
+  },
+  wednesday_day: {
+    en: { label: 'Wednesday (Day 06:00 - 17:59)', planet: 'Mercury (4)', kalakini: 'Tuesday', sri: 'Wednesday Night / Rahu' },
+    zh: { label: '星期三（日间 06:00-17:59）', planet: '水曜 (4)', kalakini: '星期二', sri: '星期三夜间 / 罗睺' },
+  },
+  wednesday_night: {
+    en: { label: 'Wednesday (Night 18:00 - 05:59 / Rahu)', planet: 'Rahu (8)', kalakini: 'Thursday', sri: 'Monday' },
+    zh: { label: '星期三（夜间 18:00-05:59 / 罗睺）', planet: '罗睺 (8)', kalakini: '星期四', sri: '星期一' },
+  },
+  thursday: {
+    en: { label: 'Thursday', planet: 'Jupiter (5)', kalakini: 'Saturday', sri: 'Sunday' },
+    zh: { label: '星期四生', planet: '木曜 (5)', kalakini: '星期六', sri: '星期日' },
+  },
+  friday: {
+    en: { label: 'Friday', planet: 'Venus (6)', kalakini: 'Wednesday Night / Rahu', sri: 'Tuesday' },
+    zh: { label: '星期五生', planet: '金曜 (6)', kalakini: '星期三（夜间）/ 罗睺', sri: '星期二' },
+  },
+  saturday: {
+    en: { label: 'Saturday', planet: 'Saturn (7)', kalakini: 'Wednesday (Day)', sri: 'Friday' },
+    zh: { label: '星期六生', planet: '土曜 (7)', kalakini: '星期三（日间）', sri: '星期五' },
+  },
+};
+
+export interface LocalizedBirthDayOption extends BirthDayOption {
+  label: string;
+  rulerPlanetLocalized: string;
+  kalakiniDayName: string;
+  sriDayName: string;
+}
+
+export function getLocalizedBirthDays(lang: SupportedLang): LocalizedBirthDayOption[] {
+  return BIRTH_DAYS.map((b) => {
+    if (lang === 'th') {
+      return {
+        ...b,
+        label: b.labelTh,
+        rulerPlanetLocalized: b.rulerPlanet,
+        kalakiniDayName: b.kalakiniDayNameTh,
+        sriDayName: b.sriDayNameTh,
+      };
+    }
+    const loc = BIRTH_DAY_LOCALE[b.id][lang];
+    return {
+      ...b,
+      label: loc.label,
+      rulerPlanetLocalized: loc.planet,
+      kalakiniDayName: loc.kalakini,
+      sriDayName: loc.sri,
+    };
+  });
+}
+
+const WORK_CATEGORY_LOCALE: Record<AuspiciousWorkCategory, {
+  en: { title: string; shortDesc: string; taboos: string };
+  zh: { title: string; shortDesc: string; taboos: string };
+}> = {
+  wedding: {
+    en: {
+      title: 'Wedding & Marriage Registration',
+      shortDesc: 'Fosters lasting love, mutual harmony, charm, and a blissful household.',
+      taboos: 'Avoid Ubatha, Lokawinas, Tuesdays, Saturdays, and either partner’s Kalakini day.',
+    },
+    zh: {
+      title: '嫁娶喜事 / 婚姻登记',
+      shortDesc: '增进白头偕老之缘、夫妻和顺、福泽满堂、家宅安康。',
+      taboos: '避开乌巴凶日、灭绝凶日、星期二、星期六及新人双方忌日。',
+    },
+  },
+  house: {
+    en: {
+      title: 'Housewarming & Moving In',
+      shortDesc: 'Establishes rock-solid foundations, peace, good health, and growing prosperity.',
+      taboos: 'Avoid Ubatha, Lokawinas, Tuesdays, Saturdays, and the homeowner’s Kalakini day.',
+    },
+    zh: {
+      title: '乔迁新居 / 入宅安家',
+      shortDesc: '根基稳固、家宅清宁、健康顺遂、财源稳步增长。',
+      taboos: '避开乌巴凶日、灭绝凶日、星期二、星期六及户主生辰忌日。',
+    },
+  },
+  merit: {
+    en: {
+      title: 'Merit-Making & Blessing Ceremonies',
+      shortDesc: 'Elevates spiritual grace, clears obstacles, and uplifts family & business fortune.',
+      taboos: 'Avoid Ubatha and Lokawinas days.',
+    },
+    zh: {
+      title: '祈福做功德 / 开光拜神',
+      shortDesc: '广积善缘、消灾解厄、得护法庇佑、家业兴旺。',
+      taboos: '避开乌巴凶日与灭绝凶日。',
+    },
+  },
+  vehicle_business: {
+    en: {
+      title: 'New Vehicle & Business Opening',
+      shortDesc: 'Safe travels on the road, thriving commerce, rising profit, and steady expansion.',
+      taboos: 'Strictly avoid the owner’s Kalakini day as well as Ubatha and Lokawinas days.',
+    },
+    zh: {
+      title: '提新车 / 开张开业',
+      shortDesc: '出入平安顺畅、商机兴旺、客似云来、生意蒸蒸日上。',
+      taboos: '严禁于车主或店主忌日，以及乌巴凶日、灭绝凶日行事。',
+    },
+  },
+  others: {
+    en: {
+      title: 'Other Auspicious Matters (Deals, Aesthetics)',
+      shortDesc: 'Smooth negotiations, contract signings, auspicious self-care, and fortunate ventures.',
+      taboos: 'Avoid Tuesdays and Saturdays for cosmetic procedures; choose clear Ubakong hours for deals.',
+    },
+    zh: {
+      title: '其他吉事（签约谈判 / 仪容开运）',
+      shortDesc: '利于商务谈判、签约成交、焕新仪容及重要决断。',
+      taboos: '美容塑形宜避开周二与周六；商务谈判宜择吉时出行。',
+    },
+  },
+};
+
+export interface LocalizedWorkCategoryInfo {
+  id: AuspiciousWorkCategory;
+  title: string;
+  icon: string;
+  shortDesc: string;
+  preferredRuk: ThaiRukType[];
+  taboos: string;
+}
+
+export function getLocalizedWorkCategories(
+  lang: SupportedLang
+): Record<AuspiciousWorkCategory, LocalizedWorkCategoryInfo> {
+  const entries = (Object.keys(WORK_CATEGORIES_INFO) as AuspiciousWorkCategory[]).map((key) => {
+    const base = WORK_CATEGORIES_INFO[key];
+    if (lang === 'th') {
+      return [key, { id: base.id, title: base.titleTh, icon: base.icon, shortDesc: base.shortDesc, preferredRuk: base.preferredRuk, taboos: base.taboosTh }] as const;
+    }
+    const loc = WORK_CATEGORY_LOCALE[key][lang];
+    return [key, { id: base.id, title: loc.title, icon: base.icon, shortDesc: loc.shortDesc, preferredRuk: base.preferredRuk, taboos: loc.taboos }] as const;
+  });
+  return Object.fromEntries(entries) as Record<AuspiciousWorkCategory, LocalizedWorkCategoryInfo>;
+}
+
+const THAI_RUK_LOCALE: Record<ThaiRukType, {
+  en: { name: string; alias: string; meaning: string; highlight: string; bestFor: string };
+  zh: { name: string; alias: string; meaning: string; highlight: string; bestFor: string };
+}> = {
+  daliddo: {
+    en: {
+      name: 'Daliddo Ruk',
+      alias: 'Auspicious Timing for Requests & Goodwill',
+      meaning: 'Moon enters the mansion of favor and empathy—people respond kindly to sincere appeals and negotiations.',
+      highlight: 'Favorable for compromise, requesting support, applications, and gentle mediation.',
+      bestFor: 'Job applications, interviews, loan requests, debt recovery, and seeking elder support.',
+    },
+    zh: {
+      name: '达利陀吉星（祈恩求援宿）',
+      alias: '顺遂恳请与和解之吉日',
+      meaning: '太阴临慈悲感应之星宿，诚心求助或洽谈最易获得贵人恻隐与支持。',
+      highlight: '利于协商调解、申办请求、争取体谅与顺利获准。',
+      bestFor: '求职面试、申请贷款、催收款项、拜托长辈引荐。',
+    },
+  },
+  mahatthano: {
+    en: {
+      name: 'Mahatthano Ruk',
+      alias: 'The Wealth & Merchant’s Fortune',
+      meaning: 'Moon illuminates abundant wealth and flowing commerce—prime timing for prosperity.',
+      highlight: 'Excels in financial fortune, trade growth, asset acquisition, and steady cash flow.',
+      bestFor: 'Grand openings, new vehicles, housewarming, weddings, investments, and contracts.',
+    },
+    zh: {
+      name: '大富吉星（富贵生财宿）',
+      alias: '商贾兴隆聚财吉日',
+      meaning: '太阴入丰盈聚宝之星宿，主财禄丰厚、买卖兴隆、事业蒸蒸日上。',
+      highlight: '旺正偏财运、资产积累、交易成交与富足吉祥。',
+      bestFor: '开张开业、提新车、乔迁、嫁娶、签约投资与置业。',
+    },
+  },
+  joro: {
+    en: {
+      name: 'Joro Ruk',
+      alias: 'The Bold Competitor’s Timing',
+      meaning: 'Swift and decisive lunar energy empowering bold action, competition, and breakthroughs.',
+      highlight: 'Excels in competitive bids, sports, rapid launches, and overcoming rivals.',
+      bestFor: 'Competitions, bidding tenders, scholarship exams, legal filings, and bold campaigns.',
+    },
+    zh: {
+      name: '勇决星（竞逐制胜宿）',
+      alias: '锐意争先与突破之日',
+      meaning: '星象敏捷果断，主行动迅速、机智过人、破局致胜。',
+      highlight: '利于竞赛竞标、抢占先机、维权胜诉与开拓新局。',
+      bestFor: '体育竞赛、项目投标、奖学金考试、诉讼维权与新品突围。',
+    },
+  },
+  bhumipalo: {
+    en: {
+      name: 'Bhumipalo Ruk',
+      alias: 'The Guardian of Land & Stability',
+      meaning: 'Moon anchors lasting stability like sacred earth—ideal for homes, land, and long-term roots.',
+      highlight: 'Excels in permanence, peaceful households, real estate, and durable foundations.',
+      bestFor: 'Housewarming, moving in, land purchase, groundbreaking, construction, and home blessings.',
+    },
+    zh: {
+      name: '护土吉星（安居固本宿）',
+      alias: '置业安宅与基业长青日',
+      meaning: '星气厚重如大地，主根基牢靠、合家平安、事业稳如泰山。',
+      highlight: '最旺长久稳固、家庭和睦、不动产交易与兴工动土。',
+      bestFor: '入宅乔迁、买地购房、动土奠基、安居祈福。',
+    },
+  },
+  thesatri: {
+    en: {
+      name: 'Thesatri Ruk',
+      alias: 'The Traveler & Bustling Trade Timing',
+      meaning: 'Moon brings lively foot traffic, travel fortune, and energetic commercial movement.',
+      highlight: 'Excels in cross-border trade, logistics, hospitality, dining, and entertainment.',
+      bestFor: 'Restaurants, cafes, hotels, tourism, logistics, livestreams, and travel ventures.',
+    },
+    zh: {
+      name: '行商吉星（远游通达宿）',
+      alias: '客流如织与商旅兴旺日',
+      meaning: '太阴临流动兴旺之星宿，主往来络绎、人气旺盛、交易活跃。',
+      highlight: '旺跨区商贸、交通运输、文旅餐饮及文娱传播行业。',
+      bestFor: '开设餐厅咖啡馆、酒店旅游、物流贸易、直播带货。',
+    },
+  },
+  thewi: {
+    en: {
+      name: 'Thewi Ruk',
+      alias: 'The Sovereign Grace & Romance Timing',
+      meaning: 'Moon bestows grace, charisma, tenderness, and auspicious harmony in love and elegance.',
+      highlight: 'Excels in charm, popularity, happy marriage, beauty, and family warmth.',
+      bestFor: 'Weddings, engagements, marriage registration, beauty care, and creative studios.',
+    },
+    zh: {
+      name: '天后吉星（婉雅姻缘宿）',
+      alias: '人缘魅力与美满姻缘日',
+      meaning: '星光柔美尊贵，主魅力大增、贵人爱护、姻缘和合与优雅风范。',
+      highlight: '最旺桃花人缘、婚姻幸福、美容美学及家庭温馨。',
+      bestFor: '婚礼庆典、订婚登记、美容护理、美业开业。',
+    },
+  },
+  phetchakat: {
+    en: {
+      name: 'Phetchakat Ruk',
+      alias: 'The Decisive Cleaver of Obstacles',
+      meaning: 'Sharp, resolute timing suited for cutting away misfortune, surgery, and decisive resets.',
+      highlight: 'Excels in resolving lingering obstacles, medical procedures, and karmic cleansing.',
+      bestFor: 'Medical surgery, bad-luck cleansing, ordination, and cutting off toxic habits.',
+    },
+    zh: {
+      name: '决断星（斩障破厄宿）',
+      alias: '果决治病与化解阻碍日',
+      meaning: '星象刚毅果断，利于斩断阻滞、祛除病气、清净身心。',
+      highlight: '利于突破瓶颈、医疗手术、化煞祈福及重整旗鼓。',
+      bestFor: '外科疗愈、化解太岁厄运、剃度修行、断舍离旧习。',
+    },
+  },
+  raja: {
+    en: {
+      name: 'Raja Ruk',
+      alias: 'The Royal Authority & Honor Timing',
+      meaning: 'Moon radiates sovereignty, prestige, triumph over hurdles, and noble leadership.',
+      highlight: 'Excels in authority, reputation, executive milestones, and backing from VIP patrons.',
+      bestFor: 'Headquarters launch, promotions, executive vehicles, major signings, VIP meetings.',
+    },
+    zh: {
+      name: '帝王吉星（尊荣权威宿）',
+      alias: '显赫威望与升迁吉日',
+      meaning: '星气尊贵庄严，主官禄威望、贵人提携、胜券在握。',
+      highlight: '旺事业声望、领袖气场、高阶晋升与重量级合作。',
+      bestFor: '总部揭幕、履新升职、喜提座驾、重大签约、拜会尊长。',
+    },
+  },
+  samano: {
+    en: {
+      name: 'Samano Ruk',
+      alias: 'The Serene Monk’s Blessing Timing',
+      meaning: 'Moon radiates tranquility, wholesome merit, divine protection, and spiritual clarity.',
+      highlight: 'Excels in peace of mind, merit-making, spiritual protection, and calm harmony.',
+      bestFor: 'Annual merit ceremonies, home/office blessings, ordination, meditation, and temple tours.',
+    },
+    zh: {
+      name: '禅悦吉星（清净福田宿）',
+      alias: '安详修福与诸神护佑日',
+      meaning: '星象宁静祥和，主善德圆满、天神庇佑、心灵澄明安泰。',
+      highlight: '最旺消灾祈福、家宅清净、修行禅坐与积善纳祥。',
+      bestFor: '年度祈福、公司/新居法会、禅修静坐、九寺朝圣。',
+    },
+  },
+};
+
+export function getLocalizedThaiRuk(type: ThaiRukType, lang: SupportedLang) {
+  const base = THAI_RUK_DESCRIPTIONS[type];
+  if (lang === 'th') {
+    return {
+      name: base.nameTh,
+      alias: base.alias,
+      meaning: base.meaningTh,
+      highlight: base.highlightTh,
+      bestFor: base.bestFor,
+      icon: base.icon,
+    };
+  }
+  const loc = THAI_RUK_LOCALE[type][lang];
+  return { ...loc, icon: base.icon };
+}
+
+export function getLocalizedKalaYogaLabel(day: AuspiciousDay, lang: SupportedLang): string {
+  if (lang === 'th') return day.kalaYogaLabel;
+  if (lang === 'en') {
+    if (day.kalaYoga === 'thongchai') return `⭐ Thongchai Victory Day (${day.yearCE})`;
+    if (day.kalaYoga === 'athipadi') return `Athipadi Sovereign Day (${day.yearCE})`;
+    if (day.kalaYoga === 'ubatha') return `⚠️ Ubatha Taboo Day (${day.yearCE})`;
+    if (day.kalaYoga === 'lokawinas') return `⛔ Lokawinas Inauspicious Day (${day.yearCE})`;
+    return 'Standard Day';
+  }
+  if (day.kalaYoga === 'thongchai') return `⭐ 年度大吉旗胜日 (${day.yearCE})`;
+  if (day.kalaYoga === 'athipadi') return `年度尊贵主宰日 (${day.yearCE})`;
+  if (day.kalaYoga === 'ubatha') return `⚠️ 年度乌巴凶忌日 (${day.yearCE})`;
+  if (day.kalaYoga === 'lokawinas') return `⛔ 年度灭绝凶忌日 (${day.yearCE})`;
+  return '平日';
+}
+
+const THAKSA_LOCALE: Record<ThaksaRelation['relation'], {
+  en: { name: string; badge: string; advice: (birthLabel: string) => string };
+  zh: { name: string; badge: string; advice: (birthLabel: string) => string };
+}> = {
+  kalakini: {
+    en: {
+      name: 'Kalakini (Taboo)',
+      badge: '⚠️ Kalakini Day (Avoid)',
+      advice: (b) => `This is the personal Kalakini taboo day for those born on ${b}. Avoid weddings, vehicle delivery, or housewarming.`,
+    },
+    zh: {
+      name: '灾煞忌日（避用）',
+      badge: '⚠️ 个人忌日（宜避开）',
+      advice: (b) => `此日为${b}之人的大煞忌日，传统星相宜避开嫁娶、提新车或乔迁入宅等重要仪式。`,
+    },
+  },
+  boriwan: {
+    en: {
+      name: 'Boriwan (Support)',
+      badge: 'Boriwan (Allies & Team)',
+      advice: () => 'A day of supportive companions—expect loyal cooperation from peers and team members.',
+    },
+    zh: {
+      name: '辅弼星（贵人协助）',
+      badge: '辅弼（人缘助力）',
+      advice: () => '得团队与亲友衷心协作之日，众人齐心、事半功倍。',
+    },
+  },
+  ayu: {
+    en: {
+      name: 'Ayu (Vitality)',
+      badge: 'Ayu (Health & Longevity)',
+      advice: () => 'Boosts physical vitality, refreshed spirit, and serene resilience.',
+    },
+    zh: {
+      name: '长寿星（安康顺遂）',
+      badge: '长寿（身心康泰）',
+      advice: () => '旺健康元气与身心安适之日，适合调养、安宅与祈福。',
+    },
+  },
+  dej: {
+    en: {
+      name: 'Dej (Authority)',
+      badge: 'Dej (Power & Victory)',
+      advice: () => 'Highly auspicious for leadership, sharp negotiation, and overcoming obstacles.',
+    },
+    zh: {
+      name: '威德星（权威胜局）',
+      badge: '威德（气场与胜算）',
+      advice: () => '主气场强盛、谈判犀利、突破难关、赢得尊严与主动权。',
+    },
+  },
+  sri: {
+    en: {
+      name: 'Sri (Supreme Fortune)',
+      badge: '⭐ Sri Auspicious (Wealth & Grace)',
+      advice: () => 'Your supreme lucky day—enhances wealth, blessings, popularity, and all auspicious ceremonies.',
+    },
+    zh: {
+      name: '吉祥福星（财禄大吉）',
+      badge: '⭐ 本命大吉（招财纳福）',
+      advice: () => '您生辰八大星象中最吉之日，大旺财禄、喜庆与诸事吉祥圆满。',
+    },
+  },
+  mula: {
+    en: {
+      name: 'Mula (Foundation)',
+      badge: 'Mula (Roots & Assets)',
+      advice: () => 'Strengthens property, inheritance, and durable long-term security.',
+    },
+    zh: {
+      name: '根基星（资产稳固）',
+      badge: '根基（家业长青）',
+      advice: () => '利于置业留财、夯实事业与家庭长远根基。',
+    },
+  },
+  utsaha: {
+    en: {
+      name: 'Utsaha (Diligence)',
+      badge: 'Utsaha (Effort Rewarded)',
+      advice: () => 'Rewarding results follow focused perseverance and active preparation.',
+    },
+    zh: {
+      name: '精进星（勤勉有成）',
+      badge: '精进（耕耘收获）',
+      advice: () => '只要积极推进与勤奋筹备，便能换来实打实的圆满成果。',
+    },
+  },
+  montri: {
+    en: {
+      name: 'Montri (Patronage)',
+      badge: 'Montri (Elder Backing)',
+      advice: () => 'Senior mentors and noble patrons show goodwill and clear the path forward.',
+    },
+    zh: {
+      name: '贵人星（长辈提携）',
+      badge: '贵人（庇佑顺畅）',
+      advice: () => '易获师长、上司及贵人悉心照拂，诸事沟通顺畅无阻。',
+    },
+  },
+};
+
+export function getLocalizedThaksaRelation(
+  thaksa: ThaksaRelation,
+  birthDayId: BirthDayId,
+  lang: SupportedLang
+): ThaksaRelation {
+  if (lang === 'th') return thaksa;
+  const birthOpt = getLocalizedBirthDays(lang).find((b) => b.id === birthDayId);
+  const loc = THAKSA_LOCALE[thaksa.relation][lang];
+  return {
+    ...thaksa,
+    nameTh: loc.name,
+    badgeText: loc.badge,
+    advice: loc.advice(birthOpt?.label || ''),
+  };
+}
+
+const COLOR_TRANSLATIONS: Record<string, { en: string; zh: string }> = {
+  'สีเขียวมรกต': { en: 'Emerald Green', zh: '祖母绿' },
+  'สีชมพู': { en: 'Rose Pink', zh: '玫瑰粉' },
+  'สีทอง': { en: 'Imperial Gold', zh: '皇室金' },
+  'สีน้ำเงินเข้ม': { en: 'Dark Navy', zh: '深海蓝' },
+  'สีม่วงเม็ดมะปราง': { en: 'Plum Purple', zh: '梅子紫' },
+  'สีเขียวสด': { en: 'Fresh Green', zh: '翠绿色' },
+  'สีแดงเพลิง': { en: 'Fiery Red', zh: '烈焰红' },
+  'สีส้มทอง': { en: 'Amber Gold', zh: '琥珀橙金' },
+  'สีดำขลับ': { en: 'Jet Black', zh: '玄黑色' },
+  'สีม่วง': { en: 'Violet Purple', zh: '紫罗兰' },
+  'สีขาวนวล': { en: 'Cream White', zh: '柔白' },
+  'สีเขียวเหนี่ยวทรัพย์': { en: 'Wealth Jade Green', zh: '招财翡翠绿' },
+  'สีเหลืองบุษราคัม': { en: 'Topaz Yellow', zh: '黄玉金' },
+  'สีขาว': { en: 'Pure White', zh: '纯净白' },
+  'สีชมพูสด': { en: 'Bright Pink', zh: '亮粉红' },
+  'สีส้มอิฐ': { en: 'Terracotta Orange', zh: '砖橙色' },
+  'สีฟ้า': { en: 'Sky Blue', zh: '天蓝色' },
+  'สีแดง': { en: 'Crimson Red', zh: '朱砂红' },
+  'สีดำสนิท': { en: 'Pitch Black', zh: '纯黑' },
+  'สีฟ้าพาสเทล': { en: 'Pastel Blue', zh: '粉彩蓝' },
+  'สีชมพูอ่อน': { en: 'Soft Pink', zh: '淡粉色' },
+  'สีเทาเข้ม': { en: 'Charcoal Grey', zh: '深灰色' },
+  'สีม่วงเข้ม': { en: 'Deep Purple', zh: '深紫色' },
+  'สีดำ': { en: 'Black', zh: '黑色' },
+};
+
+function translateColorList(colors: string[], lang: SupportedLang): string[] {
+  if (lang === 'th') return colors;
+  return colors.map((c) => COLOR_TRANSLATIONS[c]?.[lang] || c);
+}
+
+function getLocalizedDirection(dayOfWeek: number, lang: SupportedLang, thFallback: string): string {
+  if (lang === 'th') return thFallback;
+  if (lang === 'en') {
+    if (dayOfWeek === 3) return 'South (Sri Auspicious Direction)';
+    if (dayOfWeek === 2) return 'East (Dej Authority Direction)';
+    return 'Northeast (Sri Auspicious Direction)';
+  }
+  if (dayOfWeek === 3) return '正南（吉星开运方）';
+  if (dayOfWeek === 2) return '正东（威德贵人方）';
+  return '东北（喜神财位方）';
+}
+
+function getLocalizedUbakongAndDithi(day: AuspiciousDay, lang: SupportedLang) {
+  if (lang === 'th') {
+    return {
+      ubakongYama: day.bestHours.ubakongYama,
+      dithiName: day.dithiName,
+      primaryTime: day.bestHours.primaryTime,
+      secondaryTime: day.bestHours.secondaryTime,
+      minuteAuspicious: day.bestHours.minuteAuspicious,
+    };
+  }
+  const timeSuffix = lang === 'en' ? '' : '';
+  const primaryTime = lang === 'en' ? '09:09 - 10:39 AM' : '09:09 - 10:39';
+  const secondaryTime = lang === 'en' ? '13:19 - 14:49 PM' : '13:19 - 14:49';
+  const minuteAuspicious = lang === 'en' ? '09:09, 09:39, 14:19' : '09:09、09:39、14:19';
+
+  if (lang === 'en') {
+    const ubakongYama =
+      day.kalaYoga === 'thongchai'
+        ? 'Double-Four Wealth Hour (Prosperity & Big Deals)'
+        : day.kalaYoga === 'ubatha' || day.kalaYoga === 'lokawinas'
+        ? 'Two-Zero Retreat Hour (Pause Major Ceremonies)'
+        : day.kalaYoga === 'athipadi'
+        ? 'Raja Sovereign Hour (Clear Path & Victory)'
+        : 'Serene Clear Hour (Protected & Smooth Progress)';
+    let dithiName = 'Siddhi-Chok Dithi (Smooth Success)';
+    if (day.kalaYoga === 'thongchai') dithiName = 'Chai-Chok & Maha Siddhi Dithi (Supreme Victory)';
+    else if (day.kalaYoga === 'athipadi') dithiName = 'Raja-Chok Dithi (Highest Honor)';
+    else if (day.kalaYoga === 'ubatha' || day.kalaYoga === 'lokawinas') dithiName = 'Cautionary Dithi / Day of Restraint';
+    else if (day.buddhistHolyDay) dithiName = day.lunarDay === 15 ? 'Amrit-Chok & Full Moon Dithi' : 'Amrit-Chok Dithi (Obstacle-Free)';
+    else if (day.isMasterAuspicious) dithiName = 'Amrit-Chok Dithi (Peak Achievement)';
+    return { ubakongYama, dithiName, primaryTime, secondaryTime, minuteAuspicious };
+  }
+
+  const ubakongYama =
+    day.kalaYoga === 'thongchai'
+      ? '双吉旺财时（财源广进、利于成交大单）'
+      : day.kalaYoga === 'ubatha' || day.kalaYoga === 'lokawinas'
+      ? '退守避煞时（宜静不宜动、暂缓重大吉事）'
+      : day.kalaYoga === 'athipadi'
+      ? '帝王胜算时（一路坦途、克服阻滞）'
+      : '清宁顺遂时（平安护佑、诸事顺畅）';
+  let dithiName = '悉地吉时（顺遂圆满）';
+  if (day.kalaYoga === 'thongchai') dithiName = '胜吉大成星格（全面致胜）';
+  else if (day.kalaYoga === 'athipadi') dithiName = '尊荣王吉星格（声望隆盛）';
+  else if (day.kalaYoga === 'ubatha' || day.kalaYoga === 'lokawinas') dithiName = '损耗戒慎星格（宜守不宜攻）';
+  else if (day.buddhistHolyDay) dithiName = day.lunarDay === 15 ? '甘露吉日 & 望月满圆夜' : '甘露吉日（诸障消融）';
+  else if (day.isMasterAuspicious) dithiName = '甘露胜日（事半功倍）';
+  void timeSuffix;
+  return { ubakongYama, dithiName, primaryTime, secondaryTime, minuteAuspicious };
+}
+
+export function getLocalizedDayDetails(day: AuspiciousDay, lang: SupportedLang) {
+  if (lang === 'th') {
+    return {
+      dayName: day.dayNameTh,
+      lunarDate: day.lunarDateTh,
+      lunarPhaseShort: day.lunarPhaseThShort,
+      thaiRukName: day.thaiRukNameTh,
+      thaiRukMeaning: day.thaiRukMeaning,
+      thaiRukHighlight: day.thaiRukHighlight,
+      nakshatraName: day.nakshatraNameTh,
+      dithiName: day.dithiName,
+      kalaYogaLabel: day.kalaYogaLabel,
+      auspiciousDirection: day.auspiciousDirection,
+      luckyColors: day.luckyColors,
+      unluckyColors: day.unluckyColors,
+      bestHours: day.bestHours,
+      ceremonyTips: day.ceremonyTips,
+      prohibitions: day.prohibitions,
+    };
+  }
+
+  const ruk = getLocalizedThaiRuk(day.thaiRuk, lang);
+  const nakMeta = THAI_NAKSHATRAS[day.nakshatraNumber - 1];
+  const moonIcon = day.lunarPhaseThShort.split(' ').pop() || '🌙';
+  const isSpecialNov24 = day.yearBE === 2569 && day.month === 11 && day.dayOfMonth === 24;
+
+  const lunarDate =
+    lang === 'en'
+      ? `${day.lunarPhase === 'waxing' ? 'Waxing' : 'Waning'} Day ${day.lunarDay}, Lunar Month ${day.lunarMonth}${
+          isSpecialNov24
+            ? ' (Full Moon / Loy Krathong / Buddhist Holy Day)'
+            : day.buddhistHolyDay
+            ? day.lunarDay === 15 && day.lunarPhase === 'waxing'
+              ? ' (Grand Holy Day / Full Moon)'
+              : ' (Buddhist Holy Day)'
+            : ''
+        }`
+      : `${day.lunarPhase === 'waxing' ? '上弦' : '下弦'}初${day.lunarDay} · 泰历${day.lunarMonth}月${
+          isSpecialNov24
+            ? '（满月 / 水灯节 / 大佛日）'
+            : day.buddhistHolyDay
+            ? day.lunarDay === 15 && day.lunarPhase === 'waxing'
+              ? '（望月大佛日）'
+              : '（泰历斋戒佛日）'
+            : ''
+        }`;
+
+  const lunarPhaseShort =
+    lang === 'en'
+      ? `${day.lunarPhase === 'waxing' ? 'Waxing' : 'Waning'} ${day.lunarDay} ${moonIcon}`
+      : `${day.lunarPhase === 'waxing' ? '上' : '下'}${day.lunarDay} ${moonIcon}`;
+
+  const tips: AuspiciousDay['ceremonyTips'] = {};
+  if (day.kalaYoga !== 'ubatha' && day.kalaYoga !== 'lokawinas') {
+    if (day.ceremonyTips.wedding) {
+      tips.wedding =
+        lang === 'en'
+          ? `Conch-blessing and marriage registration under ${ruk.name} nurture lasting devotion and household harmony.`
+          : `于「${ruk.name}」举行婚礼洒水祈福与婚姻登记，寓意琴瑟和鸣、白首同心。`;
+    }
+    if (day.ceremonyTips.house) {
+      tips.house =
+        lang === 'en'
+          ? 'Bring a sacred image, full rice jar, pure water, and auspicious offerings into the new home at first light.'
+          : '吉时恭请佛像、满桶香米、净水与吉数礼金入宅安居，祈愿合家兴旺。';
+    }
+    if (day.ceremonyTips.merit) {
+      tips.merit = isSpecialNov24
+        ? lang === 'en'
+          ? 'Offer morning alms and float a Krathong at dusk to honor the River Goddess and renew good fortune.'
+          : '清晨布施供僧，夜晚放水灯祈福谢水神，消灾增福、万事顺遂。'
+        : lang === 'en'
+        ? 'Offer morning alms, release fish compassionately, and chant sacred blessings for family peace.'
+        : '清晨布施供奉、慈悲放生并静心诵经，广结福缘、护佑家宅平安。';
+    }
+    if (day.ceremonyTips.vehicle_business) {
+      tips.vehicle_business =
+        lang === 'en'
+          ? 'Ideal for taking delivery of a new vehicle or cutting the ribbon to welcome flourishing revenue.'
+          : '最宜提取新车出库或店铺剪彩开张，迎接滚滚财源与平安顺利。';
+    }
+    if (day.ceremonyTips.others) {
+      tips.others = isSpecialNov24
+        ? lang === 'en'
+          ? 'Bathe in the 12th-month full moonlight to uplift personal grace, charm, and prosperity blessings.'
+          : '十二月满月之夜沐浴清辉，静心祈愿人缘魅力与财禄丰盈。'
+        : lang === 'en'
+        ? 'Favorable for business negotiations, signing agreements, or auspicious self-care milestones.'
+        : '适合商务谈判、重要签约成交，或进行焕新仪容之吉事。';
+    }
+  }
+
+  const timing = getLocalizedUbakongAndDithi(day, lang);
+
+  return {
+    dayName: getLocalizedFullDayName(day.dayOfWeek, lang),
+    lunarDate,
+    lunarPhaseShort,
+    thaiRukName: ruk.name,
+    thaiRukMeaning: ruk.meaning,
+    thaiRukHighlight: ruk.highlight,
+    nakshatraName:
+      lang === 'en'
+        ? nakMeta?.transliteration || day.nakshatraNameTh
+        : `${nakMeta?.transliteration || day.nakshatraNameTh} · 第${day.nakshatraNumber}宿`,
+    dithiName: timing.dithiName,
+    kalaYogaLabel: getLocalizedKalaYogaLabel(day, lang),
+    auspiciousDirection: getLocalizedDirection(day.dayOfWeek, lang, day.auspiciousDirection),
+    luckyColors: translateColorList(day.luckyColors, lang),
+    unluckyColors: translateColorList(day.unluckyColors, lang),
+    bestHours: {
+      primaryTime: timing.primaryTime,
+      secondaryTime: timing.secondaryTime,
+      ubakongYama: timing.ubakongYama,
+      minuteAuspicious: timing.minuteAuspicious,
+    },
+    ceremonyTips: tips,
+    prohibitions:
+      day.kalaYoga === 'ubatha' || day.kalaYoga === 'lokawinas'
+        ? [
+            lang === 'en'
+              ? 'Strictly avoid weddings, housewarming, new vehicle delivery, or grand company openings.'
+              : '严禁举办婚礼、乔迁入宅、提新车或盛大开业仪式。',
+          ]
+        : [
+            lang === 'en'
+              ? 'Refrain from unethical actions or unkind speech during ceremonies.'
+              : '仪式期间忌口舌争执与违背善德之举。',
+          ],
+  };
+}
+

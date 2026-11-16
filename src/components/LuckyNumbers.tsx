@@ -17,7 +17,7 @@ interface LuckyNumbersProps {
 }
 
 export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onOpenCard }) => {
-  const { t } = useLanguage();
+  const { lang, t, format } = useLanguage();
   // Category: null = ยังไม่ได้เลือก (ถามก่อนเล่นเกม), 0 = เลข 2 หลัก, 1 = เลข 3 หลัก
   const [category, setCategory] = useState<0 | 1 | null>(null);
   const categoryRef = useRef<0 | 1 | null>(null);
@@ -63,10 +63,10 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
         }
       } catch (err) {
         logger.error('Error in bridge.luckyNumbers:', err);
-        onToast('เกิดข้อผิดพลาดในการคำนวณเลขมงคล');
+        onToast(t.commonErrorRetry);
       }
     },
-    [bridge, onToast]
+    [bridge, onToast, t.commonErrorRetry]
   );
 
   useEffect(() => {
@@ -98,13 +98,13 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
     setCategory(null);
     setBurnLevel(0);
     setIsJournalSaved(false);
-    onToast('กลับสู่ขั้นตอนเลือกเลข 2 หลัก หรือ 3 หลัก');
+    onToast(t.luckyBackToChoiceToast);
   };
 
   // When player wins a round in any mini-game
   const handleWin = useCallback(() => {
     if (categoryRef.current === null) {
-      onToast('⚠️ กรุณาเลือกประเภทเลข 2 หลัก หรือ 3 หลักก่อน');
+      onToast(t.luckyNeedCategoryToast);
       return;
     }
 
@@ -127,7 +127,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
     if (next === 3) {
       onToast(`🔥 ${t.luckyRevealComplete}`);
     } else {
-      onToast(`🔥 เพลิงเผายันต์ลามขึ้น! (${next}/3 ตา) ชนะอีก ${3 - next} ตา!`);
+      onToast(format(t.luckyBurnProgressToast, { next, rem: 3 - next }));
     }
 
     if (burnTimerRef.current !== null) {
@@ -139,18 +139,19 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
         setIsBurning(false);
       }
     }, 1100);
-  }, [onToast, t.luckyRevealComplete]);
+  }, [format, onToast, t.luckyBurnProgressToast, t.luckyNeedCategoryToast, t.luckyRevealComplete]);
 
   // Save to journal and open card modal
   const handleSaveAndShare = () => {
     if (burnLevel < 3 || category === null) return;
-    const { cardData, details: detailsObj } = buildLuckyNumbersCardData(luckyNumber, category);
+    const { cardData, details: detailsObj } = buildLuckyNumbersCardData(luckyNumber, category, lang);
+    const catLabel = category === 0 ? t.lucky2Digits : t.lucky3Digits;
 
     if (!isJournalSaved) {
       saveJournalEntry({
         type: 'number',
-        title: `เลขมงคล (${category === 0 ? 'เลข 2 หลัก' : 'เลข 3 หลัก'})`,
-        summary: `เลขเด่น: ${luckyNumber} — เผายันต์สำเร็จ`,
+        title: format(t.luckyJournalTitle, { category: catLabel }),
+        summary: format(t.luckyJournalSummary, { number: luckyNumber }),
         details: detailsObj,
       });
       setIsJournalSaved(true);
@@ -163,8 +164,8 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
 
   // When player loses a round
   const handleLose = useCallback(() => {
-    onToast('🏮 ตานี้ยังไม่ชนะ เพลิงจึงยังไม่ลาม — เล่นใหม่อีกครั้ง!');
-  }, [onToast]);
+    onToast(t.luckyLoseToast);
+  }, [onToast, t.luckyLoseToast]);
 
   // Reset to start a new burning talisman with currently selected category
   const handleReset = () => {
@@ -178,7 +179,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
     setBurnLevel(0);
     setIsJournalSaved(false);
     generateNumber(category);
-    onToast('รีเซ็ตพร้อมเริ่มเผายันต์ขอเลขใหม่');
+    onToast(t.luckyResetToast);
   };
 
   return (
@@ -223,9 +224,9 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
           {burnLevel === 3 ? (
             <article className="result lucky-final-card" aria-live="polite">
               <div className="lucky-final-header">
-                <span className="lucky-final-seal">✦ มงคลฤกษ์ ✦</span>
+                <span className="lucky-final-seal">{t.luckyFinalSeal}</span>
                 <h3>
-                  เลขมงคลประจำตัวของคุณ:{' '}
+                  {t.luckyFinalHeading}{' '}
                   <span className="highlight-lucky-number">{luckyNumber}</span>
                 </h3>
                 <p className="lucky-final-sub">
@@ -234,25 +235,32 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
               </div>
 
               {luckyResult?.note && (
-                <p className="verse lucky-verse-text">{luckyResult.note}</p>
+                <>
+                  {lang !== 'th' && (
+                    <p className="note" style={{ marginBottom: '0.45rem', textAlign: 'center' }}>
+                      {t.oracleThaiFallbackNote}
+                    </p>
+                  )}
+                  <p className="verse lucky-verse-text">{luckyResult.note}</p>
+                </>
               )}
 
               <div className="aspects lucky-advice-grid">
                 <div className="aspect">
-                  <b>ทิศนำโชคประจำวัน</b>
-                  <span>ทิศตะวันออกเฉียงเหนือ (ทิศทรัพย์มงคล)</span>
+                  <b>{t.luckyAdviceDirTitle}</b>
+                  <span>{t.luckyAdviceDirText}</span>
                 </div>
                 <div className="aspect">
-                  <b>สีกระเป๋าสตางค์เสริมดวง</b>
-                  <span>สีทองคำ, สีส้มอิฐ และสีเขียวมรกต</span>
+                  <b>{t.luckyAdviceWalletTitle}</b>
+                  <span>{t.luckyAdviceWalletText}</span>
                 </div>
                 <div className="aspect">
-                  <b>ข้อแนะนำการใช้เลข</b>
-                  <span>เหมาะสำหรับใช้เป็นเลขตั้งเป้าหมาย หรือรหัสเสริมพลังใจ</span>
+                  <b>{t.luckyAdviceUsageTitle}</b>
+                  <span>{t.luckyAdviceUsageText}</span>
                 </div>
                 <div className="aspect">
-                  <b>คำเตือนมงคล</b>
-                  <span>เพื่อความบันเทิงและกำลังใจ ไม่ใช่การทำนายสลากจริง</span>
+                  <b>{t.luckyAdviceWarnTitle}</b>
+                  <span>{t.luckyAdviceWarnText}</span>
                 </div>
               </div>
 
@@ -272,15 +280,15 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
                   className="btn primary glow-gold"
                   onClick={handleReset}
                 >
-                  <span>🔥 เผาแผ่นยันต์ขอเลขใหม่</span>
+                  <span>{t.luckyBurnAgainBtn}</span>
                 </button>
                 <button
                   type="button"
                   className="btn ghost"
                   onClick={handleResetToCategorySelection}
-                  title="เปลี่ยนไปเลือกเลข 2 หลัก หรือ 3 หลักใหม่"
+                  title={t.luckyChangeCatTitle}
                 >
-                  <span>🔄 เลือก 2 หรือ 3 หลักใหม่</span>
+                  <span>{t.luckyChangeCatBtn}</span>
                 </button>
               </div>
             </article>

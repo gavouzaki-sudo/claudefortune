@@ -4,6 +4,8 @@ import type { ImageScanResult, SignatureResult } from '../types';
 import { renderParchmentBackground, getPointerPosOnCanvas, processImageToPixels } from '../utils/canvasUtils';
 import { ScoreBars } from './ScoreBars';
 import { logger } from '../utils/logger';
+import { useLanguage } from '../context/LanguageContext';
+import { getLocalizedElementName } from '../data/ritualProphecies';
 
 interface ScanFortuneProps {
   bridge: Bridge;
@@ -11,10 +13,12 @@ interface ScanFortuneProps {
 }
 
 export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => {
+  const { t, lang, format } = useLanguage();
+
   // Image scan state
   const [imgMode, setImgMode] = useState<number>(0);
   const [pixels, setPixels] = useState<Uint8ClampedArray | null>(null);
-  const [dropText, setDropText] = useState('แตะเพื่อเลือกหรือถ่ายภาพ');
+  const [hasSelectedImage, setHasSelectedImage] = useState(false);
   const [imageScanResult, setImageScanResult] = useState<ImageScanResult | null>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -31,11 +35,11 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      onToast('กรุณาเลือกไฟล์รูปภาพ');
+      onToast(t.scanInvalidFileToast);
       return;
     }
     if (file.size > 15 * 1024 * 1024) {
-      onToast('ไฟล์ใหญ่เกินไป (สูงสุด 15 MB)');
+      onToast(t.scanFileTooLargeToast);
       return;
     }
 
@@ -46,13 +50,13 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
       const extractedPixels = await processImageToPixels(file, canvas);
       if (extractedPixels) {
         setPixels(extractedPixels);
-        setDropText('เลือกภาพแล้ว (ประมวลผลในเครื่องเท่านั้น)');
+        setHasSelectedImage(true);
       } else {
-        onToast('อ่านรูปภาพไม่สำเร็จ ลองไฟล์อื่น');
+        onToast(t.scanReadFailedToast);
       }
     } catch (err) {
       logger.error('Error handling uploaded file:', err);
-      onToast('อ่านรูปภาพไม่สำเร็จ ลองไฟล์อื่น');
+      onToast(t.scanReadFailedToast);
     }
   };
 
@@ -63,7 +67,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
       setImageScanResult(res);
     } catch (err) {
       logger.error('Error in bridge.imageScan:', err);
-      onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
+      onToast(t.commonErrorRetry);
     }
   };
 
@@ -144,7 +148,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
 
   const handleAnalyzeSignature = () => {
     if (ptsRef.current.length < 8) {
-      onToast('กรุณาเขียนลายมือหรือเซ็นชื่อให้ยาวขึ้นอีกนิดนะ');
+      onToast(t.scanSigTooShortToast);
       return;
     }
     try {
@@ -152,7 +156,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
       setSigResult(res);
     } catch (err) {
       logger.error('Error in bridge.signature:', err);
-      onToast('เกิดข้อผิดพลาด ลองเขียนใหม่อีกครั้ง');
+      onToast(t.commonErrorRetry);
     }
   };
 
@@ -162,12 +166,10 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
         {/* Interactive Handwriting / Signature Pad */}
         <div className="card scan-card-primary">
           <div className="card-title-row">
-            <h3>✍️ กระดานเขียนลายมือ & ลายเซ็นสด</h3>
-            <span className="card-tag-pill">เขียนสดบนหน้าจอ</span>
+            <h3>{t.scanSigTitle}</h3>
+            <span className="card-tag-pill">{t.scanSigPill}</span>
           </div>
-          <p className="card-sub-hint">
-            จรดปลายนิ้ว ปากกาสไตลัส หรือลากเมาส์เพื่อเขียนลายมือหรือลายเซ็นของคุณ
-          </p>
+          <p className="card-sub-hint">{t.scanSigHint}</p>
 
           <div className="sig-canvas-box">
             <canvas
@@ -176,7 +178,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
               className="sig"
               width={640}
               height={260}
-              aria-label="พื้นที่เขียนลายมือและเซ็นชื่อ"
+              aria-label={t.scanSigCanvasAria}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
@@ -191,7 +193,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
               type="button"
               onClick={handleClearSignature}
             >
-              🔄 ล้างกระดานเขียนใหม่
+              {t.scanSigClearBtn}
             </button>
             <button
               id="btn-sig"
@@ -199,25 +201,30 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
               type="button"
               onClick={handleAnalyzeSignature}
             >
-              🔮 วิเคราะห์ลายมือ & ลายเซ็น
+              {t.scanSigAnalyzeBtn}
             </button>
           </div>
 
           {sigResult && (
             <article id="sig-result" className="result" aria-live="polite">
-              <h3>ลายเซ็นและลายมือของคุณบอกว่า…</h3>
-              {sigResult.traits.map((t, idx) => (
-                <p key={idx}>• {t}</p>
+              <h3>{t.scanSigResultTitle}</h3>
+              {sigResult.traits.map((trait, idx) => (
+                <p key={idx}>• {trait}</p>
               ))}
+              {lang !== 'th' && (
+                <p className="note" style={{ marginBottom: '0.5rem' }}>
+                  {t.oracleThaiFallbackNote}
+                </p>
+              )}
               <ScoreBars
                 scores={[
-                  { key: 'wealth', label: 'โชคลาภ', score: sigResult.scores.wealth },
-                  { key: 'love', label: 'ความรัก', score: sigResult.scores.love },
-                  { key: 'career', label: 'การงาน', score: sigResult.scores.career },
-                  { key: 'luck', label: 'โชคชะตา', score: sigResult.scores.luck },
+                  { key: 'wealth', label: t.scanBarWealth, score: sigResult.scores.wealth },
+                  { key: 'love', label: t.scanBarLove, score: sigResult.scores.love },
+                  { key: 'career', label: t.scanBarCareer, score: sigResult.scores.career },
+                  { key: 'luck', label: t.scanBarLuck, score: sigResult.scores.luck },
                 ]}
               />
-              <p className="note">{sigResult.strokes} เส้นตวัด · วิเคราะห์เชิงโหงวเฮ้งเพื่อความบันเทิง</p>
+              <p className="note">{format(t.scanSigStrokesNote, { strokes: sigResult.strokes })}</p>
             </article>
           )}
         </div>
@@ -225,14 +232,12 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
         {/* Image / Photo Scan */}
         <div className="card scan-card-secondary">
           <div className="card-title-row">
-            <h3>📷 ถ่ายภาพ / สแกน (ใบหน้า หรือ ภาพถ่ายฝ่ามือ)</h3>
-            <span className="card-tag-pill">อัปโหลดไฟล์รูปภาพ</span>
+            <h3>{t.scanImgTitle}</h3>
+            <span className="card-tag-pill">{t.scanImgPill}</span>
           </div>
-          <p className="card-sub-hint">
-            เลือกภาพถ่ายใบหน้าหรือภาพถ่ายฝ่ามือ เพื่อให้ระบบคำนวณวิเคราะห์ธาตุและโหงวเฮ้ง
-          </p>
+          <p className="card-sub-hint">{t.scanImgHint}</p>
 
-          <div className="pills scan-mode-pills" role="radiogroup" aria-label="ประเภทภาพ">
+          <div className="pills scan-mode-pills" role="radiogroup" aria-label={t.scanImgTypeAria}>
             <button
               type="button"
               role="radio"
@@ -240,7 +245,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
               className={`pill ${imgMode === 0 ? 'active' : ''}`}
               onClick={() => setImgMode(0)}
             >
-              สแกนใบหน้า
+              {t.scanImgFace}
             </button>
             <button
               type="button"
@@ -249,7 +254,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
               className={`pill ${imgMode === 1 ? 'active' : ''}`}
               onClick={() => setImgMode(1)}
             >
-              สแกนภาพฝ่ามือ
+              {t.scanImgPalm}
             </button>
           </div>
           <label className="drop" htmlFor="in-image">
@@ -260,7 +265,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
               capture="environment"
               onChange={handleFileChange}
             />
-            <span id="drop-text">{dropText}</span>
+            <span id="drop-text">{hasSelectedImage ? t.scanDropSelected : t.scanDropPrompt}</span>
             <canvas
               ref={previewCanvasRef}
               id="img-preview"
@@ -276,23 +281,32 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
             disabled={!pixels}
             onClick={handleScanImage}
           >
-            สแกนดวง
+            {t.scanBtn}
           </button>
 
           {imageScanResult && (
             <article id="scan-result" className="result" aria-live="polite">
-              <h3>ธาตุประจำภาพ: {imageScanResult.element}</h3>
+              <h3>
+                {format(t.scanResultElement, {
+                  element: getLocalizedElementName(imageScanResult.element, lang),
+                })}
+              </h3>
               <p>{imageScanResult.reading}</p>
+              {lang !== 'th' && (
+                <p className="note" style={{ marginBottom: '0.5rem' }}>
+                  {t.oracleThaiFallbackNote}
+                </p>
+              )}
               <ScoreBars
                 scores={[
-                  { key: 'wealth', label: 'โชคลาภ', score: imageScanResult.scores.wealth },
-                  { key: 'love', label: 'ความรัก', score: imageScanResult.scores.love },
-                  { key: 'health', label: 'สุขภาพ', score: imageScanResult.scores.health },
-                  { key: 'career', label: 'การงาน', score: imageScanResult.scores.career },
+                  { key: 'wealth', label: t.scanBarWealth, score: imageScanResult.scores.wealth },
+                  { key: 'love', label: t.scanBarLove, score: imageScanResult.scores.love },
+                  { key: 'health', label: t.scanBarHealth, score: imageScanResult.scores.health },
+                  { key: 'career', label: t.scanBarCareer, score: imageScanResult.scores.career },
                 ]}
               />
               <p className="note">
-                รหัสพลัง {imageScanResult.fingerprint} · เพื่อความบันเทิง ไม่ใช่การระบุตัวตนหรือการวินิจฉัย
+                {format(t.scanFingerprintNote, { fingerprint: imageScanResult.fingerprint })}
               </p>
             </article>
           )}
@@ -301,3 +315,4 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
     </section>
   );
 };
+

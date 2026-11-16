@@ -1,13 +1,16 @@
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 export const Footer: React.FC = () => {
+  const { t } = useLanguage();
+
   return (
     <footer className="foot">
       <p>
-        <strong>ข้อสงวนสิทธิ์:</strong> เว็บนี้จัดทำเพื่อความบันเทิงและวัฒนธรรมความเชื่อเท่านั้น คำทำนายและเลขมงคลไม่ใช่คำแนะนำทางการแพทย์ กฎหมาย หรือการเงิน และไม่รับประกันผลใดๆ การเสี่ยงโชคมีความเสี่ยง โปรดใช้วิจารณญาณ
+        <strong>{t.footerDisclaimerLabel}</strong> {t.footerDisclaimerText}
       </p>
       <p>
-        หากรู้สึกท้อแท้หรืออยากทำร้ายตัวเอง โทรสายด่วนสุขภาพจิต <a href="tel:1323">1323</a> ตลอด 24 ชั่วโมง
+        {t.footerHelplinePrefix} <a href="tel:1323">1323</a> {t.footerHelplineHours}
       </p>
     </footer>
   );

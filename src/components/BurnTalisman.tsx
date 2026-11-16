@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { drawRoundedRect } from '../utils/canvasUtils';
+import { useLanguage } from '../context/LanguageContext';
 
 interface BurnTalismanProps {
   burnLevel: number; // 0, 1, 2, 3
@@ -41,6 +42,7 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
   category,
   isBurning,
 }) => {
+  const { t, format } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -52,8 +54,8 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
   const goldSparklesRef = useRef<GoldSparkle[]>([]);
   const flameTimeRef = useRef<number>(0);
   const animationFrameIdRef = useRef<number | null>(null);
-  const propsRef = useRef({ burnLevel, luckyNumber, category, isBurning });
-  propsRef.current = { burnLevel, luckyNumber, category, isBurning };
+  const propsRef = useRef({ burnLevel, luckyNumber, category, isBurning, t });
+  propsRef.current = { burnLevel, luckyNumber, category, isBurning, t };
 
   // Responsive dimensions (reduced height 50%)
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({
@@ -312,6 +314,7 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
         luckyNumber: curLuckyNumber,
         category: curCategory,
         isBurning: curIsBurning,
+        t: curT,
       } = propsRef.current;
 
       // Smooth interpolation towards target burn level
@@ -461,7 +464,7 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
       ctx.font = '7px sans-serif';
       ctx.fillStyle = 'rgba(232, 185, 74, 0.75)';
       ctx.textAlign = 'center';
-      ctx.fillText('ธูปนำโชค', censerX, censerY + 7);
+      ctx.fillText(curT.burnCanvasCenser, censerX, censerY + 7);
 
       // Rising Incense Smoke (ควันธูปพริ้วไหว)
       const smokeList = smokeParticlesRef.current;
@@ -536,10 +539,10 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
       ctx.textAlign = 'center';
       ctx.fillText(
         curCategory === 0
-          ? '✦ เลขท้าย 2 ตัวมงคล ✦'
+          ? curT.burnCanvas2Digits
           : curCategory === 1
-          ? '✦ เลขท้าย 3 ตัวมงคล ✦'
-          : '✦ ยันต์ไฟเบิกเลขมงคล ✦',
+          ? curT.burnCanvas3Digits
+          : curT.burnCanvasDefaultTitle,
         talisCx,
         talisTop + 12
       );
@@ -592,17 +595,17 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
         ctx.fillStyle = '#ffea00';
         ctx.shadowColor = '#ff9800';
         ctx.shadowBlur = 4;
-        ctx.fillText('✦ มงคลฤกษ์โชคลาภพูนทวี ✦', talisCx, talisTop + talisH - 7);
+        ctx.fillText(curT.burnCanvasRevealSeal, talisCx, talisTop + talisH - 7);
         ctx.shadowBlur = 0;
       } else if (curBurn >= 1.8) {
         ctx.font = '7px sans-serif';
         ctx.fillStyle = '#ffb74d';
-        ctx.fillText('🔥 ควันเพลิงบดบัง... ชนะอีก 1 ตา!', talisCx, talisTop + talisH - 7);
+        ctx.fillText(curT.burnCanvasHint2, talisCx, talisTop + talisH - 7);
       } else {
         ctx.font = '7px sans-serif';
         ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
         ctx.fillText(
-          curBurn >= 0.8 ? '🔥 เพลิงเริ่มลาม... ชนะอีก 2 ตา' : 'ชนะมินิเกมด้านล่างเพื่อจุดไฟ',
+          curBurn >= 0.8 ? curT.burnCanvasHint1 : curT.burnCanvasHint0,
           talisCx,
           talisTop + talisH - 7
         );
@@ -665,7 +668,7 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
 
         ctx.font = 'bold 6.5px sans-serif';
         ctx.fillStyle = '#6d1811';
-        ctx.fillText('ยันต์ไฟเบิกโชค', talisCx, talisTop + 24);
+        ctx.fillText(curT.burnCanvasTalismanLabel, talisCx, talisTop + 24);
 
         // Mystical Bagua / Wealth Diagram
         const baguaCy = talisTop + 49;
@@ -852,7 +855,7 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
       ctx.font = '7px sans-serif';
       ctx.fillStyle = 'rgba(255, 215, 0, 0.85)';
       ctx.textAlign = 'center';
-      ctx.fillText('กองทรัพย์มงคล', goldCx, altarY + 6);
+      ctx.fillText(curT.burnCanvasGoldLabel, goldCx, altarY + 6);
 
       // 4G. Update & Render Gold Glitter Particles (ละอองทองลอย)
       const sparkles = goldSparklesRef.current;
@@ -974,9 +977,9 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
             display: 'block',
             touchAction: 'manipulation',
           }}
-          aria-label={`แท่นบูชาประกอบด้วย ธูปนำโชค(ซ้าย), ยันต์ไฟเบิกโชค(กลาง), และกองเงินทองเปล่งประกาย(ขวา) เลขมงคล: ${
-            burnLevel === 3 ? luckyNumber : 'ยังไม่เปิดเผย'
-          }`}
+          aria-label={format(t.burnAriaLabel, {
+            number: burnLevel === 3 ? luckyNumber : t.burnUnrevealed,
+          })}
         />
       </div>
 
@@ -986,12 +989,12 @@ export const BurnTalisman: React.FC<BurnTalismanProps> = ({
           <span className="burn-status-left">
             {category !== null && (
               <span className="burn-category-tag">
-                {category === 0 ? '🏮 2 หลัก' : '✨ 3 หลัก'}
+                {category === 0 ? t.burnTag2 : t.burnTag3}
               </span>
             )}
             <span className="burn-fire-icon">🔥</span>
             <span>
-              เพลิงเผายันต์: <b className="burn-highlight">{burnLevel} / 3 ตา</b>
+              {t.burnProgressLabel} <b className="burn-highlight">{format(t.burnRoundsUnit, { current: burnLevel })}</b>
             </span>
           </span>
         </div>

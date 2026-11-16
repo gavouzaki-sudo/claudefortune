@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getRandomArrayItem } from '../utils/formatters';
+import { useLanguage } from '../context/LanguageContext';
 
 type MiniGameType = 'rps' | 'mole' | 'ox' | 'match' | 'demon';
 
@@ -12,6 +13,7 @@ interface LuckyMiniGamesProps {
    1. ROCK-PAPER-SCISSORS (เป่ายิ้งฉุบ - เพิ่มความยาก แข่ง 2 ใน 3 แต้ม)
    ========================================================================= */
 const RPSGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({ onWin, onLose }) => {
+  const { t, format } = useLanguage();
   type Choice = 'rock' | 'paper' | 'scissors';
   const [playerChoice, setPlayerChoice] = useState<Choice | null>(null);
   const [aiChoice, setAiChoice] = useState<Choice | null>(null);
@@ -38,9 +40,9 @@ const RPSGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({ onWin, o
   const TARGET_POINTS = 2; // Best of 3 (แข่ง 2 แต้ม)
 
   const choices: { id: Choice; icon: string; label: string }[] = [
-    { id: 'rock', icon: '✊', label: 'ค้อน' },
-    { id: 'scissors', icon: '✌️', label: 'กรรไกร' },
-    { id: 'paper', icon: '✋', label: 'กระดาษ' },
+    { id: 'rock', icon: '✊', label: t.mgRpsRock },
+    { id: 'scissors', icon: '✌️', label: t.mgRpsScissors },
+    { id: 'paper', icon: '✋', label: t.mgRpsPaper },
   ];
 
   const handlePlay = (choice: Choice) => {
@@ -122,18 +124,18 @@ const RPSGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({ onWin, o
   return (
     <div className="mini-game-container rps-container">
       <div className="mini-game-header-row">
-        <h4 className="mini-game-heading">เป่ายิ้งฉุบกับสิ่งศักดิ์สิทธิ์</h4>
+        <h4 className="mini-game-heading">{t.mgRpsTitle}</h4>
         <span className="status-badge timer-badge">
-          คะแนน: <b>{playerScore} - {aiScore}</b> (ชิง 2 แต้ม)
+          <b>{format(t.mgRpsScore, { player: playerScore, ai: aiScore, target: TARGET_POINTS })}</b>
         </span>
       </div>
       <p className="mini-game-sub">
-        ต้องเป่ายิ้งฉุบชนะให้ได้ <b>{TARGET_POINTS} แต้ม</b> ก่อนศาลเจ้า จึงจะจุดไฟเผายันต์สำเร็จ!
+        {format(t.mgRpsSub, { target: TARGET_POINTS })}
       </p>
 
       <div className="rps-arena">
         <div className="rps-fighter player-side">
-          <span className="rps-badge">คุณ ({playerScore}/{TARGET_POINTS})</span>
+          <span className="rps-badge">{format(t.mgRpsPlayerBadge, { score: playerScore, target: TARGET_POINTS })}</span>
           <span className={`rps-hand-display ${isShooting ? 'shaking-hand' : ''}`}>
             {playerChoice
               ? choices.find((c) => c.id === playerChoice)?.icon
@@ -144,7 +146,7 @@ const RPSGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({ onWin, o
         <span className="rps-vs">VS</span>
 
         <div className="rps-fighter ai-side">
-          <span className="rps-badge">ศาลเจ้า ({aiScore}/{TARGET_POINTS})</span>
+          <span className="rps-badge">{format(t.mgRpsAiBadge, { score: aiScore, target: TARGET_POINTS })}</span>
           <span className={`rps-hand-display ${isShooting ? 'shaking-hand' : ''}`}>
             {aiChoice
               ? choices.find((c) => c.id === aiChoice)?.icon
@@ -155,17 +157,15 @@ const RPSGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({ onWin, o
 
       {roundResult && !matchOver && (
         <div className={`mini-game-result-msg msg-${roundResult}`}>
-          {roundResult === 'win' && '👏 ยกนี้คุณได้แต้ม! ชนะเพิ่มอีก 1 ครั้งเพื่อผ่าน'}
-          {roundResult === 'lose' && '🏮 ศาลเจ้าได้แต้มนี้! ตั้งสมาธิแล้วแก้มือ'}
-          {roundResult === 'draw' && '🤝 เสมอกัน! ยังไม่ได้แต้ม ออกค้อน กรรไกร กระดาษใหม่'}
+          {roundResult === 'win' && t.mgRpsRoundWin}
+          {roundResult === 'lose' && t.mgRpsRoundLose}
+          {roundResult === 'draw' && t.mgRpsRoundDraw}
         </div>
       )}
 
       {matchOver && (
         <div className={`mini-game-result-msg msg-${matchOver}`}>
-          {matchOver === 'win'
-            ? '🎉 ชนะการประลอง 2 ใน 3 สำเร็จ! เพลิงเผายันต์เพิ่มขึ้น +1 ส่วน!'
-            : '🏮 ศาลเจ้าได้ 2 แต้มก่อน! ตานี้แพ้ ลองเริ่มประลองใหม่อีกครั้ง'}
+          {matchOver === 'win' ? t.mgRpsMatchWin : t.mgRpsMatchLose}
         </div>
       )}
 
@@ -187,7 +187,7 @@ const RPSGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({ onWin, o
       {matchOver && (
         <div className="row center" style={{ marginTop: '0.45rem' }}>
           <button type="button" className="btn ghost" onClick={handleResetMatch}>
-            <span>🔄 เริ่มประลองใหม่ (ชิง 2 แต้ม)</span>
+            <span>{t.mgRpsReset}</span>
           </button>
         </div>
       )}
@@ -207,6 +207,7 @@ const WhackMoleGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
   onWin,
   onLose,
 }) => {
+  const { t, format } = useLanguage();
   const [activeItem, setActiveItem] = useState<ActiveItem | null>(null);
   const [score, setScore] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(7);
@@ -299,13 +300,13 @@ const WhackMoleGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
   return (
     <div className="mini-game-container mole-container">
       <div className="mini-game-header-row">
-        <h4 className="mini-game-heading">ตีภูตนำโชคศาลเจ้า</h4>
+        <h4 className="mini-game-heading">{t.mgMoleTitle}</h4>
         <span className="status-badge timer-badge">
-          ⏱️ เวลา: <b>{timeLeft}s</b> | แต้ม: <b>{score}/{TARGET_HITS}</b>
+          <b>{format(t.mgMoleStatus, { time: timeLeft, score, target: TARGET_HITS })}</b>
         </span>
       </div>
       <p className="mini-game-sub">
-        ตีภูตทอง 👻 ให้ครบ <b>{TARGET_HITS} ครั้ง</b> ใน <b>{TIME_LIMIT}s</b> (ระวัง! ห้ามแตะกะโหลก 💀 จะเสียแต้ม)
+        {format(t.mgMoleSub, { target: TARGET_HITS, time: TIME_LIMIT })}
       </p>
 
       <div className="mole-grid">
@@ -318,7 +319,7 @@ const WhackMoleGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
               className={`mole-pot ${isCurrent ? 'has-mole' : ''}`}
               onClick={() => handleHit(i)}
               disabled={!gameRunning}
-              aria-label={`กระถางใบที่ ${i + 1}`}
+              aria-label={format(t.mgMolePotAria, { index: i + 1 })}
             >
               <span className="pot-rim">🏺</span>
               {isCurrent && (
@@ -334,8 +335,8 @@ const WhackMoleGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
       {gameOverResult && (
         <div className={`mini-game-result-msg msg-${gameOverResult}`}>
           {gameOverResult === 'win'
-            ? '🎉 ตีภูตครบ 5 ตัวสำเร็จตามเวลา! เพลิงไหม้ยันต์เพิ่ม +1 ส่วน!'
-            : '⏰ หมดเวลา! ยังตีไม่ครบ 5 ตัว ลองกดเริ่มใหม่อีกครั้ง'}
+            ? format(t.mgMoleWin, { target: TARGET_HITS })
+            : format(t.mgMoleLose, { target: TARGET_HITS })}
         </div>
       )}
 
@@ -346,7 +347,7 @@ const WhackMoleGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
           onClick={startGame}
           disabled={gameRunning}
         >
-          {gameRunning ? 'กำลังเล่น...' : score === 0 ? '▶ เริ่มตีภูต' : '🔄 เล่นใหม่อีกครั้ง'}
+          {gameRunning ? t.mgMolePlaying : score === 0 ? t.mgMoleStart : t.mgMoleReplay}
         </button>
       </div>
     </div>
@@ -360,6 +361,7 @@ const TicTacToeGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
   onWin,
   onLose,
 }) => {
+  const { t, format } = useLanguage();
   type Cell = 'O' | 'X' | null;
   const [board, setBoard] = useState<Cell[]>(Array(9).fill(null));
   const [winner, setWinner] = useState<'O' | 'X' | 'draw' | null>(null);
@@ -487,13 +489,13 @@ const TicTacToeGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
   return (
     <div className="mini-game-container ox-container">
       <div className="mini-game-header-row">
-        <h4 className="mini-game-heading">เกม OX (คุณคือ ⭕)</h4>
+        <h4 className="mini-game-heading">{t.mgOxTitle}</h4>
         <span className="status-badge ox-badge">
-          {winner ? 'จบเกม' : isAiTurn ? 'ศาลเจ้ากำลังคิด...' : 'ตาของคุณ'}
+          {winner ? t.mgOxOver : isAiTurn ? t.mgOxAiTurn : t.mgOxYourTurn}
         </span>
       </div>
       <p className="mini-game-sub">
-        ศาลเจ้าเล่นเชิงกลยุทธ์! เรียง ⭕ ให้ได้ 3 ช่องแนวนอน แนวตั้ง หรือแนวทแยงเพื่อเอาชนะ ❌
+        {t.mgOxSub}
       </p>
 
       <div className="ox-grid">
@@ -504,7 +506,7 @@ const TicTacToeGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
             className={`ox-cell ${cell ? `cell-${cell.toLowerCase()}` : ''}`}
             onClick={() => handleCellClick(idx)}
             disabled={Boolean(cell || winner || isAiTurn)}
-            aria-label={`ช่องที่ ${idx + 1} ${cell ? cell : 'ว่าง'}`}
+            aria-label={format(t.mgOxCellAria, { index: idx + 1, state: cell ? cell : t.mgOxEmpty })}
           >
             {cell === 'O' && <span className="ox-symbol ox-o">⭕</span>}
             {cell === 'X' && <span className="ox-symbol ox-x">❌</span>}
@@ -518,15 +520,15 @@ const TicTacToeGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
             winner === 'O' ? 'win' : winner === 'X' ? 'lose' : 'draw'
           }`}
         >
-          {winner === 'O' && '🎉 สุดยอด! คุณเอาชนะ OX ศาลเจ้าได้! เพลิงเผายันต์เพิ่มขึ้น +1 ส่วน!'}
-          {winner === 'X' && '🏮 ศาลเจ้าชนะ! ยันต์ยังไม่ไหม้ ลองวางหมากใหม่อีกครั้ง'}
-          {winner === 'draw' && '🤝 เสมอกัน! กลยุทธ์เสมอกัน ลองวางหมากใหม่อีกตาเพื่อเอาชนะ'}
+          {winner === 'O' && t.mgOxWin}
+          {winner === 'X' && t.mgOxLose}
+          {winner === 'draw' && t.mgOxDraw}
         </div>
       )}
 
       <div className="row center" style={{ marginTop: '0.4rem' }}>
         <button type="button" className="btn ghost" onClick={resetGame}>
-          <span>🔄 เริ่มเกม OX ใหม่</span>
+          <span>{t.mgOxReset}</span>
         </button>
       </div>
     </div>
@@ -536,27 +538,35 @@ const TicTacToeGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
 /* =========================================================================
    4. AUSPICIOUS IMAGE MATCHING GAME (จับคู่ภาพมงคล - เพิ่มความยาก 6 คู่ 12 ใบ แข่งเวลา 22 วินาที)
    ========================================================================= */
+type MatchLabelKey =
+  | 'mgMatchItemLantern'
+  | 'mgMatchItemCoin'
+  | 'mgMatchItemLotus'
+  | 'mgMatchItemElephant'
+  | 'mgMatchItemBell'
+  | 'mgMatchItemCandle';
+
 interface MatchCard {
   id: number;
   symbol: string;
-  name: string;
+  labelKey: MatchLabelKey;
   pairKey: string;
 }
 
-const MATCH_ITEMS_HARD = [
-  { symbol: '🏮', name: 'โคมมงคล', pairKey: 'lantern' },
-  { symbol: '🪙', name: 'เหรียญทอง', pairKey: 'coin' },
-  { symbol: '🪷', name: 'ดอกบัว', pairKey: 'lotus' },
-  { symbol: '🐘', name: 'ช้างแก้ว', pairKey: 'elephant' },
-  { symbol: '🔔', name: 'ระฆังทอง', pairKey: 'bell' },
-  { symbol: '🕯️', name: 'เทียนชัย', pairKey: 'candle' },
+const MATCH_ITEMS_HARD: { symbol: string; labelKey: MatchLabelKey; pairKey: string }[] = [
+  { symbol: '🏮', labelKey: 'mgMatchItemLantern', pairKey: 'lantern' },
+  { symbol: '🪙', labelKey: 'mgMatchItemCoin', pairKey: 'coin' },
+  { symbol: '🪷', labelKey: 'mgMatchItemLotus', pairKey: 'lotus' },
+  { symbol: '🐘', labelKey: 'mgMatchItemElephant', pairKey: 'elephant' },
+  { symbol: '🔔', labelKey: 'mgMatchItemBell', pairKey: 'bell' },
+  { symbol: '🕯️', labelKey: 'mgMatchItemCandle', pairKey: 'candle' },
 ];
 
 const shuffleHardMatchCards = (): MatchCard[] => {
   const deck: MatchCard[] = [];
   MATCH_ITEMS_HARD.forEach((item, index) => {
-    deck.push({ id: index * 2, symbol: item.symbol, name: item.name, pairKey: item.pairKey });
-    deck.push({ id: index * 2 + 1, symbol: item.symbol, name: item.name, pairKey: item.pairKey });
+    deck.push({ id: index * 2, symbol: item.symbol, labelKey: item.labelKey, pairKey: item.pairKey });
+    deck.push({ id: index * 2 + 1, symbol: item.symbol, labelKey: item.labelKey, pairKey: item.pairKey });
   });
   // Fisher-Yates shuffle
   for (let i = deck.length - 1; i > 0; i--) {
@@ -567,6 +577,7 @@ const shuffleHardMatchCards = (): MatchCard[] => {
 };
 
 const AuspiciousMatchGame: React.FC<{ onWin: () => void; onLose?: () => void }> = ({ onWin, onLose }) => {
+  const { t, format } = useLanguage();
   const [cards, setCards] = useState<MatchCard[]>(() => shuffleHardMatchCards());
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [matchedKeys, setMatchedKeys] = useState<string[]>([]);
@@ -688,13 +699,13 @@ const AuspiciousMatchGame: React.FC<{ onWin: () => void; onLose?: () => void }> 
   return (
     <div className="mini-game-container match-container">
       <div className="mini-game-header-row">
-        <h4 className="mini-game-heading">เกมจับคู่ภาพมงคล</h4>
+        <h4 className="mini-game-heading">{t.mgMatchTitle}</h4>
         <span className={`status-badge timer-badge ${timeLeft <= 6 ? 'timer-danger' : ''}`}>
-          ⏱️ เวลา: <b>{timeLeft}s</b> | คู่: <b>{matchedKeys.length}/{MATCH_ITEMS_HARD.length}</b>
+          <b>{format(t.mgMatchStatus, { time: timeLeft, matched: matchedKeys.length, total: MATCH_ITEMS_HARD.length })}</b>
         </span>
       </div>
       <p className="mini-game-sub">
-        จับคู่ภาพมงคลให้ครบทั้ง <b>{MATCH_ITEMS_HARD.length} คู่</b> (12 ใบ) ภายใน <b>22 วินาที</b>!
+        {format(t.mgMatchSub, { total: MATCH_ITEMS_HARD.length, time: 22 })}
       </p>
 
       {/* 4x3 Match Cards Grid */}
@@ -702,6 +713,7 @@ const AuspiciousMatchGame: React.FC<{ onWin: () => void; onLose?: () => void }> 
         {cards.map((card, idx) => {
           const isFlipped = flippedIndices.includes(idx) || matchedKeys.includes(card.pairKey);
           const isMatched = matchedKeys.includes(card.pairKey);
+          const cardLabel = t[card.labelKey];
 
           return (
             <button
@@ -710,7 +722,10 @@ const AuspiciousMatchGame: React.FC<{ onWin: () => void; onLose?: () => void }> 
               className={`match-card-btn ${isFlipped ? 'is-flipped' : ''} ${isMatched ? 'is-matched' : ''}`}
               onClick={() => handleCardClick(idx)}
               disabled={isFlipped || isLocked || timeUp}
-              aria-label={`การ์ดใบที่ ${idx + 1} ${isFlipped ? card.name : 'คว่ำอยู่'}`}
+              aria-label={format(t.mgMatchCardAria, {
+                index: idx + 1,
+                state: isFlipped ? cardLabel : t.mgMatchFaceDown,
+              })}
             >
               <div className="match-card-inner">
                 {/* Back (Facing down) */}
@@ -720,7 +735,7 @@ const AuspiciousMatchGame: React.FC<{ onWin: () => void; onLose?: () => void }> 
                 {/* Front (Facing up) */}
                 <div className="match-card-face match-card-front">
                   <span className="card-symbol-icon">{card.symbol}</span>
-                  <span className="card-symbol-label">{card.name}</span>
+                  <span className="card-symbol-label">{cardLabel}</span>
                 </div>
               </div>
             </button>
@@ -730,19 +745,19 @@ const AuspiciousMatchGame: React.FC<{ onWin: () => void; onLose?: () => void }> 
 
       {isWon && (
         <div className="mini-game-result-msg msg-win">
-          🎉 ยอดเยี่ยม! จับคู่ครบทั้ง 6 คู่ทันเวลา! เพลิงเผายันต์เพิ่มขึ้น +1 ส่วน!
+          {format(t.mgMatchWin, { total: MATCH_ITEMS_HARD.length })}
         </div>
       )}
 
       {timeUp && !isWon && (
         <div className="mini-game-result-msg msg-lose">
-          ⏰ หมดเวลา! ยังจับคู่ไม่ครบทั้ง 6 คู่ กดเริ่มใหม่เพื่อลองอีกครั้ง
+          {format(t.mgMatchLose, { total: MATCH_ITEMS_HARD.length })}
         </div>
       )}
 
       <div className="row center" style={{ marginTop: '0.45rem' }}>
         <button type="button" className="btn ghost" onClick={handleRestart}>
-          <span>🔄 สับการ์ดใหม่ (รีเซ็ตเวลา 22s)</span>
+          <span>{t.mgMatchReset}</span>
         </button>
       </div>
     </div>
@@ -756,6 +771,7 @@ const DemonCardGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
   onWin,
   onLose,
 }) => {
+  const { t, format } = useLanguage();
   // 4 cards: 2 are Blessing (✨), 2 are Demon (👹) - 50/50 chance
   const generateDeck = () => {
     const deck = [false, false, true, true]; // true = demon, false = blessing
@@ -796,14 +812,13 @@ const DemonCardGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
   return (
     <div className="mini-game-container demon-container">
       <div className="mini-game-header-row">
-        <h4 className="mini-game-heading">เปิดไพ่หลบปิศาจ (มี 4 ใบ)</h4>
+        <h4 className="mini-game-heading">{t.mgDemonTitle}</h4>
         <span className="status-badge demon-badge">
-          {revealed ? (result === 'win' ? '🎉 ได้รับพร' : '👹 โดนปิศาจ') : 'เลือกไพ่ 1 ใบ'}
+          {revealed ? (result === 'win' ? t.mgDemonWon : t.mgDemonLost) : t.mgDemonPick}
         </span>
       </div>
       <p className="mini-game-sub">
-        มีไพ่ 4 ใบ: <b>2 ใบเป็นพรเทพเจ้า ✨</b> และ <b>2 ใบเป็นปิศาจร้าย 👹</b>{' '}
-        เปิดให้ได้พรเพื่อจุดไฟเผายันต์!
+        {t.mgDemonSub}
       </p>
 
       <div className="demon-cards-row demon-4-cards">
@@ -825,17 +840,17 @@ const DemonCardGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
                 {/* Back Face (Card Cover) */}
                 <div className="demon-card-back">
                   <span className="card-cover-seal">🎴</span>
-                  <span className="card-cover-num">ใบที่ {idx + 1}</span>
+                  <span className="card-cover-num">{format(t.mgDemonCardNum, { index: idx + 1 })}</span>
                 </div>
 
                 {/* Front Face (Revealed Blessing or Demon) */}
                 <div className={`demon-card-front ${isDemon ? 'front-demon' : 'front-blessing'}`}>
                   <span className="card-reveal-icon">{isDemon ? '👹' : '✨'}</span>
                   <span className="card-reveal-title">
-                    {isDemon ? 'ปิศาจ!' : 'พรเทพเจ้า'}
+                    {isDemon ? t.mgDemonName : t.mgDemonBlessingName}
                   </span>
                   <span className="card-reveal-sub">
-                    {isDemon ? 'แพ้ในตานี้' : 'ชนะแล้ว!'}
+                    {isDemon ? t.mgDemonSubLose : t.mgDemonSubWin}
                   </span>
                 </div>
               </div>
@@ -846,16 +861,14 @@ const DemonCardGame: React.FC<{ onWin: () => void; onLose: () => void }> = ({
 
       {result && (
         <div className={`mini-game-result-msg msg-${result}`}>
-          {result === 'win'
-            ? '🎉 เปิดได้พรเทพเจ้า! คุณชนะบททดสอบ! เพลิงเผายันต์เพิ่ม +1 ส่วน!'
-            : '👹 เจอปิศาจดักจับ! ตานี้แพ้ ไฟจึงยังไม่ลาม ลองแก้มือใหม่'}
+          {result === 'win' ? t.mgDemonMsgWin : t.mgDemonMsgLose}
         </div>
       )}
 
       {revealed && (
         <div className="row center" style={{ marginTop: '0.45rem' }}>
           <button type="button" className="btn ghost" onClick={handlePlayAgain}>
-            <span>🔄 สับไพ่อีกรอบ</span>
+            <span>{t.mgDemonReset}</span>
           </button>
         </div>
       )}
@@ -870,20 +883,21 @@ export const LuckyMiniGames: React.FC<LuckyMiniGamesProps> = ({
   onWin,
   onLose,
 }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<MiniGameType>('rps');
 
   const tabs: { id: MiniGameType; name: string }[] = [
-    { id: 'rps', name: 'เป่ายิ้งฉุบ' },
-    { id: 'mole', name: 'ตีภูต' },
-    { id: 'ox', name: 'OX' },
-    { id: 'match', name: 'จับคู่' },
-    { id: 'demon', name: 'ไพ่ปิศาจ' },
+    { id: 'rps', name: t.mgTabRps },
+    { id: 'mole', name: t.mgTabMole },
+    { id: 'ox', name: t.mgTabOx },
+    { id: 'match', name: t.mgTabMatch },
+    { id: 'demon', name: t.mgTabDemon },
   ];
 
   return (
     <div className="lucky-minigames-section">
       {/* 5 Mini-Game Selector Tabs: Centered text without emojis */}
-      <div className="minigame-tab-bar" role="tablist" aria-label="เลือกมินิเกม">
+      <div className="minigame-tab-bar" role="tablist" aria-label={t.mgTabListAria}>
         {tabs.map((tab) => (
           <button
             key={tab.id}

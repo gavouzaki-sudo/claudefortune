@@ -303,3 +303,270 @@ export const ZODIAC_SYSTEMS: ZodiacSystem[] = [
     },
   },
 ];
+
+import type { SupportedLang } from './translations';
+
+export const GATE_SYSTEM_NODES: Record<
+  string,
+  {
+    label: Record<SupportedLang, string>;
+    sub: Record<SupportedLang, string>;
+  }
+> = {
+  western: {
+    label: { th: 'ยุโรป / สากล', en: 'Western Astrology', zh: '西方星象' },
+    sub: { th: '12 จักรราศี', en: '12 Zodiac Signs', zh: '十二星座' },
+  },
+  native_american: {
+    label: { th: 'อินเดียแดง', en: 'Native American', zh: '印第安图腾' },
+    sub: { th: 'โทเท็มสัตว์วิญญาณ', en: 'Spirit Totems', zh: '自然灵兽' },
+  },
+  vedic: {
+    label: { th: 'อินเดีย', en: 'Vedic Jyotish', zh: '印度吠陀' },
+    sub: { th: 'โหราศาสตร์พระเวท', en: '12 Rashis', zh: '吠陀十二宫' },
+  },
+  islamic: {
+    label: { th: 'อิสลาม / อาหรับ', en: 'Islamic / Arabic', zh: '阿拉伯星宿' },
+    sub: { th: '12 บุรุจดวงดาว', en: '12 Celestial Buruj', zh: '十二天宫' },
+  },
+  burmese: {
+    label: { th: 'พม่า', en: 'Burmese Mahabote', zh: '缅甸八宿' },
+    sub: { th: 'มหาภูติ 8 สัตว์', en: '8 Guardian Beasts', zh: '八曜神兽' },
+  },
+  aztec_mayan: {
+    label: { th: 'แอซเท็ก / มายา', en: 'Aztec & Mayan', zh: '阿兹特克玛雅' },
+    sub: { th: 'ปฏิทินสุริยะ', en: 'Solar Tonalpohualli', zh: '太阳圣历' },
+  },
+  vietnamese: {
+    label: { th: 'เวียดนาม', en: 'Vietnamese Chi', zh: '越南生肖' },
+    sub: { th: '12 สัตว์ศักดิ์สิทธิ์', en: '12 Sacred Beasts', zh: '十二圣兽（含猫）' },
+  },
+  egyptian: {
+    label: { th: 'อียิปต์โบราณ', en: 'Ancient Egyptian', zh: '古埃及神祇' },
+    sub: { th: 'ทวยเทพแห่งไนล์', en: 'Gods of the Nile', zh: '尼罗河众神' },
+  },
+  thai: {
+    label: { th: 'ไทย', en: 'Thai / Lanna', zh: '泰国暹罗生肖' },
+    sub: { th: '12 นักษัตรสยาม', en: '12 Siamese Naksat', zh: '暹罗十二生肖' },
+  },
+  chinese: {
+    label: { th: 'จีน', en: 'Chinese Zodiac', zh: '中国生肖' },
+    sub: { th: '12 นักษัตรมังกรฟ้า', en: '12 Celestial Animals', zh: '天干地支十二生肖' },
+  },
+};
+
+export const ZODIAC_SYSTEM_LOCALES: Record<
+  string,
+  {
+    name: Record<SupportedLang, string>;
+    region: Record<SupportedLang, string>;
+  }
+> = {
+  chinese: {
+    name: { th: 'จีน (นักษัตร 12 ราศี)', en: 'Chinese Zodiac (12 Animals)', zh: '中国传统十二生肖' },
+    region: { th: 'เอเชียตะวันออก', en: 'East Asia', zh: '东亚' },
+  },
+  western: {
+    name: { th: 'ยุโรป / สากล (12 จักรราศี)', en: 'Western Astrology (12 Signs)', zh: '西方古典十二星座' },
+    region: { th: 'ยุโรปและเมดิเตอร์เรเนียน', en: 'Europe & Mediterranean', zh: '欧洲与地中海' },
+  },
+  thai: {
+    name: { th: 'ไทย (12 นักษัตรสยาม-ล้านนา)', en: 'Thai / Lanna Zodiac (12 Naksat)', zh: '泰国暹罗·兰纳十二生肖' },
+    region: { th: 'เอเชียอาคเนย์', en: 'Southeast Asia', zh: '东南亚' },
+  },
+  vedic: {
+    name: { th: 'อินเดีย (โหราศาสตร์พระเวท / นวเคราะห์)', en: 'Vedic Astrology (12 Rashis)', zh: '印度吠陀占星（十二宫）' },
+    region: { th: 'เอเชียใต้ / อินเดีย', en: 'South Asia / India', zh: '南亚 / 印度' },
+  },
+  islamic: {
+    name: { th: 'อิสลาม / อาหรับ (12 บุรุจแห่งดวงดาว)', en: 'Arabic & Islamic Buruj (12 Mansions)', zh: '伊斯兰/阿拉伯十二星宫' },
+    region: { th: 'ตะวันออกกลางและอาหรับ', en: 'Middle East & Arabia', zh: '中东与阿拉伯' },
+  },
+  vietnamese: {
+    name: { th: 'เวียดนาม (12 นักษัตรเอเชียตะวันออกเฉียงใต้)', en: 'Vietnamese Zodiac (12 Chi)', zh: '越南十二地支生肖' },
+    region: { th: 'เวียดนาม', en: 'Vietnam', zh: '越南' },
+  },
+  burmese: {
+    name: { th: 'พม่า (มหาภูติ 8 สัตว์ประจำวัน)', en: 'Burmese Mahabote (8 Weekday Signs)', zh: '缅甸摩诃菩提八曜神兽' },
+    region: { th: 'พม่า / สุวรรณภูมิ', en: 'Myanmar / Suvarnabhumi', zh: '缅甸' },
+  },
+  egyptian: {
+    name: { th: 'อียิปต์โบราณ (เทพเจ้าแห่งลุ่มน้ำไนล์)', en: 'Ancient Egyptian (Deities of the Nile)', zh: '古埃及尼罗河神祇历' },
+    region: { th: 'อียิปต์โบราณ / แอฟริกาเหนือ', en: 'Ancient Egypt / North Africa', zh: '古埃及 / 北非' },
+  },
+  aztec_mayan: {
+    name: { th: 'แอซเท็กและมายา (ปฏิทินสุริยะศักดิ์สิทธิ์)', en: 'Aztec & Mayan Sacred Solar Calendar', zh: '阿兹特克与玛雅神圣太阳历' },
+    region: { th: 'เมโสอเมริกา', en: 'Mesoamerica', zh: '中美洲' },
+  },
+  native_american: {
+    name: { th: 'ชนเผ่าอินเดียแดง (โทเท็มวิญญาณแห่งธรรมชาติ)', en: 'Native American Medicine Wheel Totems', zh: '北美印第安自然灵兽图腾' },
+    region: { th: 'อเมริกาเหนือ', en: 'North America', zh: '北美' },
+  },
+};
+
+const SYSTEM_ITEM_NAMES_EN: Record<string, readonly string[]> = {
+  chinese: [
+    'Rat (Zi)', 'Ox (Chou)', 'Tiger (Yin)', 'Rabbit (Mao)', 'Dragon (Chen)', 'Snake (Si)',
+    'Horse (Wu)', 'Goat (Wei)', 'Monkey (Shen)', 'Rooster (You)', 'Dog (Xu)', 'Pig (Hai)',
+  ],
+  western: [
+    'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces',
+  ],
+  thai: [
+    'Chuat (Golden Rat)', 'Chalu (Royal Ox)', 'Khan (Sacred Tiger)', 'Tho (Moon Rabbit)',
+    'Marong (Naga King)', 'Maseng (Jewel Serpent)', 'Mamia (Celestial Horse)', 'Mamae (Golden Goat)',
+    'Wok (Hanuman Monkey)', 'Raka (Sarika Rooster)', 'Cho (Guardian Hound)', 'Kun (Auspicious White Elephant)',
+  ],
+  vedic: [
+    'Mesha (Agni Aries)', 'Vrishabha (Surabhi Taurus)', 'Mithuna (Gemini)', 'Karka (Chandra Cancer)',
+    'Simha (Narasimha Leo)', 'Kanya (Lakshmi Virgo)', 'Tula (Dharma Libra)', 'Vrishchika (Scorpio)',
+    'Dhanu (Brihaspati Sagittarius)', 'Makara (Varuna Capricorn)', 'Kumbha (Amrita Aquarius)', 'Meena (Matsya Pisces)',
+  ],
+  islamic: [
+    'Al-Hamal (Aries)', 'Al-Thawr (Taurus)', 'Al-Jawza (Gemini)', 'Al-Saratan (Cancer)',
+    'Al-Asad (Leo)', 'Al-Sunbula (Virgo)', 'Al-Mizan (Libra)', 'Al-Aqrab (Scorpio)',
+    'Al-Qaws (Sagittarius)', 'Al-Jady (Capricorn)', 'Al-Dalw (Aquarius)', 'Al-Hut (Pisces)',
+  ],
+  vietnamese: [
+    'Ty (Clever Rat)', 'Suu (Water Buffalo)', 'Dan (Noble Tiger)', 'Mao (Lucky Cat)',
+    'Thin (Halong Dragon)', 'Ty (Auspicious Snake)', 'Ngo (Swift Horse)', 'Mui (Mountain Goat)',
+    'Than (Wise Monkey)', 'Dau (Dawn Rooster)', 'Tuat (Loyal Dog)', 'Hoi (Prosperous Pig)',
+  ],
+  burmese: [
+    'Sunday (Galon Garuda)', 'Monday (Graceful Tiger)', 'Tuesday (Chinthe Lion)', 'Wednesday AM (Tusked Elephant)',
+    'Wednesday PM / Rahu (Tuskless Elephant)', 'Thursday (Swift Rat)', 'Friday (Guinea Pig)', 'Saturday (Royal Naga)',
+    'Waning Sunday (Golden Garuda)', 'Full Monday (White Guardian Tiger)', 'Great Thursday (Fortune Rat)', 'Night Saturday (Emerald Naga)',
+  ],
+  egyptian: [
+    'The Nile (Hapi)', 'Amon-Ra', 'Mut', 'Geb', 'Osiris', 'Isis',
+    'Thoth', 'Horus', 'Anubis', 'Set', 'Bastet', 'Sekhmet',
+  ],
+  aztec_mayan: [
+    'Cipactli / Imix', 'Ehecatl / Ik', 'Calli / Akbal', 'Cuetzpalin / Kan',
+    'Coatl / Chicchan', 'Miquiztli / Cimi', 'Mazatl / Manik', 'Tochtli / Lamat',
+    'Atl / Muluc', 'Ocelotl / Ix', 'Cuauhtli / Men', 'Xochitl / Ahau',
+  ],
+  native_american: [
+    'Snow Goose', 'Otter', 'Wolf', 'Red Hawk', 'Beaver', 'Deer',
+    'Woodpecker', 'Sturgeon', 'Brown Bear', 'Raven', 'Snake', 'Owl',
+  ],
+};
+
+const SYSTEM_ITEM_NAMES_ZH: Record<string, readonly string[]> = {
+  chinese: [
+    '子鼠', '丑牛', '寅虎', '卯兔', '辰龙', '巳蛇',
+    '午马', '未羊', '申猴', '酉鸡', '戌狗', '亥猪',
+  ],
+  western: [
+    '白羊座', '金牛座', '双子座', '巨蟹座', '狮子座', '处女座',
+    '天秤座', '天蝎座', '射手座', '摩羯座', '水瓶座', '双鱼座',
+  ],
+  thai: [
+    '子鼠 · 金鼠瑞兆', '丑牛 · 御牛神牛', '寅虎 · 威猛圣虎', '卯兔 · 玉兔迎月',
+    '辰龙 · 纳迦龙王', '巳蛇 · 灵宝金蛇', '午马 · 天马骏骥', '未羊 · 聚宝金羊',
+    '申猴 · 哈奴曼神猴', '酉鸡 · 吉祥金鸡', '戌狗 · 镇宅灵犬', '亥象 · 兰纳吉祥白象',
+  ],
+  vedic: [
+    '白羊宫 (Mesha)', '金牛宫 (Vrishabha)', '双子宫 (Mithuna)', '巨蟹宫 (Karka)',
+    '狮子宫 (Simha)', '处女宫 (Kanya)', '天秤宫 (Tula)', '天蝎宫 (Vrishchika)',
+    '射手宫 (Dhanu)', '摩羯宫 (Makara)', '水瓶宫 (Kumbha)', '双鱼宫 (Meena)',
+  ],
+  islamic: [
+    '白羊星宫 (Al-Hamal)', '金牛星宫 (Al-Thawr)', '双子星宫 (Al-Jawza)', '巨蟹星宫 (Al-Saratan)',
+    '狮子星宫 (Al-Asad)', '室女星宫 (Al-Sunbula)', '天秤星宫 (Al-Mizan)', '天蝎星宫 (Al-Aqrab)',
+    '人马星宫 (Al-Qaws)', '摩羯星宫 (Al-Jady)', '宝瓶星宫 (Al-Dalw)', '双鱼星宫 (Al-Hut)',
+  ],
+  vietnamese: [
+    '鼠年 (Tý)', '水牛年 (Sửu)', '虎年 (Dần)', '招财猫年 (Mão)',
+    '龙年 (Thìn)', '蛇年 (Tỵ)', '马年 (Ngọ)', '羊年 (Mùi)',
+    '猴年 (Thân)', '鸡年 (Dậu)', '犬年 (Tuất)', '猪年 (Hợi)',
+  ],
+  burmese: [
+    '周日 · 金翅鸟 (Galon)', '周一 · 瑞虎 (Kya)', '周二 · 圣狮 (Chinthe)', '周三上午 · 象王 (Hsin)',
+    '周三晚/罗睺 · 无牙圣象', '周四 · 灵鼠 (Kywe)', '周五 · 祥豚 (Puta)', '周六 · 纳迦龙 (Naga)',
+    '周日亏月 · 金羽迦楼罗', '周一满月 · 护法白虎', '周四大吉 · 聚财金鼠', '周六星夜 · 碧玉龙王',
+  ],
+  egyptian: [
+    '尼罗河神 (Hapi)', '太阳神阿蒙拉 (Amon-Ra)', '天空女神穆特 (Mut)', '大地之神盖布 (Geb)',
+    '冥王奥西里斯 (Osiris)', '魔法女神伊西斯 (Isis)', '智慧神托特 (Thoth)', '鹰神荷鲁斯 (Horus)',
+    '冥界守护阿努比斯 (Anubis)', '风暴之神赛特 (Set)', '猫神巴斯特 (Bastet)', '狮首战神塞赫迈特 (Sekhmet)',
+  ],
+  aztec_mayan: [
+    '太初鳄神 (Cipactli)', '天风羽神 (Ehecatl)', '太阳圣殿 (Calli)', '烈阳灵蜥 (Cuetzpalin)',
+    '羽蛇神 (Quetzalcoatl)', '蜕变灵骷 (Miquiztli)', '圣林神鹿 (Mazatl)', '月宫玉兔 (Tochtli)',
+    '圣水甘霖 (Atl)', '夜行美洲豹 (Ocelotl)', '太阳金鹰 (Cuauhtli)', '天堂花环 (Xochitl)',
+  ],
+  native_american: [
+    '雪雁图腾 (Snow Goose)', '水獭图腾 (Otter)', '灵狼图腾 (Wolf)', '红鹰图腾 (Red Hawk)',
+    '河狸图腾 (Beaver)', '森鹿图腾 (Deer)', '啄木鸟图腾 (Woodpecker)', '鲟鱼图腾 (Sturgeon)',
+    '棕熊图腾 (Brown Bear)', '渡鸦图腾 (Raven)', '圣蛇图腾 (Snake)', '夜鸮图腾 (Owl)',
+  ],
+};
+
+function translateElementString(el: string, lang: SupportedLang): string {
+  if (lang === 'th') return el;
+  const s = el.toLowerCase();
+  if (s.includes('ไฟ') || s.includes('อัคนี') || s.includes('สุริย') || s.includes('เตชัส')) {
+    return lang === 'en' ? 'Fire' : '火行';
+  }
+  if (s.includes('น้ำ') || s.includes('วารี')) {
+    return lang === 'en' ? 'Water' : '水行';
+  }
+  if (s.includes('ดิน') || s.includes('ปฐพี') || s.includes('ปฤถวี')) {
+    return lang === 'en' ? 'Earth' : '土行';
+  }
+  if (s.includes('ลม') || s.includes('วายุ')) {
+    return lang === 'en' ? 'Air / Wind' : '风行';
+  }
+  if (s.includes('ไม้')) {
+    return lang === 'en' ? 'Wood' : '木行';
+  }
+  if (s.includes('ทอง') || s.includes('โลหะ')) {
+    return lang === 'en' ? 'Metal / Gold' : '金行';
+  }
+  return lang === 'en' ? 'Celestial Spirit' : '圣灵五行';
+}
+
+export function getLocalizedZodiacSystem(
+  sys: ZodiacSystem,
+  lang: SupportedLang
+): { name: string; region: string } {
+  if (lang === 'th') {
+    return { name: sys.name, region: sys.region };
+  }
+  const loc = ZODIAC_SYSTEM_LOCALES[sys.id];
+  if (!loc) return { name: sys.name, region: sys.region };
+  return {
+    name: loc.name[lang],
+    region: loc.region[lang],
+  };
+}
+
+export function getLocalizedZodiacItem(
+  item: ZodiacItem,
+  systemId: string,
+  lang: SupportedLang
+): { name: string; primaryLabel: string; secondaryLabel: string | null; element: string } {
+  if (lang === 'th') {
+    const primary = item.origName || item.name;
+    const secondary = item.origName && item.name !== item.origName ? item.name : null;
+    return {
+      name: item.name,
+      primaryLabel: primary,
+      secondaryLabel: secondary,
+      element: item.element,
+    };
+  }
+  const list = lang === 'en' ? SYSTEM_ITEM_NAMES_EN[systemId] : SYSTEM_ITEM_NAMES_ZH[systemId];
+  const localizedName = list?.[item.id] || item.origName || item.name;
+  const primary = item.origName || localizedName;
+  const secondary = item.origName && localizedName !== item.origName ? localizedName : null;
+  return {
+    name: localizedName,
+    primaryLabel: primary,
+    secondaryLabel: secondary,
+    element: translateElementString(item.element, lang),
+  };
+}
+

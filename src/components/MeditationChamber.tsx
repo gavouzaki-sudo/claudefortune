@@ -12,8 +12,13 @@ import {
   getActiveChantId,
 } from '../utils/chantAudio';
 import { spiritualSpeechEngine } from '../utils/spiritualSpeech';
-import { MEDITATION_QUOTES_5 } from '../data/ritualProphecies';
+import {
+  getLocalizedMeditationQuote,
+  MEDITATION_QUOTES_5,
+} from '../data/ritualProphecies';
+import { getLocalizedZodiacSystem, ZODIAC_SYSTEMS } from '../data/zodiacSystems';
 import { getWeeklyProphecySetIndex } from '../utils/prophecyCycle';
+import { useLanguage } from '../context/LanguageContext';
 
 interface MeditationChamberProps {
   systemId: string;
@@ -26,6 +31,7 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
   systemName,
   onToast,
 }) => {
+  const { t, lang, format } = useLanguage();
   const [activeSoundscape, setActiveSoundscape] = useState<SoundscapeType>(
     ambientSoundEngine.getSoundscape()
   );
@@ -38,6 +44,28 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
   const [quoteIndex, setQuoteIndex] = useState<number>(() => getWeeklyProphecySetIndex());
 
   const timerRef = useRef<number | null>(null);
+  const finishedToastRef = useRef(t.medToastFinished);
+  finishedToastRef.current = t.medToastFinished;
+
+  const matchedSystem = ZODIAC_SYSTEMS.find((s) => s.id === systemId);
+  const localizedSystemName = matchedSystem
+    ? getLocalizedZodiacSystem(matchedSystem, lang).name
+    : systemName;
+
+  const getSoundscapeText = (id: SoundscapeType, fallbackTitle: string, fallbackSub: string, fallbackDesc: string) => {
+    switch (id) {
+      case 'bamboo_chime':
+        return { title: t.medSoundBambooTitle, subtitle: t.medSoundBambooSub, description: t.medSoundBambooDesc };
+      case 'temple_rain':
+        return { title: t.medSoundRainTitle, subtitle: t.medSoundRainSub, description: t.medSoundRainDesc };
+      case 'tibetan_bowl':
+        return { title: t.medSoundBowlTitle, subtitle: t.medSoundBowlSub, description: t.medSoundBowlDesc };
+      case 'temple_bell':
+        return { title: t.medSoundBellTitle, subtitle: t.medSoundBellSub, description: t.medSoundBellDesc };
+      default:
+        return { title: fallbackTitle, subtitle: fallbackSub, description: fallbackDesc };
+    }
+  };
 
   // Sync with global audio states
   useEffect(() => {
@@ -85,7 +113,7 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
         setTimerRemaining(0);
         setTimerSeconds(null);
         spiritualSpeechEngine.playTempleChime();
-        onToast('🔔 สิ้นสุดเวลาฝึกสมาธิ ขออนุโมทนาในกุศลจิต');
+        onToast(finishedToastRef.current);
         return;
       }
       setTimerRemaining(remaining);
@@ -101,33 +129,32 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
 
   // Audio coordination: Ensure only ONE sound plays to prevent audio clashes
   const handleSelectSoundscape = (type: SoundscapeType) => {
-    // Stop competing cultural music and TTS
     stopChant();
     spiritualSpeechEngine.stop();
 
     if (activeSoundscape === type) {
       ambientSoundEngine.setSoundscape('none');
-      onToast('ปิดเสียงบรรยากาศแล้ว');
+      onToast(t.medToastAmbientOff);
     } else {
       ambientSoundEngine.setSoundscape(type);
       const found = SOUNDSCAPES.find((s) => s.id === type);
       if (found) {
-        onToast(`🌿 เริ่มบรรเลง: ${found.title}`);
+        const loc = getSoundscapeText(found.id, found.title, found.subtitle, found.description);
+        onToast(format(t.medToastAmbientOn, { title: loc.title }));
       }
     }
   };
 
   const handlePlayCulturalMusic = () => {
-    // Stop competing soundscapes and TTS
     ambientSoundEngine.setSoundscape('none');
     spiritualSpeechEngine.stop();
 
     if (activeMusic) {
       stopChant();
-      onToast('พักการบรรเลงดนตรี');
+      onToast(t.medToastMusicOff);
     } else {
       playChant(systemId);
-      onToast(`🎵 บรรเลงดนตรีสมาธิอารยธรรม ${systemName}`);
+      onToast(format(t.medToastMusicOn, { system: localizedSystemName }));
     }
   };
 
@@ -135,7 +162,7 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
     ambientSoundEngine.setSoundscape('none');
     stopChant();
     spiritualSpeechEngine.stop();
-    onToast('🔇 ปิดเสียงทั้งหมด เข้าสู่ความสงบเงียบ');
+    onToast(t.medToastAllStopped);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,8 +172,7 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
   };
 
   const isAudioPlaying = activeSoundscape !== 'none' || !!activeMusic;
-
-  const currentQuote = MEDITATION_QUOTES_5[quoteIndex];
+  const currentQuote = getLocalizedMeditationQuote(quoteIndex, lang);
 
   return (
     <section id="meditation-chamber" className="ritual-frameless-stage meditation-stage">
@@ -156,9 +182,9 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
           <div className="lotus-glow-aura" />
           <div className="lotus-icon-center">🪷</div>
           <span className="breath-instruction">
-            {breathPhase === 'inhale' && 'หายใจเข้าลึกๆ... รับพลังบริสุทธิ์ (พุท)'}
-            {breathPhase === 'hold' && 'กลั้นลมหายใจเบาๆ... จิตนิ่งสงบ'}
-            {breathPhase === 'exhale' && 'ผ่อนลมหายใจออกช้าๆ... ปล่อยวางทุกสิ่ง (โธ)'}
+            {breathPhase === 'inhale' && t.medBreathInhale}
+            {breathPhase === 'hold' && t.medBreathHold}
+            {breathPhase === 'exhale' && t.medBreathExhale}
           </span>
         </div>
 
@@ -166,7 +192,7 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
         <div
           className="dharma-quote-box"
           onClick={() => setQuoteIndex((prev) => (prev + 1) % MEDITATION_QUOTES_5.length)}
-          title="แตะเพื่อเปลี่ยนคติธรรม"
+          title={t.medQuoteTapTitle}
         >
           <span className="quote-pali">"{currentQuote.pali}"</span>
           <span className="quote-thai">— {currentQuote.thai}</span>
@@ -176,15 +202,15 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
       {/* Soundscape Selection Cards */}
       <div className="meditation-sounds-container">
         <div className="meditation-section-title-row">
-          <h3 className="sub-title">🌿 เลือกคลื่นเสียงสมาธิ (เล่นครั้งละ 1 เสียงอย่างนุ่มนวล)</h3>
+          <h3 className="sub-title">{t.medSoundsHeading}</h3>
           {isAudioPlaying && (
             <button
               type="button"
               className="btn-stop-all-audio"
               onClick={handleStopAll}
-              title="ปิดเสียงทั้งหมดทันที"
+              title={t.medStopAllTitle}
             >
-              🔇 ปิดเสียงทั้งหมด
+              {t.medStopAllBtn}
             </button>
           )}
         </div>
@@ -192,6 +218,7 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
         <div className="meditation-sound-grid">
           {SOUNDSCAPES.filter((s) => s.id !== 'none').map((s) => {
             const isSelected = activeSoundscape === s.id;
+            const loc = getSoundscapeText(s.id, s.title, s.subtitle, s.description);
             return (
               <button
                 key={s.id}
@@ -202,13 +229,13 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
                 <div className="card-top-status">
                   <span className="sound-emoji">{s.icon}</span>
                   <span className="sound-status-tag">
-                    {isSelected ? '✓ กำลังเปิด' : 'เปิดฟัง'}
+                    {isSelected ? t.medStatusPlaying : t.medStatusListen}
                   </span>
                 </div>
-                <strong className="sound-title">{s.title}</strong>
-                <span className="sound-sub">{s.subtitle}</span>
-                <p className="sound-desc">{s.description}</p>
-                {isSelected && <span className="playing-indicator-wave">🎶 กำลังขับกล่อม</span>}
+                <strong className="sound-title">{loc.title}</strong>
+                <span className="sound-sub">{loc.subtitle}</span>
+                <p className="sound-desc">{loc.description}</p>
+                {isSelected && <span className="playing-indicator-wave">{t.medWaveIndicator}</span>}
               </button>
             );
           })}
@@ -222,15 +249,13 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
             <div className="card-top-status">
               <span className="sound-emoji">🎵</span>
               <span className="sound-status-tag">
-                {activeMusic ? '✓ กำลังบรรเลง' : 'เปิดฟัง'}
+                {activeMusic ? t.medStatusActiveMusic : t.medStatusListen}
               </span>
             </div>
-            <strong className="sound-title">ดนตรีสมาธิ ({systemName})</strong>
-            <span className="sound-sub">Procedural Melodic Harmony</span>
-            <p className="sound-desc">
-              บรรเลงเครื่องดนตรีโบราณประจำอารยธรรม เช่น ขิม ระนาดเอก หรือกู่เจิง คลอเบาๆ
-            </p>
-            {activeMusic && <span className="playing-indicator-wave">🎶 กำลังขับกล่อม</span>}
+            <strong className="sound-title">{format(t.medMusicTitle, { system: localizedSystemName })}</strong>
+            <span className="sound-sub">{t.medMusicSub}</span>
+            <p className="sound-desc">{t.medMusicDesc}</p>
+            {activeMusic && <span className="playing-indicator-wave">{t.medWaveIndicator}</span>}
           </button>
         </div>
 
@@ -238,7 +263,7 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
         {isAudioPlaying && (
           <div className="meditation-volume-bar">
             <span className="volume-label">
-              🔊 ระดับเสียง ({Math.round(volume * 100)}%):
+              {format(t.medVolumeLabel, { volume: Math.round(volume * 100) })}
             </span>
             <input
               type="range"
@@ -255,7 +280,7 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
 
       {/* Meditation Timer Options */}
       <div className="meditation-timer-section">
-        <h3 className="sub-title">⏱️ ตั้งเวลานั่งสมาธิ (พร้อมเสียงระฆังเมื่อครบเวลา)</h3>
+        <h3 className="sub-title">{t.medTimerHeading}</h3>
         <div className="timer-buttons-row">
           {[180, 300, 600].map((sec) => (
             <button
@@ -267,7 +292,7 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
                 setTimerRunId((id) => id + 1);
               }}
             >
-              {sec / 60} นาที
+              {format(t.medTimerMinuteBtn, { min: sec / 60 })}
             </button>
           ))}
           {timerSeconds !== null && (
@@ -276,14 +301,14 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
               className="btn-timer-cancel"
               onClick={() => setTimerSeconds(null)}
             >
-              ✕ ยกเลิกเวลา
+              {t.medTimerCancelBtn}
             </button>
           )}
         </div>
 
         {timerSeconds !== null && (
           <div className="timer-countdown-display">
-            <span>เวลาสมาธิที่เหลือ:</span>
+            <span>{t.medTimerRemainingLabel}</span>
             <span className="countdown-time">
               {Math.floor(timerRemaining / 60)}:
               {String(timerRemaining % 60).padStart(2, '0')}
@@ -294,3 +319,4 @@ export const MeditationChamber: React.FC<MeditationChamberProps> = ({
     </section>
   );
 };
+

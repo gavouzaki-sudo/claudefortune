@@ -2,6 +2,7 @@ import React from 'react';
 import type { Bridge } from '../bridge';
 import { SacredJourney9Game } from './SacredJourney9Game';
 import type { CardData } from '../utils/luckyCardCanvas';
+import { useLanguage } from '../context/LanguageContext';
 
 interface FestivalStageProps {
   bridge: Bridge;
@@ -16,12 +17,14 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
   onLaunchFireworks,
   onOpenCard,
 }) => {
+  const { t } = useLanguage();
+
   return (
     <div
       id="sj9-stage-root"
       className="sacred-journey-container"
       role="tabpanel"
-      aria-label="ไหว้พระขอพร มหามงคล 9 วัด"
+      aria-label={t.festStageAria}
     >
       <SacredJourney9Game
         onToast={onToast}
@@ -31,4 +34,5 @@ export const FestivalStage: React.FC<FestivalStageProps> = ({
     </div>
   );
 };
+
 

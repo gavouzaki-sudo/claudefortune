@@ -1,3 +1,5 @@
+import type { SupportedLang } from './locales/types';
+
 // 5 distinct, non-duplicate prophecy sets per ritual for weekly Mon–Sun rotation
 
 export interface TarotMeaningSet {
@@ -1142,3 +1144,382 @@ export const MEDITATION_QUOTES_5: readonly [DharmaQuoteSet, DharmaQuoteSet, Dhar
   { pali: 'สพฺเพ ตสนฺติ ทณฺฑสฺส', thai: 'สัตว์ทั้งหลายย่อมกลัวต่อความทุกข์ จงแผ่เมตตาแก่สรรพสัตว์' },
   { pali: 'อตฺตา หิ อตฺตโน นาโถ', thai: 'ตนแลเป็นที่พึ่งแห่งตน สติที่มั่นคงคือประทีปนำทาง' },
 ];
+
+// ---------------------------------------------------------------------------
+// 10. Multilingual Localization Helpers (EN & ZH) with TH Source Fallback
+// ---------------------------------------------------------------------------
+export const LOVE_FORTUNE_SETS_EN: Record<'single' | 'crush' | 'couple', readonly [LoveReadingSet, LoveReadingSet, LoveReadingSet, LoveReadingSet, LoveReadingSet]> = {
+  single: [
+    {
+      status: 'Single',
+      verdict: 'True romance is blooming like a lotus at dawn',
+      score: 88,
+      prediction: 'A destined connection may arrive through your work or a meaningful journey, bringing warmth and wisdom to your heart.',
+      soulmateElement: 'Water / Air Element',
+      soulmateTrait: 'Polite, gentle, warm-hearted, with a reassuring smile and attentive listening.',
+      mantra: 'Om Namo Buddhaya Metta-Jittam Piyam Mama',
+    },
+    {
+      status: 'Single',
+      verdict: 'Moonlight guides the person you have awaited toward you',
+      score: 93,
+      prediction: 'A bond rooted in genuine friendship will steadily deepen into lasting affection. Open your heart to new encounters.',
+      soulmateElement: 'Gold / Fire Element',
+      soulmateTrait: 'Passionate, sincere, natural leader who stands faithfully beside you.',
+      mantra: 'Na Metta Mo Karuna Phut Prani Tha Yindi Ya Endu',
+    },
+    {
+      status: 'Single',
+      verdict: 'Your magnetic aura shines like the full moon',
+      score: 85,
+      prediction: 'Someone nearby quietly admires you. Do not close off your feelings—offer a warm smile and let conversation begin.',
+      soulmateElement: 'Earth / Wood Element',
+      soulmateTrait: 'Steadfast, consistent, understated yet deeply loyal and dependable.',
+      mantra: 'Chandra Metta Piyam Piyamama Sukho Hotu',
+    },
+    {
+      status: 'Single',
+      verdict: 'Karmic affinity crosses paths through merit and true friends',
+      score: 90,
+      prediction: 'A close friend or respected elder may introduce someone kind-hearted and aligned with your values, bringing peace of mind.',
+      soulmateElement: 'Wood / Water Element',
+      soulmateTrait: 'Compassionate, family-oriented, thoughtful, and eager to grow together.',
+      mantra: 'Mettanca Sabba-Lokasmim Manasam Bhavaye Aparimanam',
+    },
+    {
+      status: 'Single',
+      verdict: 'Radiate self-love and your true match will follow',
+      score: 86,
+      prediction: 'Caring for your wellbeing and passions attracts a worthy partner. Never settle out of loneliness—the right one is on their way.',
+      soulmateElement: 'Fire / Earth Element',
+      soulmateTrait: 'Honest, humorous, respectful of your boundaries and personal growth.',
+      mantra: 'Piyamama Mamapiyam Sukham Bhavantu Me',
+    },
+  ],
+  crush: [
+    {
+      status: 'Secret Crush',
+      verdict: 'Hearts resonate in harmony like ripples on calm water',
+      score: 91,
+      prediction: 'The person on your mind is also quietly noticing your charm. Clearer positive signals will surface soon—spark a chat about their interests.',
+      soulmateElement: 'Water / Gold Element',
+      soulmateTrait: 'Eyes light up when sharing passions, paired with deep emotional empathy.',
+      mantra: 'Itipiso Bhagava Mettanca Sabba-Lokasmim',
+    },
+    {
+      status: 'Secret Crush',
+      verdict: 'An enchanted thread of destiny draws you closer',
+      score: 82,
+      prediction: 'Patience and mutual respect will transform shy hesitation into a steady bond. Stay authentic and let sincerity shine.',
+      soulmateElement: 'Air / Fire Element',
+      soulmateTrait: 'Witty conversationalist with gentle humor who puts you at ease.',
+      mantra: 'Piyo Deva-Manussanam Piyo Brahmanamuttamo',
+    },
+    {
+      status: 'Secret Crush',
+      verdict: 'Gentle drops carve stone—affection grows steadily',
+      score: 87,
+      prediction: 'Consistent kindness and thoughtful small gestures are leaving a deep impression. Give time space to work its quiet magic.',
+      soulmateElement: 'Earth / Water Element',
+      soulmateTrait: 'Careful and reserved at first, yet wholeheartedly devoted once trusting.',
+      mantra: 'Na Jittam Buddha-Jittam Mamapiyam Bhavantu Me',
+    },
+    {
+      status: 'Secret Crush',
+      verdict: 'A golden chance for closer collaboration or heart-to-heart talk',
+      score: 94,
+      prediction: 'Timing opens an opportunity to converse meaningfully. Listen with genuine care and your warmth will naturally win them over.',
+      soulmateElement: 'Gold / Wood Element',
+      soulmateTrait: 'Articulate, principled, and drawn to people who understand their life vision.',
+      mantra: 'Ehi Piyam Mama Jittam Samagamam',
+    },
+    {
+      status: 'Secret Crush',
+      verdict: 'Keep inner balance and clarity will soon reveal itself',
+      score: 80,
+      prediction: 'The connection is still in a quiet testing phase. Watch actions more than words so you know clearly how to proceed.',
+      soulmateElement: 'Air / Water Element',
+      soulmateTrait: 'Independent and gentle, taking time before opening up completely.',
+      mantra: 'Buddho Metta Dhammo Karuna Sangho Piyam',
+    },
+  ],
+  couple: [
+    {
+      status: 'In a Relationship',
+      verdict: 'A sacred bond as enduring as temple stone',
+      score: 96,
+      prediction: 'Mutual trust and honesty carry your partnership to new heights. Favorable timing for shared milestones or a restorative trip together.',
+      soulmateElement: 'Mutually Supporting Elements',
+      soulmateTrait: 'Karmic companions uplifting both career ambitions and family foundations.',
+      mantra: 'Sabbe Jana Bahu Jana Sukhajivi Mahapiyam',
+    },
+    {
+      status: 'In a Relationship',
+      verdict: 'Gentle compromise restores deep warmth and harmony',
+      score: 87,
+      prediction: 'Should any tension arise, forgiveness and tender words dissolve friction swiftly, bringing back twice the sweetness.',
+      soulmateElement: 'Water Nurturing Fire',
+      soulmateTrait: 'Different in style yet seamlessly balancing what the other needs most.',
+      mantra: 'Sineham Mahalabham Jayo Niccam Piyakaro',
+    },
+    {
+      status: 'In a Relationship',
+      verdict: 'United hearts building shared prosperity and stability',
+      score: 92,
+      prediction: 'Your partner stands as a powerful pillar for work and finance this period—expect fruitful plans or joyful family news.',
+      soulmateElement: 'Earth Upholding Gold',
+      soulmateTrait: 'True co-builders walking shoulder to shoulder through every season.',
+      mantra: 'Mahalabha Mahapiya Sukha Sirimangalam Hotu',
+    },
+    {
+      status: 'In a Relationship',
+      verdict: 'Refresh the spark with thoughtful appreciation',
+      score: 89,
+      prediction: 'Routine can quiet sweet words; plan a cozy dinner or small surprise to rekindle the joyful glow of your early days.',
+      soulmateElement: 'Air Embracing Wood',
+      soulmateTrait: 'Cheerful, attentive to small joys, and always ready to share daily smiles.',
+      mantra: 'Piyavaca Mettajittam Sabbakalam Sukham Hotu',
+    },
+    {
+      status: 'In a Relationship',
+      verdict: 'Serene lifelong companions blessed in virtue and grace',
+      score: 95,
+      prediction: 'Your affection has matured beyond words. Sharing merit, prayer, or quiet gratitude strengthens lifelong harmony.',
+      soulmateElement: 'Gold Paired with Water',
+      soulmateTrait: 'Calm, thoughtful, and devoted to growing together through every chapter.',
+      mantra: 'Idha Modati Pecca Modati Katapunno Ubhayattha Modati',
+    },
+  ],
+};
+
+export const LOVE_FORTUNE_SETS_ZH: Record<'single' | 'crush' | 'couple', readonly [LoveReadingSet, LoveReadingSet, LoveReadingSet, LoveReadingSet, LoveReadingSet]> = {
+  single: [
+    {
+      status: '单身',
+      verdict: '真挚良缘如晨露莲花悄然绽放',
+      score: 88,
+      prediction: '有望在工作往来或远行途中邂逅有缘人，对方将为您带来温暖、真诚与契合的心灵共鸣。',
+      soulmateElement: '水行 / 风象气质',
+      soulmateTrait: '温文尔雅、笑容暖心，懂得细心倾听与体谅您的心声。',
+      mantra: '唵 南无佛陀耶 慈悲喜舍 善缘相随',
+    },
+    {
+      status: '单身',
+      verdict: '月华引路，期盼已久的良人正走近',
+      score: 93,
+      prediction: '一段从真诚友谊开始的缘分将逐渐升温为深厚爱意，敞开心扉迎接新相识便会看到答案。',
+      soulmateElement: '金行 / 火行',
+      soulmateTrait: '热情坦诚、有担当与领导力，关键时刻始终坚定站在您身旁。',
+      mantra: '慈心所向 善缘聚首 喜乐常随',
+    },
+    {
+      status: '单身',
+      verdict: '魅力焕发，如望月清辉照亮夜空',
+      score: 85,
+      prediction: '近期您的恋爱气场格外明朗，不远处有人正默默欣赏您，不妨大方微笑回应开启对话。',
+      soulmateElement: '土行 / 木行',
+      soulmateTrait: '踏实稳重、专一长情，不浮夸却最值得托付与信赖。',
+      mantra: '月光护念 心怀慈柔 良缘自在',
+    },
+    {
+      status: '单身',
+      verdict: '善缘因福德与挚友牵线而相逢',
+      score: 90,
+      prediction: '亲友或长辈有机会为您引荐三观相合的良人，这段感情自然舒适、令人安心。',
+      soulmateElement: '木行 / 水行',
+      soulmateTrait: '心怀善念、顾家重情，乐于与您一同学习成长并规划未来。',
+      mantra: '愿以无量慈心 广结十方善缘',
+    },
+    {
+      status: '单身',
+      verdict: '先爱自己散发微光，正缘自会循光而来',
+      score: 86,
+      prediction: '专注于身心调养与热爱之事正在吸引同频伴侣，切勿因孤单而将就，真正适合您的人正在路上。',
+      soulmateElement: '火行 / 土行',
+      soulmateTrait: '坦率真诚、幽默风趣，并且懂得尊重您的节奏与空间。',
+      mantra: '心安则美 善爱随行 幸福常在',
+    },
+  ],
+  crush: [
+    {
+      status: '暗恋中',
+      verdict: '两心相印，如微风拂水起涟漪',
+      score: 91,
+      prediction: '您念念不忘的人也在悄悄留意您的闪光点，不久后会有更明显的回应信号，可先从共同兴趣聊起。',
+      soulmateElement: '水行 / 金行',
+      soulmateTrait: '谈及热爱之事时眼神发亮，且极富同理心与细腻度。',
+      mantra: '诚心祝祷 善缘相通 笑颜相迎',
+    },
+    {
+      status: '暗恋中',
+      verdict: '宿命红线牵引，默契正在升温',
+      score: 82,
+      prediction: '耐心与彼此尊重会把微妙悸动转化为稳固联结，保持最真实的自己最能打动对方。',
+      soulmateElement: '风象 / 火行',
+      soulmateTrait: '风趣善谈、自带幽默感，与对方相处总能感到轻松自在。',
+      mantra: '至诚感通 人天欢喜 缘深情长',
+    },
+    {
+      status: '暗恋中',
+      verdict: '水滴石穿，温柔与坚持正悄悄打动芳心',
+      score: 87,
+      prediction: '持续的体贴与不经意的小关心已留下深刻印象，切勿急于求成，让时间温柔发酵。',
+      soulmateElement: '土行 / 水行',
+      soulmateTrait: '处事谨慎、不擅轻易表露心意，但一旦敞开心扉便十分专一。',
+      mantra: '一念至诚 柔和相待 静候花开',
+    },
+    {
+      status: '暗恋中',
+      verdict: '良机将至，有望并肩共事或深入畅谈',
+      score: 94,
+      prediction: '天时促成双方近距离交流重要话题的契机，请用心倾听，您的真诚与气质将自然俘获对方好感。',
+      soulmateElement: '金行 / 木行',
+      soulmateTrait: '聪慧理智，格外欣赏懂得并支持其人生目标的知己。',
+      mantra: '善意相招 心灵契合 顺遂圆满',
+    },
+    {
+      status: '暗恋中',
+      verdict: '先稳住心神，明朗答案即将浮现',
+      score: 80,
+      prediction: '双方仍在彼此观察试探阶段，多留意实际行动而非只看言语，您很快便能看清心意并从容抉择。',
+      soulmateElement: '风象 / 水行',
+      soulmateTrait: '向往自由、性情温和，需要多一点信任与时间来坦露真心。',
+      mantra: '正念清明 智慧观照 随缘自在',
+    },
+  ],
+  couple: [
+    {
+      status: '已有伴侣',
+      verdict: '情比金石坚，同心共筑安稳未来',
+      score: 96,
+      prediction: '理解与坦诚将引领感情迈向新阶段，适合共同规划重要目标，或结伴出游焕新心境。',
+      soulmateElement: '五行相生相扶',
+      soulmateTrait: '福德伴侣，在事业拼搏与家庭根基上皆能彼此成就。',
+      mantra: '同心同德 和合吉祥 百年好合',
+    },
+    {
+      status: '已有伴侣',
+      verdict: '退一步海阔天空，温暖甜蜜必将重归',
+      score: 87,
+      prediction: '若偶有小摩擦，宽容与柔和沟通能迅速化解心结，令感情比往昔更加深厚甘甜。',
+      soulmateElement: '水火既济',
+      soulmateTrait: '性格虽有互补差异，却恰能填补彼此所需、默契十足。',
+      mantra: '以柔克刚 慈语生春 恩爱常新',
+    },
+    {
+      status: '已有伴侣',
+      verdict: '齐心协力，共聚财禄与家运兴旺',
+      score: 92,
+      prediction: '这段时期伴侣是您事业与财运上的强力后盾，适合商讨理财置业或迎来家庭喜讯。',
+      soulmateElement: '厚土生金',
+      soulmateTrait: '同甘共苦的实干拍档，风雨之中始终并肩不离。',
+      mantra: '大吉大利 家业兴隆 和乐安康',
+    },
+    {
+      status: '已有伴侣',
+      verdict: '为日常注入新鲜仪式感，重燃初见心动',
+      score: 89,
+      prediction: '熟悉容易让人忽略表达爱意，不妨约一顿暖心晚餐或准备小惊喜，让温柔星火再次闪耀。',
+      soulmateElement: '和风润木',
+      soulmateTrait: '阳光开朗、注重细节，喜欢把日常点滴笑声与您分享。',
+      mantra: '爱语温存 念念生喜 朝夕相伴',
+    },
+    {
+      status: '已有伴侣',
+      verdict: '静水深流，福慧双修长相厮守',
+      score: 95,
+      prediction: '爱意已沉淀得深沉而超越言语，相约行善积福或静心祈愿，更能护佑长久顺遂安康。',
+      soulmateElement: '金水相涵',
+      soulmateTrait: '平和理性，愿意在岁月中共同调适、携手成长。',
+      mantra: '今生欢喜 善果圆成 安稳白头',
+    },
+  ],
+};
+
+export function getLocalizedLoveReading(
+  status: 'single' | 'crush' | 'couple',
+  setIdx: number,
+  lang: SupportedLang
+): LoveReadingSet {
+  const safeIdx = ((setIdx % 5) + 5) % 5;
+  if (lang === 'en') return LOVE_FORTUNE_SETS_EN[status][safeIdx];
+  if (lang === 'zh') return LOVE_FORTUNE_SETS_ZH[status][safeIdx];
+  return LOVE_FORTUNE_SETS[status][safeIdx];
+}
+
+export const MEDITATION_QUOTES_LOCALIZED: Record<SupportedLang, readonly [DharmaQuoteSet, DharmaQuoteSet, DharmaQuoteSet, DharmaQuoteSet, DharmaQuoteSet]> = {
+  th: MEDITATION_QUOTES_5,
+  en: [
+    { pali: 'Natthi santiparam sukham', thai: 'There is no happiness greater than inner peace' },
+    { pali: 'Cittam dantam sukhavaham', thai: 'A well-trained mind brings lasting happiness' },
+    { pali: 'Arogya parama labha', thai: 'Freedom from illness and peace of mind are the highest wealth' },
+    { pali: 'Sabbe tasanti dandassa', thai: 'All beings tremble before suffering—radiate loving-kindness to all' },
+    { pali: 'Atta hi attano natho', thai: 'Oneself is truly one’s own refuge; steady mindfulness lights the way' },
+  ],
+  zh: [
+    { pali: 'นตฺถิ สนฺติปรํ สุขํ · Natthi santiparam sukham', thai: '世间之乐，莫胜于心境寂静安宁' },
+    { pali: 'จิตฺตํ ทนฺตํ สุขาวหํ · Cittam dantam sukhavaham', thai: '调伏安顿之心，自能带来长久安乐' },
+    { pali: 'อโรคฺยา ปรมา ลาภา · Arogya parama labha', thai: '无病康宁与心境澄明，乃是人生最上乘的福报' },
+    { pali: 'สพฺเพ ตสนฺติ ทณฺฑสฺส · Sabbe tasanti dandassa', thai: '一切众生皆畏苦痛，当以慈悲心观照万物' },
+    { pali: 'อตฺตา หิ อตฺตโน นาโถ · Atta hi attano natho', thai: '自依止、心作主，清明正念即是引路明灯' },
+  ],
+};
+
+export function getLocalizedMeditationQuote(idx: number, lang: SupportedLang): DharmaQuoteSet {
+  const safeIdx = ((idx % 5) + 5) % 5;
+  return MEDITATION_QUOTES_LOCALIZED[lang][safeIdx] || MEDITATION_QUOTES_5[safeIdx];
+}
+
+const ELEMENT_TRANSLATIONS: Record<string, { th: string; en: string; zh: string }> = {
+  โลหะ: { th: 'โลหะ', en: 'Metal', zh: '金' },
+  ทอง: { th: 'ทอง', en: 'Metal / Gold', zh: '金' },
+  น้ำ: { th: 'น้ำ', en: 'Water', zh: '水' },
+  ไม้: { th: 'ไม้', en: 'Wood', zh: '木' },
+  ไฟ: { th: 'ไฟ', en: 'Fire', zh: '火' },
+  ดิน: { th: 'ดิน', en: 'Earth', zh: '土' },
+  ลม: { th: 'ลม', en: 'Air', zh: '风' },
+};
+
+export function getLocalizedElementName(el: string, lang: SupportedLang): string {
+  const cleaned = el.replace(/^ธาตุ/, '').trim();
+  const mapped = ELEMENT_TRANSLATIONS[cleaned] || ELEMENT_TRANSLATIONS[el.trim()];
+  if (mapped) return mapped[lang];
+  return el;
+}
+
+export const TAROT_TITLE_ZH: Record<number, string> = {
+  0: '愚者 (The Fool)',
+  1: '魔术师 (The Magician)',
+  2: '女祭司 (The High Priestess)',
+  3: '皇后 (The Empress)',
+  4: '皇帝 (The Emperor)',
+  5: '教皇 (The Hierophant)',
+  6: '恋人 (The Lovers)',
+  7: '战车 (The Chariot)',
+  8: '力量 (Strength)',
+  9: '隐者 (The Hermit)',
+  10: '命运之轮 (Wheel of Fortune)',
+  11: '正义 (Justice)',
+  12: '倒吊人 (The Hanged Man)',
+  13: '死神 (Death)',
+  14: '节制 (Temperance)',
+  15: '恶魔 (The Devil)',
+  16: '高塔 (The Tower)',
+  17: '星星 (The Star)',
+  18: '月亮 (The Moon)',
+  19: '太阳 (The Sun)',
+  20: '审判 (Judgement)',
+  21: '世界 (The World)',
+};
+
+export function getLocalizedTarotTitle(
+  id: number,
+  thName: string,
+  enName: string,
+  lang: SupportedLang
+): string {
+  if (lang === 'en') return enName || thName;
+  if (lang === 'zh') return TAROT_TITLE_ZH[id] || enName || thName;
+  return thName;
+}
+

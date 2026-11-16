@@ -8,6 +8,8 @@ import type { CardData } from '../utils/luckyCardCanvas';
 import { playWoodClatter } from '../utils/chantAudio';
 import { logger } from '../utils/logger';
 import { pad2 } from '../utils/formatters';
+import { useLanguage } from '../context/LanguageContext';
+import { getLocalizedTarotTitle } from '../data/ritualProphecies';
 
 interface CoffinCardProps {
   bridge: Bridge;
@@ -20,6 +22,7 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
   onToast,
   onOpenCard,
 }) => {
+  const { t, lang } = useLanguage();
   const [coffinOpen, setCoffinOpen] = useState(false);
   const [coffinCard, setCoffinCard] = useState<TarotCard | null>(null);
   const [blessing, setBlessing] = useState<BlessingResult | null>(null);
@@ -43,7 +46,6 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
     if (isLoading) return;
 
     if (coffinOpen) {
-      // Close coffin
       if (openTimerRef.current !== null) {
         clearTimeout(openTimerRef.current);
         openTimerRef.current = null;
@@ -56,7 +58,6 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
       return;
     }
 
-    // Open coffin
     playWoodClatter();
     setCoffinOpen(true);
     setIsLoading(true);
@@ -82,10 +83,10 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
 
       const b = bridge.blessing(2);
       setBlessing(b);
-      onToast('⚰️ เปิดฝาโลงสำเร็จ ปรากฏไพ่ลิขิตชะตาเกิดใหม่');
+      onToast(t.coffinToastOpened);
     } catch (err) {
       logger.error('Error in CoffinCard ritual:', err);
-      onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
+      onToast(t.commonErrorRetry);
     } finally {
       if (isMountedRef.current) {
         setIsLoading(false);
@@ -96,23 +97,32 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
   const buildAndSaveCoffinReading = (): CardData | null => {
     if (!coffinCard) return null;
 
+    const localizedTitle = getLocalizedTarotTitle(
+      coffinCard.id,
+      coffinCard.name,
+      coffinCard.en,
+      lang
+    );
+
     const { cardData, details } = buildTarotCardData(
       [coffinCard],
       1,
       TAROT_GLYPHS,
-      { 1: ['ไพ่จากโลงศพ'] }
+      { 1: [t.coffinPosTitle.replace(/✨/g, '').trim()] },
+      lang
     );
-    cardData.title = `ไพ่จากโลงศพ · ${coffinCard.name}`;
+    cardData.title = `${t.coffinTitle} · ${localizedTitle}`;
 
     if (!isJournalSaved) {
+      const orientText = coffinCard.reversed ? t.tarotReversed : t.tarotUpright;
       saveJournalEntry({
         type: 'tarot',
         title: cardData.title,
-        summary: `${coffinCard.name}${coffinCard.reversed ? ' (กลับหัว)' : ' (หัวตั้ง)'} · ${coffinCard.meaning}`,
+        summary: `${localizedTitle} (${orientText}) · ${coffinCard.meaning}`,
         details,
       });
       setIsJournalSaved(true);
-      onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
+      onToast(t.savedToJournal);
     }
 
     return cardData;
@@ -131,14 +141,18 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
     }
   };
 
+  const localizedCardName = coffinCard
+    ? getLocalizedTarotTitle(coffinCard.id, coffinCard.name, coffinCard.en, lang)
+    : '';
+
   return (
     <section id="tab-coffin" className="ritual-frameless-stage tab coffin-ritual-stage" role="tabpanel">
       <div className="coffin-ritual-header" style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
         <h2 style={{ fontSize: '1.35rem', color: 'var(--gold)', margin: '0 0 0.35rem' }}>
-          ⚰️ พิธีกรรมไพ่จากโลงศพ
+          {t.coffinTitle}
         </h2>
         <p style={{ fontSize: '0.86rem', color: 'var(--muted)', margin: 0, maxWidth: '480px', marginInline: 'auto' }}>
-          พิธีกรรมโบราณสะเดาะเคราะห์ต่อดวงชะตา ปลดปล่อยเรื่องร้ายลงในโลง แล้วเปิดฝาโลงรับไพ่แห่งการเกิดใหม่
+          {t.coffinLead}
         </p>
       </div>
 
@@ -148,7 +162,7 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
           className={`coffin ${coffinOpen ? 'open' : ''}`}
           role="button"
           tabIndex={0}
-          aria-label={coffinOpen ? 'แตะเพื่อปิดฝาโลง' : 'แตะเพื่อเปิดฝาโลงเสี่ยงทาย'}
+          aria-label={coffinOpen ? t.coffinCloseAria : t.coffinOpenAria}
           onClick={handleToggleCoffin}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -164,10 +178,10 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
 
         <p className="hint" style={{ marginTop: '0.75rem', textAlign: 'center' }}>
           {isLoading
-            ? '🕯️ กำลังเปิดฝาโลงและทำพิธีสะเดาะเคราะห์...'
+            ? t.coffinHintLoading
             : coffinOpen
-            ? 'แตะโลงศพอีกครั้งเพื่อปิดฝาโลง'
-            : 'แตะที่โลงศพเพื่อเปิดฝาและรับคำทำนายชะตาเกิดใหม่'}
+            ? t.coffinHintOpen
+            : t.coffinHintClosed}
         </p>
 
         {/* Revealed Coffin Card */}
@@ -175,7 +189,7 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
           <div className="coffin-card" style={{ width: '100%', maxWidth: '420px', marginTop: '1.2rem' }}>
             <div className="tslot revealed" style={{ width: '100%', margin: '0 auto' }}>
               <div className="pos" style={{ fontWeight: 600, color: 'var(--gold)' }}>
-                ✨ ไพ่ลิขิตฟ้าจากโลงศพ ✨
+                {t.coffinPosTitle}
               </div>
 
               <div className="tcard flipped" style={{ margin: '0.5rem auto' }}>
@@ -185,7 +199,7 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
                     <div className="num">{pad2(coffinCard.id)}</div>
                     <div className="glyph">{TAROT_GLYPHS[coffinCard.id] || '🎴'}</div>
                     <div>
-                      <div className="nm">{coffinCard.name}</div>
+                      <div className="nm">{localizedCardName}</div>
                       <div className="en">{coffinCard.en}</div>
                     </div>
                   </div>
@@ -207,11 +221,11 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
                 <div style={{ marginBottom: '0.4rem' }}>
                   {coffinCard.reversed ? (
                     <span className="rv" style={{ color: 'var(--warn, #ffb36b)', fontWeight: 600 }}>
-                      🔄 ไพ่กลับหัว (Reversed)
+                      {t.coffinReversedBadge}
                     </span>
                   ) : (
                     <span style={{ color: 'var(--gold)', fontWeight: 600 }}>
-                      ⚡ ไพ่หัวตั้ง (Upright)
+                      {t.coffinUprightBadge}
                     </span>
                   )}
                 </div>
@@ -230,15 +244,21 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
                     }}
                   >
                     <div style={{ fontWeight: 600, marginBottom: '0.2rem' }}>
-                      🙏 {blessing.title || 'คำอวยพรสะเดาะเคราะห์เกิดใหม่'}
+                      🙏 {blessing.title || t.coffinBlessingDefaultTitle}
                     </div>
                     <div style={{ color: 'rgba(255,255,255,0.85)' }}>{blessing.text}</div>
                     {blessing.lucky && (
                       <div style={{ marginTop: '0.3rem', fontSize: '0.78rem', color: '#fdd835' }}>
-                        เลขมงคลต่อดวง: <strong>{blessing.lucky}</strong>
+                        {t.coffinLuckyPrefix} <strong>{blessing.lucky}</strong>
                       </div>
                     )}
                   </div>
+                )}
+
+                {lang !== 'th' && (
+                  <p className="note" style={{ marginTop: '0.55rem', marginBottom: 0 }}>
+                    {t.oracleThaiFallbackNote}
+                  </p>
                 )}
               </div>
             </div>
@@ -257,9 +277,9 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
                 type="button"
                 className="btn gold"
                 onClick={handleSaveAndShare}
-                title="บันทึกภาพการ์ดมงคลและแชร์"
+                title={t.coffinSaveShareTitle}
               >
-                🎴 บันทึก&แชร์
+                {t.saveAndShareBtn}
               </button>
 
               <button
@@ -267,18 +287,18 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
                 className="btn primary"
                 onClick={handleSaveOnly}
                 disabled={isJournalSaved}
-                title="บันทึกประวัติลงในสมุดดวงชะตา"
+                title={t.coffinSaveJournalTitle}
               >
-                {isJournalSaved ? '✓ บันทึกในสมุดดวงแล้ว' : '📖 บันทึกลงสมุดดวง'}
+                {isJournalSaved ? t.journalSavedBtn : t.journalSaveBtn}
               </button>
 
               <button
                 type="button"
                 className="btn"
                 onClick={handleToggleCoffin}
-                title="ปิดโลงและเริ่มเสี่ยงทายใหม่"
+                title={t.coffinRedrawTitle}
               >
-                🔄 ปิดโลง & เสี่ยงทายใหม่
+                {t.coffinRedrawBtn}
               </button>
             </div>
 
@@ -286,17 +306,17 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
             <div style={{ marginTop: '1.5rem', width: '100%' }}>
               <SpiritualTTSPlayer
                 textToRead={[
-                  `พิธีกรรมไพ่จากโลงศพ ต่อดวงชะตาชีวิต`,
-                  `ไพ่ที่ท่านเปิดได้คือ ${coffinCard.name} (${coffinCard.en})`,
-                  coffinCard.reversed ? 'สถานะ: ไพ่กลับหัว' : 'สถานะ: ไพ่หัวตั้ง',
-                  `คำทำนาย: ${coffinCard.meaning}`,
-                  blessing?.text ? `คำอำนวยพรสะเดาะเคราะห์เกิดใหม่: ${blessing.text}` : '',
-                  blessing?.lucky ? `เลขนำโชคต่อดวงชะตาคือ ${blessing.lucky}` : '',
+                  t.coffinTitle,
+                  `${localizedCardName} (${coffinCard.en})`,
+                  coffinCard.reversed ? t.tarotReversed : t.tarotUpright,
+                  coffinCard.meaning,
+                  blessing?.text || '',
+                  blessing?.lucky ? `${t.coffinLuckyPrefix} ${blessing.lucky}` : '',
                 ]
                   .filter(Boolean)
                   .join('\n\n')}
-                title="เสียงซินแสอ่านคำทำนายไพ่จากโลงศพ"
-                subtitle="สดับรับฟังคำทำนายสะเดาะเคราะห์ต่อชะตาชีวิตเกิดใหม่"
+                title={t.coffinTtsTitle}
+                subtitle={t.coffinTtsSubtitle}
                 initialExpanded={false}
               />
             </div>
@@ -306,3 +326,4 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
     </section>
   );
 };
+

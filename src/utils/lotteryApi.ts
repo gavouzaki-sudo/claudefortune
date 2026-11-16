@@ -549,3 +549,42 @@ export function checkTicketWin(ticketInput: string, draw: LotteryDisplayData): C
     wonPrizes,
   };
 }
+
+import type { SupportedLang } from '../data/translations';
+import {
+  formatLocalizedShortDate,
+  formatPostponedNoteByLang,
+} from '../data/postponedLotteryDraws';
+
+export function formatLotteryDateByLang(rawDate: string, lang: SupportedLang): string {
+  if (!rawDate) return '';
+  const { day, month, yearCe } = parseDateString(rawDate);
+  if (lang === 'th') return formatThaiDate(yearCe, month, day);
+  return formatLocalizedShortDate(rawDate, lang);
+}
+
+const PRIZE_NAME_LOCALIZED: Record<string, { en: string; zh: string }> = {
+  'รางวัลที่ 1': { en: '1st Prize', zh: '一等奖' },
+  'รางวัลเลขหน้า 3 ตัว': { en: 'First 3 Digits', zh: '前三码奖' },
+  'รางวัลเลขท้าย 3 ตัว': { en: 'Last 3 Digits', zh: '后三码奖' },
+  'รางวัลเลขท้าย 2 ตัว': { en: 'Last 2 Digits', zh: '后二码奖' },
+};
+
+export function getLocalizedPrizeName(prizeName: string, lang: SupportedLang): string {
+  if (lang === 'th') return prizeName;
+  return PRIZE_NAME_LOCALIZED[prizeName]?.[lang] || prizeName;
+}
+
+export function getLocalizedDrawPostponedNote(
+  draw: LotteryDisplayData,
+  lang: SupportedLang
+): string | undefined {
+  if (!draw.postponedNote) return undefined;
+  if (lang === 'th') return draw.postponedNote;
+  const entry = resolvePostponedDraw(draw.rawDate);
+  if (entry && entry.actualDate === draw.rawDate) {
+    return formatPostponedNoteByLang(entry, lang);
+  }
+  return draw.postponedNote;
+}
+
