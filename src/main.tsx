@@ -3,9 +3,10 @@ import ReactDOM from 'react-dom/client';
 import { App } from './App';
 import './style.css';
 
-// Only clean up applet-specific service workers if any were registered,
-// preserving AI Studio's internal preview proxy (_service-worker.js).
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+// Only clean up stale applet-specific service workers in development mode,
+// preserving AI Studio's internal preview proxy (_service-worker.js)
+// and keeping VitePWA's production service worker active.
+if (import.meta.env.DEV && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     for (const reg of registrations) {
       const scriptURL =

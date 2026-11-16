@@ -8,6 +8,7 @@ import { saveJournalEntry } from '../utils/fortuneJournal';
 import { buildLuckyNumbersCardData } from '../utils/cardDataBuilder';
 import type { CardData } from '../utils/luckyCardCanvas';
 import { logger } from '../utils/logger';
+import { useLanguage } from '../context/LanguageContext';
 
 interface LuckyNumbersProps {
   bridge: Bridge;
@@ -16,6 +17,7 @@ interface LuckyNumbersProps {
 }
 
 export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onOpenCard }) => {
+  const { t } = useLanguage();
   // Category: null = ยังไม่ได้เลือก (ถามก่อนเล่นเกม), 0 = เลข 2 หลัก, 1 = เลข 3 หลัก
   const [category, setCategory] = useState<0 | 1 | null>(null);
   const categoryRef = useRef<0 | 1 | null>(null);
@@ -80,7 +82,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
     setCategory(cat);
     setBurnLevel(0);
     setIsJournalSaved(false);
-    onToast(`ตั้งจิตขอ ${cat === 0 ? 'เลข 2 หลัก' : 'เลข 3 หลัก'} สำเร็จ! เริ่มเล่นมินิเกมได้เลย`);
+    onToast(`${cat === 0 ? t.lucky2Digits : t.lucky3Digits} — ${t.luckyTalismanBurnHint}`);
   };
 
 
@@ -123,7 +125,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
     setBurnLevel(next);
 
     if (next === 3) {
-      onToast('🔥 ยันต์มอดไหม้สมบูรณ์! ปรากฏเลขมงคล 100%!');
+      onToast(`🔥 ${t.luckyRevealComplete}`);
     } else {
       onToast(`🔥 เพลิงเผายันต์ลามขึ้น! (${next}/3 ตา) ชนะอีก ${3 - next} ตา!`);
     }
@@ -137,7 +139,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
         setIsBurning(false);
       }
     }, 1100);
-  }, [onToast]);
+  }, [onToast, t.luckyRevealComplete]);
 
   // Save to journal and open card modal
   const handleSaveAndShare = () => {
@@ -152,7 +154,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
         details: detailsObj,
       });
       setIsJournalSaved(true);
-      onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
+      onToast(t.savedToJournal);
     }
     if (onOpenCard) {
       onOpenCard(cardData);
@@ -184,26 +186,27 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
       id="tab-number"
       className="ritual-frameless-stage tab lucky-numbers-section-stage"
       role="tabpanel"
+      aria-label={t.luckyNumberTitle}
     >
       {category === null ? (
         /* Asking first before playing the game: 2 digits or 3 digits - Centered & Frameless */
-        <div className="lucky-category-choice-row" role="region" aria-label="เลือกประเภทเลขมงคล">
+        <div className="lucky-category-choice-row" role="region" aria-label={t.luckyNumberLead}>
           <button
             type="button"
             className="btn-lucky-choice choice-2-btn"
             onClick={() => handleSelectCategory(0)}
-            aria-label="เลือกขอเลข 2 หลัก"
+            aria-label={t.lucky2Digits}
           >
-            <span>เลข 2 หลัก</span>
+            <span>{t.lucky2Digits}</span>
           </button>
 
           <button
             type="button"
             className="btn-lucky-choice choice-3-btn"
             onClick={() => handleSelectCategory(1)}
-            aria-label="เลือกขอเลข 3 หลัก"
+            aria-label={t.lucky3Digits}
           >
-            <span>เลข 3 หลัก</span>
+            <span>{t.lucky3Digits}</span>
           </button>
         </div>
       ) : (
@@ -226,7 +229,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
                   <span className="highlight-lucky-number">{luckyNumber}</span>
                 </h3>
                 <p className="lucky-final-sub">
-                  ประเภท: <b>{category === 0 ? 'เลข 2 หลัก (เลขท้าย 2 ตัว)' : 'เลข 3 หลัก (เลขท้าย 3 ตัว)'}</b> · เผาด้วยจิตศรัทธาครบ 3 ตา
+                  <b>{category === 0 ? t.lucky2Digits : t.lucky3Digits}</b> · {t.luckyBurnLevelNotice}: {burnLevel}/3
                 </p>
               </div>
 
@@ -259,9 +262,9 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
                     type="button"
                     className="btn gold"
                     onClick={handleSaveAndShare}
-                    title="บันทึกและแชร์การ์ดเลขมงคล"
+                    title={t.luckyViewCardBtn}
                   >
-                    <span>🎴 บันทึก&แชร์</span>
+                    <span>{t.luckyViewCardBtn}</span>
                   </button>
                 )}
                 <button

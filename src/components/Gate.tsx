@@ -7,6 +7,7 @@ import {
   stopChant,
 } from '../utils/chantAudio';
 import { safeStorage } from '../utils/storage';
+import { useLanguage } from '../context/LanguageContext';
 interface GateProps {
   bridge: Bridge;
   onSessionStart: (session: UserSession) => void;
@@ -30,6 +31,7 @@ const SYSTEM_LOCATIONS: Record<
 };
 
 export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
+  const { t } = useLanguage();
   // Hierarchical Level: null initially, showing all 10 distributed systems
   // When user taps/hovers a system, it expands into a circular radial menu
   const [expandedSystemId, setExpandedSystemId] = useState<string | null>(null);
@@ -220,7 +222,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
     : null;
 
   return (
-    <section id="gate" className="panel gate cosmic-celestial-gate">
+    <section id="gate" className="panel gate cosmic-celestial-gate" aria-label={t.gateChooseSystem}>
       {/* Main Interactive Celestial Orrery Stage */}
       <div className="celestial-stage-wrapper">
         <div
@@ -304,7 +306,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                 onMouseLeave={() => setHoveredSystemId(null)}
                 role="button"
                 tabIndex={0}
-                aria-label={`อารยธรรม ${sys.name}`}
+                aria-label={`${t.topicCivilization} ${sys.name}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
@@ -330,12 +332,12 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
 
           {/* UNSELECTED INVITATION CORE (when no system is expanded yet) */}
           {!expandedSystemId && (
-            <div className="celestial-unselected-core animate-pulse-glow">
+            <div className="celestial-unselected-core animate-pulse-glow" title={t.gateChooseSystemSub}>
               <div className="core-portal-orb">
                 <span className="core-portal-icon">🌌</span>
                 <div className="core-portal-ring" />
               </div>
-              <h3 className="core-portal-title">อารยธรรม</h3>
+              <h3 className="core-portal-title">{t.topicCivilization}</h3>
             </div>
           )}
 
@@ -384,7 +386,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                         e.stopPropagation();
                         handleCloseRadialMenu();
                       }}
-                      title="กลับไปเลือกอารยธรรมอื่น"
+                      title={t.gateChooseSystem}
                     >
                       ✕
                     </button>
@@ -395,7 +397,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                     <button
                       type="button"
                       className="center-symbol-focus animate-rise"
-                      title="คลิกเพื่ออัญเชิญ"
+                      title={t.gateSelectSymbol}
                       onClick={() => completeSession(activeSymbol, activeSystem)}
                     >
                       <div className="center-symbol-orb">
@@ -420,7 +422,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                         className="btn primary center-confirm-btn"
                         onClick={() => completeSession(activeSymbol, activeSystem)}
                       >
-                        <span>อัญเชิญ</span>
+                        <span>{t.gateEnterShrine}</span>
                       </button>
                     </div>
                   )}
@@ -429,6 +431,7 @@ export const Gate: React.FC<GateProps> = ({ bridge, onSessionStart }) => {
                 {/* The Circular Radial Wheel of Symbols */}
                 <div
                   className="radial-symbols-wheel"
+                  aria-label={t.gateSelectSymbol}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {activeSystem.items.map((item, idx) => {

@@ -4,6 +4,7 @@ import { Bridge } from '../bridge';
 import type { CandleResult, OfferingResult, RemedyResult } from '../types';
 import { isChantMuted } from '../utils/chantAudio';
 import { getSharedAudioContextSync } from '../utils/audioContext';
+import { useLanguage } from '../context/LanguageContext';
 
 
 const WISH_PRESETS = [
@@ -55,6 +56,7 @@ interface RitualsProps {
 }
 
 export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast }) => {
+  const { t } = useLanguage();
   const [activeRit, setActiveRit] = useState<'candle' | 'lantern' | 'chong'>(() => {
     try {
       const saved = sessionStorage.getItem('shrine.activeRit');
@@ -423,16 +425,16 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   const currentNextPart = BODY_SWEEP_PARTS.find((p) => !sweptParts.includes(p.id)) || null;
 
   return (
-    <section id="tab-ritual" className="ritual-frameless-stage tab" role="tabpanel">
+    <section id="tab-ritual" className="ritual-frameless-stage tab" role="tabpanel" aria-label={t.ritualTitle}>
       {/* High-visibility Ceremonial Ritual Tabs */}
-      <div className="pills" role="tablist" aria-label="พิธีกรรมสะเดาะเคราะห์">
+      <div className="pills" role="tablist" aria-label={t.ritualTitle}>
         <button
           className={`pill ${activeRit === 'candle' ? 'active' : ''}`}
           type="button"
           onClick={() => handleSelectRit('candle')}
           aria-selected={activeRit === 'candle'}
         >
-          <span>ต่อดวง</span>
+          <span>{t.ritualCandle}</span>
         </button>
         <button
           className={`pill ${activeRit === 'lantern' ? 'active' : ''}`}
@@ -440,7 +442,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
           onClick={() => handleSelectRit('lantern')}
           aria-selected={activeRit === 'lantern'}
         >
-          <span>ลอยโคม</span>
+          <span>{t.ritualLantern}</span>
         </button>
         <button
           className={`pill ${activeRit === 'chong' ? 'active' : ''}`}
@@ -448,7 +450,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
           onClick={() => handleSelectRit('chong')}
           aria-selected={activeRit === 'chong'}
         >
-          <span>ปีชง</span>
+          <span>{t.ritualRemedy}</span>
         </button>
       </div>
 
@@ -909,7 +911,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
           onClick={handleCloseModal}
           role="dialog"
           aria-modal="true"
-          aria-label="ผลพิธีกรรมสะเดาะเคราะห์"
+          aria-label={t.ritualTitle}
         >
           <div className="ritual-modal-card" onClick={(e) => e.stopPropagation()}>
             <button
@@ -1028,7 +1030,17 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                     <span style={{ fontSize: '0.85rem', color: '#f7e2bd' }}>
                       นักษัตร{chongResult.zodiac_name} × ปี{chongResult.year_name} ({chongResult.year}):
                     </span>
-                    <span className={`badge lv${chongResult.severity}`}>{chongResult.relation_name}</span>
+                    <span className={`badge lv${chongResult.severity}`}>
+                      {chongResult.relation === 2
+                        ? t.ritualRemedyClash
+                        : chongResult.relation === 3
+                        ? t.ritualRemedyHarm
+                        : chongResult.relation === 4
+                        ? t.ritualRemedyBreak
+                        : chongResult.relation === 1
+                        ? t.ritualRemedyDirect
+                        : t.ritualRemedySafe}
+                    </span>
                     <div
                       className={`sev s${chongResult.severity}`}
                       aria-label={`ระดับ ${chongResult.severity} จาก 3`}

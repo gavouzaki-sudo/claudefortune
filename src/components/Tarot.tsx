@@ -7,6 +7,7 @@ import { buildTarotCardData, TAROT_GLYPHS } from '../utils/cardDataBuilder';
 import type { CardData } from '../utils/luckyCardCanvas';
 import { logger } from '../utils/logger';
 import { pad2 } from '../utils/formatters';
+import { useLanguage } from '../context/LanguageContext';
 
 interface TarotProps {
   bridge: Bridge;
@@ -21,6 +22,7 @@ const SPREAD_POSITIONS: Record<number, string[]> = {
 };
 
 export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => {
+  const { t } = useLanguage();
   const [spread, setSpread] = useState<number>(3);
   const [cards, setCards] = useState<TarotCard[]>([]);
   const [flipped, setFlipped] = useState<Record<number, boolean>>({});
@@ -57,7 +59,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
         details: tarotDetails,
       });
       setIsJournalSaved(true);
-      onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
+      onToast(t.savedToJournal);
     }
     if (onOpenCard) {
       onOpenCard(cardData);
@@ -111,9 +113,9 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
   const flippedCount = activeCards.filter((_, idx) => !!flipped[idx]).length;
 
   return (
-    <section id="tab-tarot" className="ritual-frameless-stage tab" role="tabpanel">
+    <section id="tab-tarot" className="ritual-frameless-stage tab" role="tabpanel" aria-label={t.tarotTitle}>
       {/* Spread Type Selector */}
-      <div className="pills" role="radiogroup" aria-label="รูปแบบการเปิดไพ่">
+      <div className="pills" role="radiogroup" aria-label={t.tarotLead}>
         {[1, 3, 5].map((count) => (
           <button
             key={count}
@@ -123,7 +125,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
             className={`pill ${spread === count ? 'active' : ''}`}
             onClick={() => handleSpreadChange(count)}
           >
-            ไพ่ {count} ใบ
+            {count === 1 ? t.tarotDaily : count === 3 ? t.tarot3Cards : t.tarot5Cards}
           </button>
         ))}
       </div>
@@ -131,11 +133,11 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
       {/* Control Actions */}
       <div className="row center" style={{ flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
         <button id="btn-tarot" className="btn primary" type="button" onClick={handleDraw}>
-          สับไพ่และจั่ว
+          {t.tarotShuffleBtn}
         </button>
         {cards.length > 0 && (
           <button id="btn-flip-all" className="btn ghost" type="button" onClick={handleFlipAll}>
-            พลิกทั้งหมด
+            {t.tarotFlipAll}
           </button>
         )}
         {cards.length > 0 && onOpenCard && (
@@ -144,9 +146,9 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
             className="btn gold"
             type="button"
             onClick={handleSaveAndShare}
-            title="บันทึกและแชร์การ์ดคำทำนาย"
+            title={t.tarotViewCardBtn}
           >
-            <span>🎴 บันทึก&แชร์</span>
+            <span>{t.tarotViewCardBtn}</span>
           </button>
         )}
       </div>
@@ -187,7 +189,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
                   </div>
                 </div>
                 <div className="tmean">
-                  {card.reversed && <span className="rv">ไพ่กลับหัว</span>}
+                  {card.reversed && <span className="rv">{t.tarotReversed}</span>}
                   {card.meaning}
                 </div>
               </div>

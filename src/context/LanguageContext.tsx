@@ -4,11 +4,22 @@ import { safeStorage } from '../utils/storage';
 
 const STORAGE_KEY = 'shrine.lang';
 
+export type TranslationVars = Record<string, string | number | boolean | null | undefined>;
+
+export function formatTranslation(template: string, vars?: TranslationVars): string {
+  if (!vars) return template;
+  return template.replace(/\{(\w+)\}/g, (match, key) => {
+    const val = vars[key];
+    return val === undefined || val === null ? match : String(val);
+  });
+}
+
 interface LanguageContextType {
   lang: SupportedLang;
   setLang: (lang: SupportedLang) => void;
   cycleLang: () => void;
   t: Translations;
+  format: typeof formatTranslation;
 }
 
 const LanguageContext = createContext<LanguageContextType>({
@@ -16,6 +27,7 @@ const LanguageContext = createContext<LanguageContextType>({
   setLang: () => {},
   cycleLang: () => {},
   t: TRANSLATIONS.th,
+  format: formatTranslation,
 });
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -49,6 +61,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setLang,
       cycleLang,
       t: TRANSLATIONS[lang],
+      format: formatTranslation,
     }),
     [lang, setLang, cycleLang]
   );

@@ -8,6 +8,7 @@ import { saveJournalEntry } from '../utils/fortuneJournal';
 import type { CardData } from '../utils/luckyCardCanvas';
 import { buildStickCardData } from '../utils/cardDataBuilder';
 import { logger } from '../utils/logger';
+import { useLanguage } from '../context/LanguageContext';
 
 export function formatStickReading(res: StickResult): string {
   return [
@@ -27,6 +28,7 @@ interface SiameseSticksProps {
 type StickRitualStep = 'cylinder' | 'puapoi' | 'prophecy';
 
 export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, onOpenCard }) => {
+  const { t } = useLanguage();
   const [step, setStep] = useState<StickRitualStep>('cylinder');
   const [prophecyMode, setProphecyMode] = useState<'read' | 'listen'>('read');
   const [shakeMeter, setShakeMeter] = useState(0);
@@ -93,7 +95,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
 
       setStep('puapoi');
       setPuaPoiVerified(false);
-      onToast(`✨ ไม้เซียมซีใบที่ ${res.stick} หล่นออกมาแล้ว! โปรดโยนไม้ปัวปวยขอยืนยัน`);
+      onToast(`✨ ${t.stickFallenNotice} (${res.stick}) — ${t.stickPuaPoiPrompt}`);
     } catch (err) {
       logger.error('Error drawing Siamese stick:', err);
       if (isMountedRef.current) {
@@ -107,7 +109,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
         setBusy(false);
       }
     }
-  }, [bridge, onToast, waitMs]);
+  }, [bridge, onToast, t.stickFallenNotice, t.stickPuaPoiPrompt, waitMs]);
 
   const addShake = useCallback(
     (amount: number) => {
@@ -223,7 +225,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
         details: cardData.details,
       });
       setIsJournalSaved(true);
-      onToast('📖 บันทึกลงในสมุดดวงชะตาเรียบร้อยแล้ว');
+      onToast(t.savedToJournal);
     }
     if (onOpenCard) {
       onOpenCard(cardData);
@@ -251,7 +253,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
   };
 
   return (
-    <section id="tab-stick" className="ritual-frameless-stage tab" role="tabpanel">
+    <section id="tab-stick" className="ritual-frameless-stage tab" role="tabpanel" aria-label={t.stickTitle}>
       {/* PHASE 1: CYLINDER SHAKING */}
       {step === 'cylinder' && (
         <div className="stick-cylinder-phase">
@@ -259,7 +261,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
             <div
               id="cylinder"
               className={`cylinder ${isShaking ? 'shaking' : ''}`}
-              aria-label="กระบอกเซียมซี"
+              aria-label={t.stickTitle}
               role="img"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
@@ -284,7 +286,14 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
             </div>
           </div>
 
-          <div className="meter" aria-hidden="true">
+          <div
+            className="meter"
+            role="progressbar"
+            aria-label={t.stickShakePower}
+            aria-valuenow={Math.round(shakeMeter)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
             <div id="shake-meter" style={{ width: `${shakeMeter}%` }} />
           </div>
 
@@ -296,11 +305,11 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
               onClick={handleButtonClick}
               disabled={busy}
             >
-              เขย่าเซียมซี
+              {t.stickShakeBtn}
             </button>
           </div>
           <p className="stick-hint-sub">
-            ตั้งจิตอธิษฐานแล้วกดปุ่มเขย่า หรือใช้นิ้วลาก/ปัดที่กระบอกเซียมซี
+            {t.stickLead}
           </p>
         </div>
       )}
@@ -348,7 +357,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
               }}
               title="แสดงเฉพาะข้อความคำทำนาย"
             >
-              <span>📖 อ่าน</span>
+              <span>📖 {t.stickReadMode}</span>
             </button>
             <button
               type="button"
@@ -366,7 +375,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
               }}
               title="สุ่มเสียงและเริ่มอ่านออกเสียงทันที"
             >
-              <span>🔊 ฟัง</span>
+              <span>🔊 {t.stickListenMode}</span>
             </button>
           </div>
 
@@ -396,9 +405,9 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
                 type="button"
                 className="btn gold btn-view-lucky-card"
                 onClick={handleSaveAndShare}
-                title="บันทึกและแชร์การ์ดมงคล"
+                title={t.stickViewCardBtn}
               >
-                <span>🎴 บันทึก&แชร์</span>
+                <span>{t.stickViewCardBtn}</span>
               </button>
             </div>
           )}
