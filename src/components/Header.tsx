@@ -53,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
                 ? 'English (Click to change to CN)'
                 : '中文 (点击切换为 TH)'
             }
-            aria-label="เปลี่ยนภาษา"
+            aria-label={t.langCycleAria}
           >
             {lang === 'th' ? 'TH' : lang === 'en' ? 'EN' : 'CN'}
           </button>

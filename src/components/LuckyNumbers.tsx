@@ -9,6 +9,7 @@ import { buildLuckyNumbersCardData } from '../utils/cardDataBuilder';
 import type { CardData } from '../utils/luckyCardCanvas';
 import { logger } from '../utils/logger';
 import { useLanguage } from '../context/LanguageContext';
+import { getLocalizedLuckyNumberNote } from '../data/locales/propheciesRituals';
 
 interface LuckyNumbersProps {
   bridge: Bridge;
@@ -235,14 +236,7 @@ export const LuckyNumbers: React.FC<LuckyNumbersProps> = ({ bridge, onToast, onO
               </div>
 
               {luckyResult?.note && (
-                <>
-                  {lang !== 'th' && (
-                    <p className="note" style={{ marginBottom: '0.45rem', textAlign: 'center' }}>
-                      {t.oracleThaiFallbackNote}
-                    </p>
-                  )}
-                  <p className="verse lucky-verse-text">{luckyResult.note}</p>
-                </>
+                <p className="verse lucky-verse-text">{getLocalizedLuckyNumberNote(lang)}</p>
               )}
 
               <div className="aspects lucky-advice-grid">

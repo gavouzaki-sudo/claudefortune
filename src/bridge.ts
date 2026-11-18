@@ -752,6 +752,55 @@ class JsCoreEngine implements ICoreEngine {
   }
 }
 
+export function analyzeSignatureIndices(points: [number, number, number][]): [number, number, number] {
+  const n = points.length;
+  let minx = 1 << 30;
+  let maxx = -(1 << 30);
+  let miny = 1 << 30;
+  let maxy = -(1 << 30);
+  let lastS = -1;
+  let px = 0;
+  let py = 0;
+  let pdx = 0;
+  let pdy = 0;
+  let rev = 0;
+  let segs = 0;
+
+  for (let i = 0; i < n; i++) {
+    const x = points[i][0] | 0;
+    const y = points[i][1] | 0;
+    const s = points[i][2] | 0;
+    if (x < minx) minx = x;
+    if (x > maxx) maxx = x;
+    if (y < miny) miny = y;
+    if (y > maxy) maxy = y;
+    if (s !== lastS) {
+      lastS = s;
+    } else {
+      const dx = x - px;
+      const dy = y - py;
+      if (dx || dy) {
+        if (segs > 0 && dx * pdx + dy * pdy < 0) rev++;
+        pdx = dx;
+        pdy = dy;
+        segs++;
+      }
+    }
+    px = x;
+    py = y;
+  }
+
+  const w = maxx - minx;
+  const ht = maxy - miny;
+  const big = w > ht ? w : ht;
+  const size = big > 600 ? 2 : big < 250 ? 0 : 1;
+  const net = (points[0][1] | 0) - (points[n - 1][1] | 0);
+  const rise = ht > 20 && net * 4 > ht ? 2 : ht > 20 && -net * 4 > ht ? 0 : 1;
+  const jag = segs > 0 ? Math.floor((rev * 100) / segs) : 0;
+  const jc = jag > 35 ? 2 : jag < 15 ? 0 : 1;
+  return [size, rise, jc];
+}
+
 // -----------------------------------------------------------------------------
 // Bridge Class Definition
 // -----------------------------------------------------------------------------
@@ -965,15 +1014,72 @@ export class Bridge {
 
   digitalOffering(type: number, text: string): OfferingResult {
     const res = this.engine.processDigitalOffering(type, text);
+    const trimmed = (text || "").slice(0, 1000);
+    const lower = trimmed.toLowerCase();
+
+    if (!res.care) {
+      const CARE_EN_ZH = [
+        "kill myself",
+        "want to die",
+        "suicide",
+        "end my life",
+        "hurt myself",
+        "don't want to live",
+        "do not want to live",
+        "自杀",
+        "想死",
+        "不想活",
+        "不想活了",
+        "轻生",
+        "活不下去",
+        "伤害自己",
+        "结束生命",
+      ];
+      if (CARE_EN_ZH.some((w) => lower.includes(w))) {
+        return {
+          offering: res.offering,
+          care: true,
+          message:
+            "ขอบคุณที่ไว้ใจเล่าออกมา ความเจ็บปวดนี้เป็นเรื่องจริง และคุณไม่ต้องแบกมันอยู่คนเดียว " +
+            "ถ้าคุณกำลังคิดทำร้ายตัวเอง โปรดโทรสายด่วนสุขภาพจิต 1323 (ตลอด 24 ชั่วโมง) หรือบอกคนที่ไว้ใจให้มาอยู่ด้วยตอนนี้ " +
+            "หากอยู่ในอันตรายเฉียบพลันโทร 1669",
+        };
+      }
+    }
+
     if (res.care) {
       return res;
     }
+
     const OFFER_CATS = ["การเงิน", "ความรัก", "สุขภาพ", "การงาน", "ทั่วไป"];
-    const catIdx = Math.max(0, OFFER_CATS.indexOf(res.category ?? "ทั่วไป"));
+    let catIdx = Math.max(0, OFFER_CATS.indexOf(res.category ?? "ทั่วไป"));
+    if (catIdx === 4 && trimmed.length > 0) {
+      const MULTILINGUAL_KW: readonly string[][] = [
+        ["money", "wealth", "fortune", "rich", "debt", "invest", "finance", "business", "prosper", "招财", "发财", "财", "钱", "富", "投资", "债务", "生意"],
+        ["love", "romance", "soulmate", "partner", "family", "heart", "marriage", "crush", "爱", "姻缘", "良缘", "情", "家庭", "婚姻", "伴侣", "复合"],
+        ["health", "sick", "ill", "pain", "sleep", "heal", "recover", "wellness", "wellbeing", "健康", "平安", "康复", "病", "痛", "睡", "身心", "长寿"],
+        ["work", "job", "career", "promotion", "study", "exam", "boss", "team", "project", "事业", "工作", "升职", "学业", "考试", "上司", "顺利", "前程"],
+      ];
+      let best = 4;
+      let bestc = 0;
+      for (let g = 0; g < 4; g++) {
+        let c = 0;
+        for (const k of MULTILINGUAL_KW[g]) {
+          if (lower.includes(k)) c++;
+        }
+        if (c > bestc) {
+          bestc = c;
+          best = g;
+        }
+      }
+      catIdx = best;
+    }
+
     const setIdx = this.getWeeklySetIndex();
     const unified = this.getPeriodLucky();
     return {
       ...res,
+      category: OFFER_CATS[catIdx],
       message: OFFERING_GUIDE_SETS[catIdx]?.[setIdx] ?? res.message,
       lucky: unified.primary2,
     };
@@ -992,52 +1098,7 @@ export class Bridge {
 
   signature(points: [number, number, number][]): SignatureResult {
     const res = this.engine.processSignature(points);
-    const n = points.length;
-    let minx = 1 << 30;
-    let maxx = -(1 << 30);
-    let miny = 1 << 30;
-    let maxy = -(1 << 30);
-    let lastS = -1;
-    let px = 0;
-    let py = 0;
-    let pdx = 0;
-    let pdy = 0;
-    let rev = 0;
-    let segs = 0;
-
-    for (let i = 0; i < n; i++) {
-      const x = points[i][0] | 0;
-      const y = points[i][1] | 0;
-      const s = points[i][2] | 0;
-      if (x < minx) minx = x;
-      if (x > maxx) maxx = x;
-      if (y < miny) miny = y;
-      if (y > maxy) maxy = y;
-      if (s !== lastS) {
-        lastS = s;
-      } else {
-        const dx = x - px;
-        const dy = y - py;
-        if (dx || dy) {
-          if (segs > 0 && dx * pdx + dy * pdy < 0) rev++;
-          pdx = dx;
-          pdy = dy;
-          segs++;
-        }
-      }
-      px = x;
-      py = y;
-    }
-
-    const w = maxx - minx;
-    const ht = maxy - miny;
-    const big = w > ht ? w : ht;
-    const size = big > 600 ? 2 : big < 250 ? 0 : 1;
-    const net = (points[0][1] | 0) - (points[n - 1][1] | 0);
-    const rise = ht > 20 && net * 4 > ht ? 2 : ht > 20 && -net * 4 > ht ? 0 : 1;
-    const jag = segs > 0 ? Math.floor((rev * 100) / segs) : 0;
-    const jc = jag > 35 ? 2 : jag < 15 ? 0 : 1;
-
+    const [size, rise, jc] = analyzeSignatureIndices(points);
     const setIdx = this.getWeeklySetIndex();
     return {
       ...res,

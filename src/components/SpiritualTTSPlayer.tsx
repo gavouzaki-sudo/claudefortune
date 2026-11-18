@@ -26,7 +26,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
   subtitle,
   showTextLines = false,
 }) => {
-  const { t, format } = useLanguage();
+  const { t, lang, format } = useLanguage();
   const [speechState, setSpeechState] = useState<SpiritualSpeechState>(
     spiritualSpeechEngine.getState()
   );
@@ -50,7 +50,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
       spiritualSpeechEngine.resume();
     } else {
       // Direct synchronous execution ensures mobile user gesture authorization is retained!
-      spiritualSpeechEngine.speak(textToRead, { withChime: true });
+      spiritualSpeechEngine.speak(textToRead, { withChime: true, lang });
     }
   };
 
@@ -71,6 +71,12 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
     .filter((l) => l.length > 0 && !l.startsWith('---'));
 
   const activePreset = SPIRITUAL_PRESETS[speechState.activePresetId] || SPIRITUAL_PRESETS.sinsei;
+  const localizedPresetTitle =
+    activePreset.id === 'dharma'
+      ? t.ttsPresetDharma
+      : activePreset.id === 'meditation'
+      ? t.ttsPresetMeditation
+      : t.ttsPresetSinsei;
 
   return (
     <div className={`spiritual-tts-container ${isCurrentTextActive ? 'is-reciting' : ''}`}>
@@ -151,7 +157,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
               type="button"
               className="btn-unsupported-retry"
               onClick={() => {
-                spiritualSpeechEngine.speak(textToRead, { withChime: false });
+                spiritualSpeechEngine.speak(textToRead, { withChime: false, lang });
               }}
             >
               {t.ttsRetry}
@@ -220,13 +226,13 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
                   {t.ttsPersonaGoogle}
                 </span>
                 <span className="persona-note">
-                  {activePreset.icon} {format(t.ttsPersonaStyle, { preset: activePreset.title })}
+                  {activePreset.icon} {format(t.ttsPersonaStyle, { preset: localizedPresetTitle })}
                 </span>
               </>
             ) : (
               <>
                 <span className="persona-badge">
-                  {activePreset.icon} {format(t.ttsPersonaNative, { preset: activePreset.title })}
+                  {activePreset.icon} {format(t.ttsPersonaNative, { preset: localizedPresetTitle })}
                 </span>
                 <span className="persona-note">{t.ttsPersonaNote}</span>
               </>
@@ -255,8 +261,8 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
                   : speechState.isPaused
                   ? t.ttsStatusPaused
                   : speechState.engineType === 'google'
-                  ? format(t.ttsStatusReadingGoogle, { preset: activePreset.title })
-                  : format(t.ttsStatusReadingNative, { preset: activePreset.title })}
+                  ? format(t.ttsStatusReadingGoogle, { preset: localizedPresetTitle })
+                  : format(t.ttsStatusReadingNative, { preset: localizedPresetTitle })}
               </span>
             </div>
 
@@ -273,7 +279,7 @@ export const SpiritualTTSPlayer: React.FC<SpiritualTTSPlayerProps> = ({
                       }`}
                       onClick={() => {
                         // Click line to jump recitation directly
-                        spiritualSpeechEngine.speak(textToRead, { startLine: idx, withChime: false });
+                        spiritualSpeechEngine.speak(textToRead, { startLine: idx, withChime: false, lang });
                       }}
                       title={t.ttsLineJumpTitle}
                     >

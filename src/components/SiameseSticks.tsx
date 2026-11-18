@@ -9,13 +9,33 @@ import type { CardData } from '../utils/luckyCardCanvas';
 import { buildStickCardData } from '../utils/cardDataBuilder';
 import { logger } from '../utils/logger';
 import { useLanguage } from '../context/LanguageContext';
+import { getLocalizedStickResult } from '../data/locales/propheciesDivination';
+import type { SupportedLang } from '../data/locales/types';
 
-export function formatStickReading(res: StickResult): string {
+export function formatStickReading(
+  res: StickResult,
+  lang: SupportedLang = 'th',
+  labels?: { titleLine?: string; levelLine?: string }
+): string {
+  const titleLine =
+    labels?.titleLine ??
+    (lang === 'en'
+      ? `Fortune Stick Number ${res.stick}: ${res.title}`
+      : lang === 'zh'
+      ? `第 ${res.stick} 签：${res.title}`
+      : `เซียมซีใบที่ ${res.stick} ${res.title}`);
+  const levelLine =
+    labels?.levelLine ??
+    (lang === 'en'
+      ? `Oracle Rank: ${res.level_name}`
+      : lang === 'zh'
+      ? `签文等级：${res.level_name}`
+      : `คำทำนาย: ${res.level_name}`);
   return [
-    `เซียมซีใบที่ ${res.stick} ${res.title}`,
-    `คำทำนาย: ${res.level_name}`,
+    titleLine,
+    levelLine,
     res.verse,
-    ...res.aspects.map((a) => `${a.name} ${a.text}`),
+    ...res.aspects.map((a) => (lang === 'th' ? `${a.name} ${a.text}` : `${a.name}: ${a.text}`)),
   ].join('\n');
 }
 
@@ -37,6 +57,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
   const [fallenNum, setFallenNum] = useState<number | null>(null);
   const [showFallen, setShowFallen] = useState(false);
   const [result, setResult] = useState<StickResult | null>(null);
+  const [resultSetIdx, setResultSetIdx] = useState<number>(() => bridge.getWeeklySetIndex());
   const [puaPoiVerified, setPuaPoiVerified] = useState<boolean>(false);
   const [isJournalSaved, setIsJournalSaved] = useState<boolean>(false);
 
@@ -79,6 +100,7 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
       const res = bridge.drawStick(shakeRawRef.current);
       setFallenNum(res.stick);
       setResult(res);
+      setResultSetIdx(bridge.getWeeklySetIndex());
       setShowFallen(false);
 
       const fallenId = window.setTimeout(() => {
@@ -214,14 +236,25 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
     setShakeMeter(0);
   };
 
+  const localizedResult = result ? getLocalizedStickResult(result, resultSetIdx, lang) : null;
+  const fullStickText = localizedResult
+    ? formatStickReading(localizedResult, lang, {
+        titleLine: format(t.stickTtsTitleLine, {
+          num: localizedResult.stick,
+          title: localizedResult.title,
+        }),
+        levelLine: format(t.stickTtsLevelLine, { level: localizedResult.level_name }),
+      })
+    : '';
+
   const handleSaveAndShare = () => {
-    if (!result) return;
-    const cardData = buildStickCardData(result, lang);
+    if (!localizedResult) return;
+    const cardData = buildStickCardData(localizedResult, lang);
     if (!isJournalSaved) {
       saveJournalEntry({
         type: 'stick',
         title: cardData.title,
-        summary: `${result.level_name}: ${result.verse.slice(0, 80)}`,
+        summary: `${localizedResult.level_name}: ${localizedResult.verse.slice(0, 80)}`,
         details: cardData.details,
       });
       setIsJournalSaved(true);
@@ -244,9 +277,8 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
     }, 50);
     timersRef.current.add(scrollId);
 
-    if (mode === 'listen' && result) {
-      const fullText = formatStickReading(result);
-      spiritualSpeechEngine.speak(fullText, { withChime: true });
+    if (mode === 'listen' && fullStickText) {
+      spiritualSpeechEngine.speak(fullStickText, { withChime: true, lang });
     } else {
       spiritualSpeechEngine.stop();
     }
@@ -315,10 +347,10 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
       )}
 
       {/* PHASE 2: PUA POI VERIFICATION */}
-      {step === 'puapoi' && result && (
+      {step === 'puapoi' && localizedResult && (
         <PuaPoi
-          stickNumber={result.stick}
-          stickTitle={result.title}
+          stickNumber={localizedResult.stick}
+          stickTitle={localizedResult.title}
           onConfirmFortune={handleConfirmFortune}
           onReshakeStick={handleResetToShake}
           onToast={onToast}
@@ -326,17 +358,17 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
       )}
 
       {/* PHASE 3: REVEALED PROPHECY */}
-      {step === 'prophecy' && result && (
+      {step === 'prophecy' && localizedResult && (
         <article ref={resultRef} id="stick-result" className="result prophecy-result-card" aria-live="polite">
           <div className="prophecy-header-row">
             <div className="prophecy-title-block">
               <h3>
-                {format(t.stickNumberLabel, { num: result.stick })} · {result.title}
+                {format(t.stickNumberLabel, { num: localizedResult.stick })} · {localizedResult.title}
               </h3>
               <p className="prophecy-level-line">
                 {t.stickResultLabel}{' '}
-                <span className={`badge lv${result.level}`}>
-                  {result.level_name}
+                <span className={`badge lv${localizedResult.level}`}>
+                  {localizedResult.level_name}
                 </span>
                 {puaPoiVerified && (
                   <span className="badge-pua-verified" title={t.stickPuaVerifiedTitle}>
@@ -365,12 +397,11 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
               onClick={(e) => {
                 e.preventDefault();
                 setProphecyMode('listen');
-                const fullText = formatStickReading(result);
                 const state = spiritualSpeechEngine.getState();
-                if (state.isSpeaking && state.isPaused && state.currentText === fullText) {
+                if (state.isSpeaking && state.isPaused && state.currentText === fullStickText) {
                   spiritualSpeechEngine.resume();
                 } else {
-                  spiritualSpeechEngine.speak(fullText, { withChime: true });
+                  spiritualSpeechEngine.speak(fullStickText, { withChime: true, lang });
                 }
               }}
               title={t.stickListenTitle}
@@ -381,23 +412,17 @@ export const SiameseSticks: React.FC<SiameseSticksProps> = ({ bridge, onToast, o
 
           {prophecyMode === 'listen' && (
             <SpiritualTTSPlayer
-              textToRead={formatStickReading(result)}
+              textToRead={fullStickText}
               subtitle={t.ttsDefaultSubtitle}
               initialExpanded={true}
               showTextLines={false}
             />
           )}
 
-          {lang !== 'th' && (
-            <p className="note" style={{ marginBottom: '0.65rem' }}>
-              {t.oracleThaiFallbackNote}
-            </p>
-          )}
-
-          <p className="verse">{result.verse}</p>
+          <p className="verse">{localizedResult.verse}</p>
 
           <div className="aspects">
-            {result.aspects.map((a, i) => (
+            {localizedResult.aspects.map((a, i) => (
               <div key={i} className="aspect">
                 <b>{a.name}</b>
                 <span>{a.text}</span>

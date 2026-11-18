@@ -1372,5 +1372,231 @@ test('Phase 3 i18n: locale placeholder parity, localized data modules, and card 
   }
 });
 
+test('Phase 4: Localized prophecies & ritual results cover TH, EN, and ZH without Thai leaks', async () => {
+  const { Bridge, analyzeSignatureIndices } = await import('../src/bridge');
+  const {
+    getLocalizedStickResult,
+    getLocalizedTarotMeaning,
+    getTarotTtsName,
+  } = await import('../src/data/locales/propheciesDivination');
+  const {
+    getLocalizedCandleProphecy,
+    getLocalizedOfferingResult,
+    getLocalizedRemedyResult,
+    getLocalizedFestivalBlessing,
+    getLocalizedImageScanReading,
+    getLocalizedSignatureTraits,
+    getLocalizedLuckyNumberNote,
+  } = await import('../src/data/locales/propheciesRituals');
+  const { formatStickReading } = await import('../src/components/SiameseSticks');
+
+  const thaiRe = /[\u0E00-\u0E7F]/;
+  const langs = ['th', 'en', 'zh'] as const;
+  const bridge = await Bridge.load();
+  bridge.seed(2026);
+
+  // 1. Siamese sticks (28 sticks × 5 sets) + formatStickReading
+  const baseStick = bridge.drawStick(450);
+  assert.ok(formatStickReading(baseStick).startsWith('เซียมซีใบที่ '));
+  for (let stickNum = 1; stickNum <= 28; stickNum++) {
+    for (let setIdx = 0; setIdx < 5; setIdx++) {
+      for (const lang of langs) {
+        const loc = getLocalizedStickResult({ ...baseStick, stick: stickNum }, setIdx, lang);
+        assert.ok(loc.title.length > 0 && loc.level_name.length > 0 && loc.verse.length > 0);
+        assert.equal(loc.aspects.length, 4);
+        const formatted = formatStickReading(loc, lang);
+        assert.ok(formatted.length > 0);
+        if (lang !== 'th') {
+          assert.equal(thaiRe.test(loc.title), false, `Thai leak in stick ${stickNum} (${lang}) title`);
+          assert.equal(thaiRe.test(loc.level_name), false, `Thai leak in stick ${stickNum} (${lang}) level`);
+          assert.equal(thaiRe.test(loc.verse), false, `Thai leak in stick ${stickNum} (${lang}) verse`);
+          for (const asp of loc.aspects) {
+            assert.equal(thaiRe.test(asp.name), false, `Thai leak in stick aspect name (${lang})`);
+            assert.equal(thaiRe.test(asp.text), false, `Thai leak in stick aspect text (${lang})`);
+          }
+          assert.equal(thaiRe.test(formatted), false, `Thai leak in formatStickReading (${lang})`);
+        }
+      }
+    }
+  }
+
+  // 2. Tarot (22 cards × 5 sets × upright/reversed) + clean TTS names
+  for (let id = 0; id < 22; id++) {
+    for (let setIdx = 0; setIdx < 5; setIdx++) {
+      for (const rev of [false, true]) {
+        for (const lang of langs) {
+          const meaning = getLocalizedTarotMeaning(id, rev, setIdx, lang);
+          assert.ok(meaning.length > 0);
+          if (lang !== 'th') {
+            assert.equal(thaiRe.test(meaning), false, `Thai leak in tarot ${id} set ${setIdx} (${lang})`);
+          }
+        }
+      }
+    }
+    const ttsEn = getTarotTtsName(id, 'ไพ่', 'The Fool', 'en');
+    const ttsZh = getTarotTtsName(id, 'ไพ่', 'The Fool', 'zh');
+    assert.equal(ttsEn, 'The Fool');
+    assert.equal(ttsZh.includes('('), false, 'ZH TTS Tarot name must not mix English parens');
+    assert.equal(thaiRe.test(ttsEn), false);
+    assert.equal(thaiRe.test(ttsZh), false);
+  }
+
+  // 3. Candle, Lantern Offering (categories + care mode), and Chong Remedy
+  for (let s = 0; s < 5; s++) {
+    for (const lang of langs) {
+      const candle = getLocalizedCandleProphecy(s, lang);
+      assert.ok(candle.dedication.length > 0 && candle.mantra.length >= 2);
+      if (lang !== 'th') {
+        assert.equal(thaiRe.test(candle.dedication), false);
+        assert.equal(candle.mantra.some((m) => thaiRe.test(m)), false);
+      }
+
+      for (let fest = 0; fest < 6; fest++) {
+        const b = getLocalizedFestivalBlessing(fest, s, lang);
+        assert.ok(b.title.length > 0 && b.text.length > 0);
+        if (lang !== 'th') {
+          assert.equal(thaiRe.test(b.title), false);
+          assert.equal(thaiRe.test(b.text), false);
+        }
+      }
+    }
+  }
+
+  const rawOfferingEn = bridge.offering(1, 'May my work and career advance smoothly');
+  assert.equal(rawOfferingEn.care, false);
+  assert.equal(rawOfferingEn.category, 'การงาน');
+  const rawOfferingZhCare = bridge.offering(1, '不想活了');
+  assert.equal(rawOfferingZhCare.care, true);
+
+  for (const lang of langs) {
+    const locWork = getLocalizedOfferingResult(rawOfferingEn, 1, lang);
+    assert.ok(locWork.category && locWork.category.length > 0 && locWork.message.length > 0);
+    const locCare = getLocalizedOfferingResult(rawOfferingZhCare, 1, lang);
+    assert.ok(locCare.message.length > 0);
+    if (lang !== 'th') {
+      assert.equal(thaiRe.test(locWork.category || ''), false);
+      assert.equal(thaiRe.test(locWork.message), false);
+      assert.equal(thaiRe.test(locWork.color || ''), false);
+      assert.equal(thaiRe.test(locCare.message), false);
+    }
+  }
+
+  const rawRemedy = bridge.remedy(0, 0);
+  for (let r = 0; r < 5; r++) {
+    for (let p = 0; p < 4; p++) {
+      for (const lang of langs) {
+        const locRem = getLocalizedRemedyResult({ ...rawRemedy, relation: r }, 2, p, lang);
+        assert.ok(locRem.summary.length > 0 && locRem.practical.length > 0 && locRem.merit.length > 0);
+        if (lang !== 'th') {
+          assert.equal(thaiRe.test(locRem.zodiac_name), false);
+          assert.equal(thaiRe.test(locRem.year_name), false);
+          assert.equal(thaiRe.test(locRem.problem), false);
+          assert.equal(thaiRe.test(locRem.summary), false);
+          assert.equal(thaiRe.test(locRem.practical), false);
+          assert.equal(thaiRe.test(locRem.merit), false);
+          assert.equal(thaiRe.test(locRem.color), false);
+          assert.equal(thaiRe.test(locRem.direction), false);
+          assert.equal(locRem.mantra.some((m) => thaiRe.test(m)), false);
+        }
+      }
+    }
+  }
+
+  // 4. Image Scan, Signature Traits, Lucky Number Note
+  const elementsTh = ['โลหะ', 'น้ำ', 'ไม้', 'ไฟ', 'ดิน'];
+  const pts: [number, number, number][] = Array.from({ length: 12 }, (_, i) => [
+    100 + i * 25,
+    180 - i * 3,
+    0,
+  ]);
+  const sigIndices = analyzeSignatureIndices(pts);
+  for (const lang of langs) {
+    assert.ok(getLocalizedLuckyNumberNote(lang).length > 0);
+    if (lang !== 'th') {
+      assert.equal(thaiRe.test(getLocalizedLuckyNumberNote(lang)), false);
+    }
+    for (const el of elementsTh) {
+      for (const mode of [0, 1]) {
+        const reading = getLocalizedImageScanReading(mode, el, 0, lang);
+        assert.ok(reading.length > 0);
+        if (lang !== 'th') {
+          assert.equal(thaiRe.test(reading), false, `Thai leak in image scan (${lang})`);
+        }
+      }
+    }
+    const traits = getLocalizedSignatureTraits(sigIndices, 0, lang);
+    assert.equal(traits.length, 3);
+    for (const tr of traits) {
+      assert.ok(tr.length > 0);
+      if (lang !== 'th') {
+        assert.equal(thaiRe.test(tr), false, `Thai leak in signature traits (${lang})`);
+      }
+    }
+  }
+});
+
+test('Phase 4: TTS Engine aligns query tl, native voices, sanitization, and CJK chunking by language', async () => {
+  const {
+    getTtsQueryLang,
+    getNativeSpeechLang,
+    doesVoiceMatchLang,
+    resolveVoiceForLang,
+    detectSpeechLangFromText,
+    sanitizeSpeechText,
+    splitSpeechLines,
+    spiritualSpeechEngine,
+  } = await import('../src/utils/spiritualSpeech');
+
+  assert.equal(getTtsQueryLang('th'), 'th');
+  assert.equal(getTtsQueryLang('en'), 'en');
+  assert.equal(getTtsQueryLang('zh'), 'zh-CN');
+
+  assert.equal(getNativeSpeechLang('th'), 'th-TH');
+  assert.equal(getNativeSpeechLang('en'), 'en-US');
+  assert.equal(getNativeSpeechLang('zh'), 'zh-CN');
+
+  const mockVoices = [
+    { name: 'Kanya', lang: 'th-TH' },
+    { name: 'Google US English', lang: 'en-US' },
+    { name: 'Google UK English Female', lang: 'en-GB' },
+    { name: 'Sinji', lang: 'zh-HK' },
+    { name: 'Tingting', lang: 'zh-CN' },
+  ];
+
+  assert.equal(doesVoiceMatchLang(mockVoices[0], 'en'), false);
+  assert.equal(doesVoiceMatchLang(mockVoices[1], 'en'), true);
+  assert.equal(doesVoiceMatchLang(mockVoices[4], 'zh'), true);
+
+  // Must NEVER fall back to Thai 'Kanya' when speaking EN or ZH
+  assert.equal(resolveVoiceForLang(mockVoices, 'en', 'Kanya')?.name, 'Google US English');
+  assert.equal(resolveVoiceForLang(mockVoices, 'zh', 'Kanya')?.name, 'Tingting');
+  assert.equal(resolveVoiceForLang(mockVoices, 'th', null)?.name, 'Kanya');
+  assert.equal(resolveVoiceForLang([mockVoices[0]], 'en', 'Kanya'), undefined);
+
+  assert.equal(detectSpeechLangFromText('Fortune Stick Number 8', 'en'), 'en');
+  assert.equal(detectSpeechLangFromText('第 8 签：神龙腾霄', 'zh'), 'zh');
+  assert.equal(detectSpeechLangFromText('เซียมซีใบที่ 8 มังกรทะยานฟ้า', 'th'), 'th');
+
+  const cleaned = sanitizeSpeechText('🔮 Fortune Stick #8 · Dragon Soaring — Finance / Love');
+  assert.equal(cleaned.includes('🔮'), false);
+  assert.equal(cleaned, 'Fortune Stick #8, Dragon Soaring, Finance, Love');
+
+  const longZh =
+    '这是第一句祈福签文内容说明近期运势渐入佳境，顺风顺水万事如意。这是第二句详细指引说明应当把握机遇并广结善缘，以诚待人必有厚报。这是第三句提醒您保持内心平静与从容，切莫急躁冒进。';
+  const zhChunks = splitSpeechLines(longZh, 'zh');
+  assert.ok(zhChunks.length >= 2);
+  for (const chunk of zhChunks) {
+    assert.ok(chunk.length <= 100, `ZH chunk exceeded 100 chars: ${chunk.length}`);
+  }
+
+  spiritualSpeechEngine.setLanguage('en');
+  assert.equal(spiritualSpeechEngine.getState().lang, 'en');
+  spiritualSpeechEngine.setLanguage('zh');
+  assert.equal(spiritualSpeechEngine.getState().lang, 'zh');
+  spiritualSpeechEngine.setLanguage('th');
+  assert.equal(spiritualSpeechEngine.getState().lang, 'th');
+});
+
+
 
 

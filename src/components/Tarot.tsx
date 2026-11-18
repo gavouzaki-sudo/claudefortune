@@ -8,6 +8,10 @@ import type { CardData } from '../utils/luckyCardCanvas';
 import { logger } from '../utils/logger';
 import { pad2 } from '../utils/formatters';
 import { getLocalizedTarotTitle } from '../data/ritualProphecies';
+import {
+  getLocalizedTarotMeaning,
+  getTarotTtsName,
+} from '../data/locales/propheciesDivination';
 import { useLanguage } from '../context/LanguageContext';
 
 interface TarotProps {
@@ -20,6 +24,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
   const { lang, t, format } = useLanguage();
   const [spread, setSpread] = useState<number>(3);
   const [cards, setCards] = useState<TarotCard[]>([]);
+  const [drawSetIdx, setDrawSetIdx] = useState<number>(() => bridge.getWeeklySetIndex());
   const [flipped, setFlipped] = useState<Record<number, boolean>>({});
   const [isJournalSaved, setIsJournalSaved] = useState<boolean>(false);
 
@@ -33,6 +38,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
     try {
       const res = bridge.drawTarot(spread);
       setCards(res.cards);
+      setDrawSetIdx(bridge.getWeeklySetIndex());
       setFlipped({});
       setIsJournalSaved(false);
       onToast(t.tarotDrawnToast);
@@ -44,7 +50,10 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
 
   const handleSaveAndShare = () => {
     if (cards.length === 0) return;
-    const activeCards = cards.slice(0, spread);
+    const activeCards = cards.slice(0, spread).map((c) => ({
+      ...c,
+      meaning: getLocalizedTarotMeaning(c.id, c.reversed, drawSetIdx, lang, c.meaning),
+    }));
     const { cardData, details: tarotDetails } = buildTarotCardData(
       activeCards,
       spread,
@@ -80,6 +89,7 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
       try {
         const res = bridge.drawTarot(newSpread);
         setCards(res.cards);
+        setDrawSetIdx(bridge.getWeeklySetIndex());
         setFlipped({});
         onToast(format(t.tarotSpreadToast, { count: newSpread }));
       } catch (err) {
@@ -116,7 +126,10 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
   };
 
   const positions = spreadPositions[spread] || [];
-  const activeCards = cards.slice(0, spread);
+  const activeCards = cards.slice(0, spread).map((card) => ({
+    ...card,
+    meaning: getLocalizedTarotMeaning(card.id, card.reversed, drawSetIdx, lang, card.meaning),
+  }));
   const flippedCount = activeCards.filter((_, idx) => !!flipped[idx]).length;
 
   return (
@@ -160,64 +173,57 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
         )}
       </div>
 
-      {/* ชุดไพ่ยิปซี (Tarot Cards Table) */}
+      {/* Tarot Cards Table */}
       {cards.length > 0 && (
-        <>
-          <div id="tarot-table" className={`tarot-table spread-${spread}`} aria-live="polite">
-            {activeCards.map((card, idx) => {
-              const isFlipped = !!flipped[idx];
-              const label = positions[idx] || format(t.tarotCardNum, { num: idx + 1 });
-              const displayCardTitle = getLocalizedTarotTitle(card.id, card.name, card.en, lang);
-              return (
-                <div key={idx} className={`tslot ${isFlipped ? 'revealed' : ''}`}>
-                  <div className="pos">{label}</div>
-                  <div
-                    className={`tcard ${isFlipped ? 'flipped' : ''}`}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={format(t.tarotCardAria, {
-                      num: idx + 1,
-                      label,
-                      state: isFlipped ? t.tarotStateRevealed : t.tarotStateTapFlip,
-                    })}
-                    style={{ '--i': idx } as React.CSSProperties}
-                    onClick={() => handleFlip(idx)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleFlip(idx);
-                      }
-                    }}
-                  >
-                    <div className="tcard-in">
-                      <div className="tface tback" />
-                      <div className={`tface tfront ${card.reversed ? 'rev' : ''}`}>
-                        <div className="num">{pad2(card.id)}</div>
-                        <div className="glyph">{TAROT_GLYPHS[card.id] || '🎴'}</div>
-                        <div>
-                          <div className="nm">{displayCardTitle}</div>
-                          {lang !== 'en' && <div className="en">{card.en}</div>}
-                        </div>
+        <div id="tarot-table" className={`tarot-table spread-${spread}`} aria-live="polite">
+          {activeCards.map((card, idx) => {
+            const isFlipped = !!flipped[idx];
+            const label = positions[idx] || format(t.tarotCardNum, { num: idx + 1 });
+            const displayCardTitle = getLocalizedTarotTitle(card.id, card.name, card.en, lang);
+            return (
+              <div key={idx} className={`tslot ${isFlipped ? 'revealed' : ''}`}>
+                <div className="pos">{label}</div>
+                <div
+                  className={`tcard ${isFlipped ? 'flipped' : ''}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={format(t.tarotCardAria, {
+                    num: idx + 1,
+                    label,
+                    state: isFlipped ? t.tarotStateRevealed : t.tarotStateTapFlip,
+                  })}
+                  style={{ '--i': idx } as React.CSSProperties}
+                  onClick={() => handleFlip(idx)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleFlip(idx);
+                    }
+                  }}
+                >
+                  <div className="tcard-in">
+                    <div className="tface tback" />
+                    <div className={`tface tfront ${card.reversed ? 'rev' : ''}`}>
+                      <div className="num">{pad2(card.id)}</div>
+                      <div className="glyph">{TAROT_GLYPHS[card.id] || '🎴'}</div>
+                      <div>
+                        <div className="nm">{displayCardTitle}</div>
+                        {lang !== 'en' && <div className="en">{card.en}</div>}
                       </div>
                     </div>
                   </div>
-                  <div className="tmean">
-                    {card.reversed && <span className="rv">{t.tarotReversed}</span>}
-                    {card.meaning}
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-          {lang !== 'th' && flippedCount > 0 && (
-            <p className="note" style={{ marginTop: '0.75rem', textAlign: 'center' }}>
-              {t.oracleThaiFallbackNote}
-            </p>
-          )}
-        </>
+                <div className="tmean">
+                  {card.reversed && <span className="rv">{t.tarotReversed}</span>}
+                  {card.meaning}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
 
-      {/* กล่องเสียงซินแสอ่านคำทำนายไพ่ยิปซี อยู่ด้านล่างชุดไพ่และคำทำนาย */}
+      {/* Spiritual TTS Player for Tarot Spread */}
       {cards.length > 0 && flippedCount > 0 && (
         <div style={{ marginTop: '1.5rem' }}>
           <SpiritualTTSPlayer
@@ -227,9 +233,14 @@ export const Tarot: React.FC<TarotProps> = ({ bridge, onToast, onOpenCard }) => 
                 if (!isFlipped) return null;
                 const pos = positions[idx] || format(t.tarotCardNum, { num: idx + 1 });
                 return [
-                  `ตำแหน่ง ${pos}: ไพ่ ${card.name} (${card.en})`,
-                  card.reversed ? 'สถานะ: ไพ่กลับหัว' : 'สถานะ: ไพ่หัวตั้ง',
-                  `ความหมายและคำทำนาย: ${card.meaning}`,
+                  format(t.tarotTtsCardLine, {
+                    pos,
+                    name: getTarotTtsName(card.id, card.name, card.en, lang),
+                  }),
+                  format(t.tarotTtsStateLine, {
+                    state: card.reversed ? t.tarotReversed : t.tarotUpright,
+                  }),
+                  format(t.tarotTtsMeaningLine, { meaning: card.meaning }),
                 ].join('\n');
               })
               .filter(Boolean)

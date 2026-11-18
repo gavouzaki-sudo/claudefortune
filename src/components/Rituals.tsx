@@ -5,15 +5,11 @@ import type { CandleResult, OfferingResult, RemedyResult } from '../types';
 import { isChantMuted } from '../utils/chantAudio';
 import { getSharedAudioContextSync } from '../utils/audioContext';
 import { useLanguage } from '../context/LanguageContext';
-
-
-const WISH_PRESETS = [
-  { icon: '🕊️', title: 'หมดเคราะห์', text: 'ขอให้หมดเคราะห์หมดโศก โรคภัยมลายสิ้น มีแต่ความสุขสงบ' },
-  { icon: '💰', title: 'โชคลาภเงินทอง', text: 'ขอให้เงินทองไหลมาเทมา มีโชคลาภ ค้าขายร่ำรวยมั่งคั่ง' },
-  { icon: '💼', title: 'การงานราบรื่น', text: 'ขอให้การงานราบรื่น ก้าวหน้ามั่นคง ได้รับการสนับสนุนที่ดี' },
-  { icon: '💖', title: 'ความรักสมหวัง', text: 'ขอให้พบเจอคู่แท้ ครอบครัวอบอุ่น มีกัลยาณมิตรที่จริงใจ' },
-  { icon: '🌿', title: 'สุขภาพแข็งแรง', text: 'ขอให้สุขภาพร่างกายแข็งแรง จิตใจแจ่มใส ปราศจากโรคภัย' },
-];
+import {
+  getLocalizedCandleProphecy,
+  getLocalizedOfferingResult,
+  getLocalizedRemedyResult,
+} from '../data/locales/propheciesRituals';
 
 const AMBIENT_LANTERNS = [
   { id: 1, left: '15%', bottom: '40px', size: 14, delay: '0s', drift: '25px' },
@@ -23,30 +19,27 @@ const AMBIENT_LANTERNS = [
   { id: 5, left: '48%', bottom: '70px', size: 9, delay: '6s', drift: '15px' },
 ];
 
-interface BodySweepPart {
+interface BodySweepPartCoord {
   id: number;
-  name: string;
-  sub: string;
-  blessing: string;
   x: number;
   y: number;
   nodeR: number;
 }
 
-const BODY_SWEEP_PARTS: BodySweepPart[] = [
-  { id: 1, name: 'ศีรษะ', sub: 'กระหม่อม', blessing: 'ปัดเคราะห์ความคิด จิตใจปลอดโปร่ง สว่างสดใส', x: 140, y: 38, nodeR: 15 },
-  { id: 2, name: 'ใบหน้า', sub: 'หน้าผากและตา', blessing: 'ปัดสิ่งอัปมงคล เสริมสง่าราศี เมตตามหานิยม', x: 140, y: 64, nodeR: 14 },
-  { id: 3, name: 'ลำคอ', sub: 'คอและคำพูด', blessing: 'ปัดเคราะห์ทางวาจา พูดจาเป็นทรัพย์ แคล้วคลาดปลอดภัย', x: 140, y: 92, nodeR: 13 },
-  { id: 4, name: 'ไหล่ขวา', sub: 'บ่าขวา', blessing: 'ปัดภาระหนักอึ้งและความกดดัน ปลดเปลื้องความทุกข์', x: 88, y: 118, nodeR: 14 },
-  { id: 5, name: 'ไหล่ซ้าย', sub: 'บ่าซ้าย', blessing: 'ปัดอุปสรรคขวากหนามและศัตรูคู่อริ ให้พ้นไปจากตัว', x: 192, y: 118, nodeR: 14 },
-  { id: 6, name: 'หน้าอก', sub: 'ดวงใจ', blessing: 'ปัดความเศร้าหมองและทุกข์ใจ สุขภาพใจเข้มแข็ง', x: 140, y: 148, nodeR: 15 },
-  { id: 7, name: 'แขนขวา', sub: 'มือขวา', blessing: 'ปัดอุปสรรคการงาน หยิบจับสิ่งใดขอให้สำเร็จราบรื่น', x: 56, y: 188, nodeR: 14 },
-  { id: 8, name: 'แขนซ้าย', sub: 'มือซ้าย', blessing: 'ปัดเคราะห์การสูญเสีย รับโชคลาภเงินทองมั่นคง', x: 224, y: 188, nodeR: 14 },
-  { id: 9, name: 'ท้องและเอว', sub: 'ช่องท้อง', blessing: 'ปัดโรคภัยไข้เจ็บ ปัญหาสุขภาพทั้งปวงมลายสิ้น', x: 140, y: 218, nodeR: 15 },
-  { id: 10, name: 'ขาขวา', sub: 'ต้นขาขวา', blessing: 'ปัดอุบัติเหตุในการสัญจร ทุกย่างก้าวปลอดภัย', x: 112, y: 295, nodeR: 14 },
-  { id: 11, name: 'ขาซ้าย', sub: 'ต้นขาซ้าย', blessing: 'ปัดสะดุดติดขัด ก้าวหน้ามั่นคง ไร้อุปสรรคกีดขวาง', x: 168, y: 295, nodeR: 14 },
-  { id: 12, name: 'เท้าขวา', sub: 'ปลายเท้าขวา', blessing: 'ปัดสิ่งชั่วร้ายทั้งปวงลงสู่ธรณี มิให้หวนคืนกลับมา', x: 102, y: 390, nodeR: 14 },
-  { id: 13, name: 'เท้าซ้าย', sub: 'ปลายเท้าซ้าย', blessing: 'ปัดเคราะห์สิ้นสุด ครบ 13 เดือนมงคล ร่มเย็นตลอดปี', x: 178, y: 390, nodeR: 14 },
+const BODY_PART_COORDS: BodySweepPartCoord[] = [
+  { id: 1, x: 140, y: 38, nodeR: 15 },
+  { id: 2, x: 140, y: 64, nodeR: 14 },
+  { id: 3, x: 140, y: 92, nodeR: 13 },
+  { id: 4, x: 88, y: 118, nodeR: 14 },
+  { id: 5, x: 192, y: 118, nodeR: 14 },
+  { id: 6, x: 140, y: 148, nodeR: 15 },
+  { id: 7, x: 56, y: 188, nodeR: 14 },
+  { id: 8, x: 224, y: 188, nodeR: 14 },
+  { id: 9, x: 140, y: 218, nodeR: 15 },
+  { id: 10, x: 112, y: 295, nodeR: 14 },
+  { id: 11, x: 168, y: 295, nodeR: 14 },
+  { id: 12, x: 102, y: 390, nodeR: 14 },
+  { id: 13, x: 178, y: 390, nodeR: 14 },
 ];
 
 interface RitualsProps {
@@ -56,7 +49,7 @@ interface RitualsProps {
 }
 
 export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast }) => {
-  const { t } = useLanguage();
+  const { t, lang, format } = useLanguage();
   const [activeRit, setActiveRit] = useState<'candle' | 'lantern' | 'chong'>(() => {
     try {
       const saved = sessionStorage.getItem('shrine.activeRit');
@@ -79,10 +72,42 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
     }
   };
 
+  // Localized wish presets & 13-part body sweep items
+  const wishPresets = [
+    { icon: '🕊️', title: t.ritWish1Title, text: t.ritWish1Text },
+    { icon: '💰', title: t.ritWish2Title, text: t.ritWish2Text },
+    { icon: '💼', title: t.ritWish3Title, text: t.ritWish3Text },
+    { icon: '💖', title: t.ritWish4Title, text: t.ritWish4Text },
+    { icon: '🌿', title: t.ritWish5Title, text: t.ritWish5Text },
+  ];
+
+  const bodyPartLabels: Record<number, { name: string; blessing: string }> = {
+    1: { name: t.ritPart1Name, blessing: t.ritPart1Blessing },
+    2: { name: t.ritPart2Name, blessing: t.ritPart2Blessing },
+    3: { name: t.ritPart3Name, blessing: t.ritPart3Blessing },
+    4: { name: t.ritPart4Name, blessing: t.ritPart4Blessing },
+    5: { name: t.ritPart5Name, blessing: t.ritPart5Blessing },
+    6: { name: t.ritPart6Name, blessing: t.ritPart6Blessing },
+    7: { name: t.ritPart7Name, blessing: t.ritPart7Blessing },
+    8: { name: t.ritPart8Name, blessing: t.ritPart8Blessing },
+    9: { name: t.ritPart9Name, blessing: t.ritPart9Blessing },
+    10: { name: t.ritPart10Name, blessing: t.ritPart10Blessing },
+    11: { name: t.ritPart11Name, blessing: t.ritPart11Blessing },
+    12: { name: t.ritPart12Name, blessing: t.ritPart12Blessing },
+    13: { name: t.ritPart13Name, blessing: t.ritPart13Blessing },
+  };
+
+  const bodySweepParts = BODY_PART_COORDS.map((c) => ({
+    ...c,
+    ...(bodyPartLabels[c.id] || { name: '', blessing: '' }),
+  }));
+
   // Candle state
   const [candleLevel, setCandleLevel] = useState(0);
-  const [candleHint, setCandleHint] = useState('แตะค้างที่เทียนหรือปุ่มด้านล่างเพื่อจุดเทียนต่อดวงชะตา');
+  const [candlePhase, setCandlePhase] = useState<'idle' | 'holding' | 'lit' | 'early'>('idle');
+  const [candleRemainingSec, setCandleRemainingSec] = useState('4.0');
   const [candleResult, setCandleResult] = useState<CandleResult | null>(null);
+  const [candleSetIdx, setCandleSetIdx] = useState<number>(() => bridge.getWeeklySetIndex());
   const candleDownRef = useRef(false);
   const candleStartRef = useRef(0);
   const candleRafRef = useRef<number | null>(null);
@@ -91,6 +116,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   // Lantern state
   const [lanternText, setLanternText] = useState('');
   const [lanternResult, setLanternResult] = useState<OfferingResult | null>(null);
+  const [lanternSetIdx, setLanternSetIdx] = useState<number>(() => bridge.getWeeklySetIndex());
   const [lanternFlying, setLanternFlying] = useState(false);
   const [lanternStyle, setLanternStyle] = useState<{ left: string; dx: string } | null>(null);
   const lanternTimerRef = useRef<number | null>(null);
@@ -104,6 +130,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   const chongProblem = 0;
   const [chongSpinning, setChongSpinning] = useState(false);
   const [chongResult, setChongResult] = useState<RemedyResult | null>(null);
+  const [chongSetIdx, setChongSetIdx] = useState<number>(() => bridge.getWeeklySetIndex());
 
   const [sweptParts, setSweptParts] = useState<number[]>([]);
   const [talismanPos, setTalismanPos] = useState<{ x: number; y: number } | null>(null);
@@ -232,20 +259,22 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
     setCandleLevel(level);
 
     if (held < 4000) {
-      setCandleHint(`ค้างไว้อีก ${((4000 - held) / 1000).toFixed(1)} วินาที…`);
+      setCandlePhase('holding');
+      setCandleRemainingSec(((4000 - held) / 1000).toFixed(1));
       candleRafRef.current = requestAnimationFrame(loopCandle);
     } else if (!candleDoneRef.current) {
       candleDoneRef.current = true;
       try {
         const res = bridge.candle(held);
         setCandleResult(res);
-        setCandleHint('เทียนสว่างแล้ว ✨');
+        setCandleSetIdx(bridge.getWeeklySetIndex());
+        setCandlePhase('lit');
         setActiveModal('candle'); // Pops up ceremonial result modal
       } catch {
-        onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
+        onToast(t.commonErrorRetry);
       }
     }
-  }, [bridge, onToast]);
+  }, [bridge, onToast, t.commonErrorRetry]);
 
   const pressCandle = (e?: React.SyntheticEvent) => {
     e?.preventDefault();
@@ -263,7 +292,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
     if (candleRafRef.current) cancelAnimationFrame(candleRafRef.current);
     if (!candleDoneRef.current) {
       setCandleLevel(0);
-      setCandleHint('เทียนดับก่อนเวลา ลองกดค้างให้นานขึ้นอีกนิด (4 วินาที)');
+      setCandlePhase('early');
     }
   };
 
@@ -271,7 +300,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
   const handleLaunchLantern = async () => {
     const trimmed = lanternText.trim();
     if (!trimmed) {
-      onToast('กรุณาพิมพ์หรือเลือกคำอธิษฐานก่อนปล่อยโคมนะ');
+      onToast(t.ritLanternNeedWishToast);
       return;
     }
 
@@ -284,6 +313,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
     try {
       const res = bridge.offering(1, trimmed);
       setLanternResult(res);
+      setLanternSetIdx(bridge.getWeeklySetIndex());
       // Brief lift-off pause before opening popup modal
       if (lanternModalTimerRef.current) clearTimeout(lanternModalTimerRef.current);
       lanternModalTimerRef.current = window.setTimeout(() => {
@@ -293,7 +323,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
         }
       }, 950);
     } catch {
-      onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
+      onToast(t.commonErrorRetry);
     }
 
     if (lanternTimerRef.current) clearTimeout(lanternTimerRef.current);
@@ -314,7 +344,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
     (partId: number) => {
       if (chongSpinning) return;
       if (sweptParts.includes(partId)) return;
-      const part = BODY_SWEEP_PARTS.find((p) => p.id === partId);
+      const part = bodySweepParts.find((p) => p.id === partId);
       if (!part) return;
 
       const next = [...sweptParts, partId];
@@ -347,7 +377,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
 
       // Complete all 13 parts!
       if (next.length === 13) {
-        onToast('🪓 ปัดเคราะห์ครบ 13 ส่วนแล้ว กำลังน้อมส่งดวงชะตาสู่ไท้ส่วยเอี๊ย...');
+        onToast(t.ritChongCompleteToast);
         setChongSpinning(true);
         if (chongTimerRef.current) clearTimeout(chongTimerRef.current);
         chongTimerRef.current = window.setTimeout(() => {
@@ -356,27 +386,47 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
           try {
             const res = bridge.remedy(chongZodiac, chongProblem);
             setChongResult(res);
+            setChongSetIdx(bridge.getWeeklySetIndex());
             setActiveModal('chong');
           } catch {
-            onToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
+            onToast(t.commonErrorRetry);
           } finally {
             setChongSpinning(false);
           }
         }, 1100);
       } else {
-        onToast(`✨ ปัดเคราะห์ส่วนที่ ${partId} (${part.name}) — ${part.blessing}`);
+        onToast(
+          format(t.ritChongPartSweptToast, {
+            id: partId,
+            name: part.name,
+            blessing: part.blessing,
+          })
+        );
       }
     },
-    [bridge, chongProblem, chongSpinning, chongZodiac, onToast, playSweepAudio, sweptParts]
+    [
+      bodySweepParts,
+      bridge,
+      chongProblem,
+      chongSpinning,
+      chongZodiac,
+      format,
+      onToast,
+      playSweepAudio,
+      sweptParts,
+      t.commonErrorRetry,
+      t.ritChongCompleteToast,
+      t.ritChongPartSweptToast,
+    ]
   );
 
   // Sweep the next unbrushed part from head to toe
   const handleSweepNext = useCallback(() => {
-    const nextUnbrushed = BODY_SWEEP_PARTS.find((p) => !sweptParts.includes(p.id));
+    const nextUnbrushed = bodySweepParts.find((p) => !sweptParts.includes(p.id));
     if (nextUnbrushed) {
       handleSweepPart(nextUnbrushed.id);
     }
-  }, [handleSweepPart, sweptParts]);
+  }, [bodySweepParts, handleSweepPart, sweptParts]);
 
   // Touch Swipe Down Handlers on Human Figure
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -416,13 +466,31 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
     mouseStartY.current = null;
   };
 
+  const candleHint =
+    candlePhase === 'holding'
+      ? format(t.ritCandleHintHold, { sec: candleRemainingSec })
+      : candlePhase === 'lit'
+      ? t.ritCandleHintLit
+      : candlePhase === 'early'
+      ? t.ritCandleHintEarly
+      : t.ritCandleHintIdle;
+
+  const localizedCandle = candleResult
+    ? getLocalizedCandleProphecy(candleSetIdx, lang, candleResult)
+    : null;
+  const localizedLantern = lanternResult
+    ? getLocalizedOfferingResult(lanternResult, lanternSetIdx, lang)
+    : null;
+  const localizedChong = chongResult
+    ? getLocalizedRemedyResult(chongResult, chongSetIdx, chongProblem, lang)
+    : null;
 
   const flameScale = (0.3 + (candleLevel / 100) * 0.95).toFixed(3);
   const flameOpacity = candleLevel > 0 ? (0.35 + (candleLevel / 100) * 0.65).toFixed(3) : '0';
   const glowOpacity = (candleLevel / 100).toFixed(3);
 
   // Determine current part to guide user
-  const currentNextPart = BODY_SWEEP_PARTS.find((p) => !sweptParts.includes(p.id)) || null;
+  const currentNextPart = bodySweepParts.find((p) => !sweptParts.includes(p.id)) || null;
 
   return (
     <section id="tab-ritual" className="ritual-frameless-stage tab" role="tabpanel" aria-label={t.ritualTitle}>
@@ -457,90 +525,90 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
       {/* 1. จุดเทียนต่อดวง: Candle image is immediately flush under the top buttons */}
       {activeRit === 'candle' && (
         <div id="rit-candle" className="rit">
-          <div
-            id="candle-wrap"
-            className="candle-wrap"
-            tabIndex={0}
-            role="button"
-            aria-label="กดค้างเพื่อจุดเทียนต่อดวง"
-            onPointerDown={pressCandle}
-            onPointerUp={releaseCandle}
-            onPointerCancel={releaseCandle}
-            onKeyDown={(e) => {
-              if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) pressCandle(e);
-            }}
-            onKeyUp={(e) => {
-              if (e.key === ' ' || e.key === 'Enter') releaseCandle();
-            }}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            <svg viewBox="0 0 200 300" className="candle-svg" aria-hidden="true">
-              <defs>
-                <radialGradient id="glowg" cx="50%" cy="50%" r="50%">
-                  <stop offset="0" stopColor="var(--glow)" stopOpacity=".9" />
-                  <stop offset="1" stopColor="var(--glow)" stopOpacity="0" />
-                </radialGradient>
-                <linearGradient id="waxg" x1="0" x2="1">
-                  <stop offset="0" stopColor="#d9b98a" />
-                  <stop offset=".5" stopColor="#fff1d3" />
-                  <stop offset="1" stopColor="#c79c64" />
-                </linearGradient>
-              </defs>
-              <circle id="candle-glow" cx="100" cy="95" r="95" fill="url(#glowg)" opacity={glowOpacity} />
-              <rect x="70" y="140" width="60" height="140" rx="6" fill="url(#waxg)" />
-              <rect x="62" y="272" width="76" height="14" rx="4" fill="#7a1f16" />
-              <rect x="98" y="128" width="4" height="16" fill="#2a1a10" />
-              <g
-                id="flame"
-                className="flame"
-                style={{
-                  transformOrigin: '100px 128px',
-                  opacity: flameOpacity,
-                  transform: `scale(${flameScale})`,
-                }}
-              >
-                <path d="M100 70 C118 92 120 112 100 128 C80 112 82 92 100 70Z" fill="#ffb347" />
-                <path d="M100 90 C110 104 110 114 100 126 C90 114 90 104 100 90Z" fill="#fff2b8" />
-              </g>
-            </svg>
-            <div className="ring">
-              <div id="candle-ring" style={{ width: `${candleLevel}%` }} />
-            </div>
-          </div>
-
-          <p id="candle-hint" className="center hint" style={{ margin: '0.2rem auto 0.4rem' }}>
-            {candleHint}
-          </p>
-
-          <div
-            className="candle-action-row"
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              width: '100%',
-              margin: '0.8rem auto 0.4rem',
-              textAlign: 'center',
-            }}
-          >
-            <button
-              id="btn-candle-hold"
-              className="btn primary btn-candle-press"
-              type="button"
+            <div
+              id="candle-wrap"
+              className="candle-wrap"
+              tabIndex={0}
+              role="button"
+              aria-label={t.ritCandleAria}
               onPointerDown={pressCandle}
               onPointerUp={releaseCandle}
               onPointerCancel={releaseCandle}
-              aria-label="กดค้างเพื่อจุดเทียนต่อดวง"
-              style={{ margin: '0 auto', textAlign: 'center' }}
+              onKeyDown={(e) => {
+                if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) pressCandle(e);
+              }}
+              onKeyUp={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') releaseCandle();
+              }}
+              onContextMenu={(e) => e.preventDefault()}
             >
-              <span>🕯️ กดค้างที่นี่ (หรือที่ตัวเทียน) เพื่อต่อดวงชะตา</span>
-              {candleLevel > 0 && <span className="candle-btn-pct">({candleLevel.toFixed(0)}%)</span>}
-            </button>
-          </div>
-        </div>
-      )}
+              <svg viewBox="0 0 200 300" className="candle-svg" aria-hidden="true">
+                <defs>
+                  <radialGradient id="glowg" cx="50%" cy="50%" r="50%">
+                    <stop offset="0" stopColor="var(--glow)" stopOpacity=".9" />
+                    <stop offset="1" stopColor="var(--glow)" stopOpacity="0" />
+                  </radialGradient>
+                  <linearGradient id="waxg" x1="0" x2="1">
+                    <stop offset="0" stopColor="#d9b98a" />
+                    <stop offset=".5" stopColor="#fff1d3" />
+                    <stop offset="1" stopColor="#c79c64" />
+                  </linearGradient>
+                </defs>
+                <circle id="candle-glow" cx="100" cy="95" r="95" fill="url(#glowg)" opacity={glowOpacity} />
+                <rect x="70" y="140" width="60" height="140" rx="6" fill="url(#waxg)" />
+                <rect x="62" y="272" width="76" height="14" rx="4" fill="#7a1f16" />
+                <rect x="98" y="128" width="4" height="16" fill="#2a1a10" />
+                <g
+                  id="flame"
+                  className="flame"
+                  style={{
+                    transformOrigin: '100px 128px',
+                    opacity: flameOpacity,
+                    transform: `scale(${flameScale})`,
+                  }}
+                >
+                  <path d="M100 70 C118 92 120 112 100 128 C80 112 82 92 100 70Z" fill="#ffb347" />
+                  <path d="M100 90 C110 104 110 114 100 126 C90 114 90 104 100 90Z" fill="#fff2b8" />
+                </g>
+              </svg>
+              <div className="ring">
+                <div id="candle-ring" style={{ width: `${candleLevel}%` }} />
+              </div>
+            </div>
 
-      {/* 2. ลอยโคมสะเดาะเคราะห์: Sky & lantern image immediately flush under top buttons */}
+            <p id="candle-hint" className="center hint" style={{ margin: '0.2rem auto 0.4rem' }}>
+              {candleHint}
+            </p>
+
+            <div
+              className="candle-action-row"
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '100%',
+                margin: '0.8rem auto 0.4rem',
+                textAlign: 'center',
+              }}
+            >
+              <button
+                id="btn-candle-hold"
+                className="btn primary btn-candle-press"
+                type="button"
+                onPointerDown={pressCandle}
+                onPointerUp={releaseCandle}
+                onPointerCancel={releaseCandle}
+                aria-label={t.ritCandleAria}
+                style={{ margin: '0 auto', textAlign: 'center' }}
+              >
+                <span>{t.ritCandleBtn}</span>
+                {candleLevel > 0 && <span className="candle-btn-pct">({candleLevel.toFixed(0)}%)</span>}
+              </button>
+            </div>
+          </div>
+        )}
+
+      {/* 2. Sky Lantern Wish Offering */}
       {activeRit === 'lantern' && (
         <div id="rit-lantern" className="rit">
           <div id="sky" className="sky">
@@ -576,8 +644,8 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                     handleLaunchLantern();
                   }
                 }}
-                title="แตะที่โคมหรือกดปุ่มด้านล่างเพื่อปล่อยโคม"
-                aria-label="โคมลอยสะเดาะเคราะห์ แตะเพื่อปล่อย"
+                title={t.ritLanternTitle}
+                aria-label={t.ritLanternAria}
               >
                 <svg viewBox="0 0 100 140" className="lantern-body-svg" aria-hidden="true">
                   <defs>
@@ -607,9 +675,9 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                   <circle cx="50" cy="138" r="3" fill="#ffb300" />
                 </svg>
                 <div className="lantern-inner-wish-text">
-                  {lanternText.trim() ? lanternText.trim() : 'คำอธิษฐาน'}
+                  {lanternText.trim() ? lanternText.trim() : t.ritLanternEmptyLabel}
                 </div>
-                <span className="lantern-tap-prompt">✨ แตะที่โคมเพื่อปล่อยลอย</span>
+                <span className="lantern-tap-prompt">{t.ritLanternTapPrompt}</span>
               </div>
             )}
 
@@ -647,10 +715,10 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
             )}
           </div>
 
-          {/* Quick Wish Presets (Without emoji on buttons) */}
+          {/* Quick Wish Presets */}
           <div className="wish-presets-group" style={{ margin: '0.4rem auto 0.6rem' }}>
             <div className="wish-preset-chips">
-              {WISH_PRESETS.map((p, idx) => (
+              {wishPresets.map((p, idx) => (
                 <button
                   key={idx}
                   type="button"
@@ -668,7 +736,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
               id="lantern-text"
               type="text"
               maxLength={120}
-              placeholder="พิมพ์คำอธิษฐานสะเดาะเคราะห์ของคุณ หรือเลือกจากด้านบน..."
+              placeholder={t.ritLanternPlaceholder}
               value={lanternText}
               onChange={(e) => setLanternText(e.target.value)}
               style={{
@@ -693,20 +761,19 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
               disabled={lanternFlying}
             >
               <span>🏮</span>
-              <span>{lanternFlying ? 'โคมลอยกำลังนำพาคำอธิษฐานขึ้นสู่ฟากฟ้า...' : 'ปล่อยโคมลอยสะเดาะเคราะห์ขึ้นฟ้า'}</span>
+              <span>{lanternFlying ? t.ritLanternFlyingBtn : t.ritLanternLaunchBtn}</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* 3. ปีชง: Interactive 13-Part Talisman Sweeping Ceremony */}
+      {/* 3. Chong Remedy: Interactive 13-Part Talisman Sweeping Ceremony */}
       {activeRit === 'chong' && (
         <div id="rit-chong" className="rit chong-interactive-stage">
-          {/* Progress Bar without duplicate sound button */}
           <div className="chong-sweep-counter-bar">
             <div className="chong-counter-header" style={{ justifyContent: 'center', textAlign: 'center' }}>
               <span style={{ fontWeight: 600 }}>
-                📜 ปัดตัวด้วยกระดาษหงิ่งเตี๋ย ({sweptParts.length}/13)
+                {format(t.ritChongSweepProgress, { done: sweptParts.length })}
               </span>
             </div>
             <div className="chong-progress-track">
@@ -717,7 +784,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
             </div>
           </div>
 
-          {/* Interactive Humanoid Figure (SVG 280x430, scaled down 20% to max-width: 224px, max-height: 344px) */}
+          {/* Interactive Humanoid Figure */}
           <div
             className="chong-figure-container"
             style={{
@@ -732,7 +799,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
-            title="ใช้นิ้วหรือเมาส์คลิกปุ่มทั้ง 13 ส่วน หรือปัดลงเพื่อปัดตัวสะเดาะเคราะห์"
+            title={t.ritChongFigureHint}
           >
             <svg
               viewBox="0 0 280 430"
@@ -745,7 +812,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                 display: 'block',
                 margin: '0 auto',
               }}
-              aria-label="หุ่นจำลองร่างกายมนุษย์สำหรับพิธีปัดตัวสะเดาะเคราะห์ 13 ส่วน"
+              aria-label={t.ritChongFigureAria}
             >
               <defs>
                 <radialGradient id="bodyAura" cx="50%" cy="45%" r="55%">
@@ -771,16 +838,13 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
               />
 
               {/* Serene Humanoid Silhouette */}
-              {/* Head */}
               <ellipse cx="140" cy="46" rx="20" ry="24" fill="url(#bodyGrad)" stroke="#ffd700" strokeWidth="1.6" />
-              {/* Torso & Core */}
               <path
                 d="M120 70 C100 80, 75 100, 75 125 C75 145, 90 170, 95 195 C98 215, 105 240, 105 270 L100 375 C98 395, 105 405, 120 405 C130 405, 132 390, 134 350 L136 265 L140 250 L144 265 L146 350 C148 390, 150 405, 160 405 C175 405, 182 395, 180 375 L175 270 C175 240, 182 215, 185 195 C190 170, 205 145, 205 125 C205 100, 180 80, 160 70 Z"
                 fill="url(#bodyGrad)"
                 stroke="#ffd700"
                 strokeWidth="1.8"
               />
-              {/* Arms in gentle blessing posture */}
               <path
                 d="M75 125 C60 145, 45 175, 52 215 C55 228, 65 228, 68 215 C66 185, 78 155, 88 135 Z"
                 fill="url(#bodyGrad)"
@@ -794,11 +858,11 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                 strokeWidth="1.4"
               />
 
-              {/* Central Energy Meridian (เส้นลมปราณแกนกลาง จากหัวจรดเท้า) */}
+              {/* Central Energy Meridian */}
               <line x1="140" y1="46" x2="140" y2="405" stroke="rgba(255, 215, 0, 0.4)" strokeDasharray="3 3" strokeWidth="1.5" />
 
               {/* 13 Interactive Clickable/Sweeping Body Nodes */}
-              {BODY_SWEEP_PARTS.map((part) => {
+              {bodySweepParts.map((part) => {
                 const isSwept = sweptParts.includes(part.id);
                 const isCurrent = currentNextPart?.id === part.id;
 
@@ -809,7 +873,11 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                     onClick={() => handleSweepPart(part.id)}
                     role="button"
                     tabIndex={0}
-                    aria-label={`ส่วนที่ ${part.id}: ${part.name} ${isSwept ? '(ปัดแล้ว)' : '(ยังไม่ได้ปัด)'}`}
+                    aria-label={format(t.ritChongNodeAria, {
+                      id: part.id,
+                      name: part.name,
+                      status: isSwept ? t.ritChongNodeDone : t.ritChongNodePending,
+                    })}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
@@ -817,7 +885,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                       }
                     }}
                   >
-                    {/* Pulsing indicator if this is the next recommended part to brush */}
                     {isCurrent && (
                       <circle
                         cx={part.x}
@@ -832,7 +899,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                       />
                     )}
 
-                    {/* Node Background Circle */}
                     <circle
                       cx={part.x}
                       cy={part.y}
@@ -843,7 +909,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                       strokeWidth={isCurrent ? 2.4 : 1.5}
                     />
 
-                    {/* Node Text: Checkmark if swept, or number 1..13 */}
                     <text
                       x={part.x}
                       y={part.y + 4.5}
@@ -855,7 +920,6 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                       {isSwept ? '✓' : part.id}
                     </text>
 
-                    {/* Part Name Tag (Placed neatly beside or above node) */}
                     <text
                       x={part.x > 140 ? part.x + part.nodeR + 6 : part.x < 140 ? part.x - part.nodeR - 6 : part.x}
                       y={part.x === 140 ? part.y - part.nodeR - 3 : part.y + 4}
@@ -871,7 +935,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                 );
               })}
 
-              {/* Animated Floating Nging-Tee Paper Talisman (กระดาษหงิ่งเตี๋ย) */}
+              {/* Animated Floating Nging-Tee Paper Talisman */}
               <g
                 id="nging-tee-talisman"
                 transform={
@@ -884,10 +948,8 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                 className={`nging-tee-paper-group ${isSweepingAnimation ? 'chong-talisman-flutter' : ''}`}
                 pointerEvents="none"
               >
-                {/* Gold foil paper with red traditional border */}
                 <rect x="0" y="0" width="44" height="60" rx="3" fill="#d4af37" stroke="#b71c1c" strokeWidth="2" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.6))" />
                 <rect x="3" y="3" width="38" height="54" rx="2" fill="#ffd700" stroke="#c62828" strokeWidth="1" strokeDasharray="3 2" />
-                {/* Traditional Chinese Talisman Character (太歲 / 福) */}
                 <text x="22" y="24" textAnchor="middle" fill="#b71c1c" fontSize="13px" fontWeight="bold">
                   太
                 </text>
@@ -900,11 +962,10 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
               </g>
             </svg>
           </div>
-
         </div>
       )}
 
-      {/* Ceremonial Result Popup Modal Overlay (หน้าต่างซ้อนป๊อปอัปผลลัพธ์พิธีกรรม) */}
+      {/* Ceremonial Result Popup Modal Overlay */}
       {activeModal && typeof document !== 'undefined' && createPortal(
         <div
           className="ritual-modal-overlay"
@@ -918,30 +979,30 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
               type="button"
               className="ritual-modal-close-btn"
               onClick={handleCloseModal}
-              aria-label="ปิดหน้าต่าง"
+              aria-label={t.ritModalCloseAria}
             >
               ✕
             </button>
 
             {/* Candle Result Modal */}
-            {activeModal === 'candle' && candleResult && (
+            {activeModal === 'candle' && localizedCandle && (
               <div className="ritual-modal-inner">
                 <div className="ritual-modal-header">
                   <span className="ritual-modal-emblem" aria-hidden="true">🕯️</span>
                   <div>
-                    <h3 className="ritual-modal-title">เทียนต่อดวงชะตาสว่างแล้ว</h3>
-                    <p className="ritual-modal-sub">แสงประทีปส่องสว่างคุ้มครองดวงชะตาให้รุ่งโรจน์</p>
+                    <h3 className="ritual-modal-title">{t.ritCandleModalTitle}</h3>
+                    <p className="ritual-modal-sub">{t.ritCandleModalSub}</p>
                   </div>
                 </div>
 
                 <div className="ritual-modal-body">
                   <div className="ritual-verse-box">
-                    <p className="ritual-verse-text">{candleResult.dedication}</p>
+                    <p className="ritual-verse-text">{localizedCandle.dedication}</p>
                   </div>
 
                   <div className="ritual-mantras-list">
-                    <div className="ritual-section-heading">บทสวดแผ่เมตตาและขอพร:</div>
-                    {candleResult.mantra.map((m, i) => (
+                    <div className="ritual-section-heading">{t.ritCandleMantraHeading}</div>
+                    {localizedCandle.mantra.map((m, i) => (
                       <div key={i} className="ritual-mantra-item">
                         {m}
                       </div>
@@ -952,24 +1013,24 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
             )}
 
             {/* Lantern Result Modal */}
-            {activeModal === 'lantern' && lanternResult && (
+            {activeModal === 'lantern' && localizedLantern && (
               <div className="ritual-modal-inner">
-                {lanternResult.care ? (
+                {localizedLantern.care ? (
                   <>
                     <div className="ritual-modal-header care-header">
                       <span className="ritual-modal-emblem" aria-hidden="true">🕊️</span>
                       <div>
-                        <h3 className="ritual-modal-title">มีคนพร้อมรับฟังคุณเสมอ</h3>
-                        <p className="ritual-modal-sub">ขอให้ใจเย็นลงและก้าวผ่านช่วงเวลานี้ไปได้อย่างปลอดภัย</p>
+                        <h3 className="ritual-modal-title">{t.ritCareModalTitle}</h3>
+                        <p className="ritual-modal-sub">{t.ritCareModalSub}</p>
                       </div>
                     </div>
                     <div className="ritual-modal-body">
                       <p className="ritual-verse-text" style={{ color: '#ffd59e', textAlign: 'left', lineHeight: 1.6 }}>
-                        {lanternResult.message}
+                        {localizedLantern.message}
                       </p>
                       <div style={{ marginTop: '0.8rem' }}>
                         <a className="btn primary full-width" href="tel:1323" style={{ textAlign: 'center', display: 'block' }}>
-                          📞 โทร 1323 สายด่วนสุขภาพจิต (โทรฟรี 24 ชม.)
+                          {t.ritCareCallBtn}
                         </a>
                       </div>
                     </div>
@@ -979,31 +1040,33 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                     <div className="ritual-modal-header">
                       <span className="ritual-modal-emblem" aria-hidden="true">🏮</span>
                       <div>
-                        <h3 className="ritual-modal-title">โคมลอยขึ้นสู่ฟากฟ้าสำเร็จแล้ว</h3>
-                        <p className="ritual-modal-sub">
-                          ปัดเป่าเคราะห์ภัย นำพาคำอธิษฐานสู่สิ่งศักดิ์สิทธิ์
-                        </p>
+                        <h3 className="ritual-modal-title">{t.ritLanternModalTitle}</h3>
+                        <p className="ritual-modal-sub">{t.ritLanternModalSub}</p>
                       </div>
                     </div>
 
                     <div className="ritual-modal-body">
                       <div style={{ textAlign: 'center', margin: '0.2rem 0' }}>
-                        <span style={{ fontSize: '0.85rem', color: '#e8c99b', marginRight: '0.5rem' }}>เรื่องที่สะเดาะเคราะห์:</span>
-                        <span className="badge lv1">{lanternResult.category}</span>
+                        <span style={{ fontSize: '0.85rem', color: '#e8c99b', marginRight: '0.5rem' }}>
+                          {t.ritLanternCategoryLabel}
+                        </span>
+                        <span className="badge lv1">{localizedLantern.category}</span>
                       </div>
 
                       <div className="ritual-verse-box">
-                        <p className="ritual-verse-text">{lanternResult.message}</p>
+                        <p className="ritual-verse-text">{localizedLantern.message}</p>
                       </div>
 
                       <div className="ritual-meta-grid">
                         <div className="ritual-meta-item">
-                          <span className="meta-k">คะแนนบุญสะสม</span>
-                          <span className="gold-text">+{lanternResult.merit} แต้ม</span>
+                          <span className="meta-k">{t.ritLanternMeritLabel}</span>
+                          <span className="gold-text">
+                            {format(t.ritLanternMeritUnit, { merit: localizedLantern.merit ?? 0 })}
+                          </span>
                         </div>
                         <div className="ritual-meta-item">
-                          <span className="meta-k">สีมงคลเสริมโชค</span>
-                          <span className="badge lv1">{lanternResult.color}</span>
+                          <span className="meta-k">{t.ritLanternColorLabel}</span>
+                          <span className="badge lv1">{localizedLantern.color}</span>
                         </div>
                       </div>
                     </div>
@@ -1012,61 +1075,63 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
               </div>
             )}
 
-            {/* Chong Result Modal (No lucky numbers as requested) */}
-            {activeModal === 'chong' && chongResult && (
+            {/* Chong Result Modal */}
+            {activeModal === 'chong' && localizedChong && (
               <div className="ritual-modal-inner">
                 <div className="ritual-modal-header">
                   <span className="ritual-modal-emblem" aria-hidden="true">☯️</span>
                   <div>
-                    <h3 className="ritual-modal-title">พิธีปัดตัวแก้ปีชงสำเร็จแล้ว</h3>
-                    <p className="ritual-modal-sub">
-                      ปัดเป่าเคราะห์ด้วยกระดาษหงิ่งเตี๋ยครบ 13 ส่วน สู่เทพเจ้าไท้ส่วยเอี๊ย
-                    </p>
+                    <h3 className="ritual-modal-title">{t.ritChongModalTitle}</h3>
+                    <p className="ritual-modal-sub">{t.ritChongModalSub}</p>
                   </div>
                 </div>
 
                 <div className="ritual-modal-body">
                   <div className="ritual-chong-severity-row">
                     <span style={{ fontSize: '0.85rem', color: '#f7e2bd' }}>
-                      นักษัตร{chongResult.zodiac_name} × ปี{chongResult.year_name} ({chongResult.year}):
+                      {format(t.ritChongZodiacYearLine, {
+                        zodiac: localizedChong.zodiac_name,
+                        yearName: localizedChong.year_name,
+                        year: localizedChong.year,
+                      })}
                     </span>
-                    <span className={`badge lv${chongResult.severity}`}>
-                      {chongResult.relation === 2
+                    <span className={`badge lv${localizedChong.severity}`}>
+                      {localizedChong.relation === 2
                         ? t.ritualRemedyClash
-                        : chongResult.relation === 3
+                        : localizedChong.relation === 3
                         ? t.ritualRemedyHarm
-                        : chongResult.relation === 4
+                        : localizedChong.relation === 4
                         ? t.ritualRemedyBreak
-                        : chongResult.relation === 1
+                        : localizedChong.relation === 1
                         ? t.ritualRemedyDirect
                         : t.ritualRemedySafe}
                     </span>
                     <div
-                      className={`sev s${chongResult.severity}`}
-                      aria-label={`ระดับ ${chongResult.severity} จาก 3`}
+                      className={`sev s${localizedChong.severity}`}
+                      aria-label={format(t.ritChongSeverityAria, { severity: localizedChong.severity })}
                     >
                       {[0, 1, 2].map((i) => (
-                        <i key={i} className={i < chongResult.severity ? 'on' : ''} />
+                        <i key={i} className={i < localizedChong.severity ? 'on' : ''} />
                       ))}
                     </div>
                   </div>
 
-                  <p className="ritual-chong-summary">{chongResult.summary}</p>
+                  <p className="ritual-chong-summary">{localizedChong.summary}</p>
 
                   <dl className="kv ritual-chong-kv">
-                    <dt>ด้าน{chongResult.problem}</dt>
-                    <dd>{chongResult.practical}</dd>
-                    <dt>วิธีเสริมสิริมงคล</dt>
-                    <dd>{chongResult.merit}</dd>
-                    <dt>สีนำโชค</dt>
-                    <dd>{chongResult.color}</dd>
-                    <dt>ทิศมงคล</dt>
-                    <dd>{chongResult.direction}</dd>
+                    <dt>{format(t.ritChongAspectLabel, { problem: localizedChong.problem })}</dt>
+                    <dd>{localizedChong.practical}</dd>
+                    <dt>{t.ritChongMeritLabel}</dt>
+                    <dd>{localizedChong.merit}</dd>
+                    <dt>{t.ritChongColorLabel}</dt>
+                    <dd>{localizedChong.color}</dd>
+                    <dt>{t.ritChongDirLabel}</dt>
+                    <dd>{localizedChong.direction}</dd>
                   </dl>
 
                   <div className="ritual-mantras-list">
-                    <div className="ritual-section-heading">พระคาถาบูชาไท้ส่วยเอี๊ยคุ้มครองดวงชะตา:</div>
-                    {chongResult.mantra.map((m, i) => (
+                    <div className="ritual-section-heading">{t.ritChongMantraHeading}</div>
+                    {localizedChong.mantra.map((m, i) => (
                       <div key={i} className="ritual-mantra-item">
                         {m}
                       </div>
@@ -1082,7 +1147,7 @@ export const Rituals: React.FC<RitualsProps> = ({ bridge, userZodiac, onToast })
                 className="btn primary glow-gold full-width"
                 onClick={handleCloseModal}
               >
-                <span>🙏 สาธุ / น้อมรับพรมงคล</span>
+                <span>{t.ritModalFooterBtn}</span>
               </button>
             </div>
           </div>

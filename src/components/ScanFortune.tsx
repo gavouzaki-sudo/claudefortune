@@ -1,11 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Bridge } from '../bridge';
+import { Bridge, analyzeSignatureIndices } from '../bridge';
 import type { ImageScanResult, SignatureResult } from '../types';
 import { renderParchmentBackground, getPointerPosOnCanvas, processImageToPixels } from '../utils/canvasUtils';
 import { ScoreBars } from './ScoreBars';
 import { logger } from '../utils/logger';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedElementName } from '../data/ritualProphecies';
+import {
+  getLocalizedImageScanReading,
+  getLocalizedSignatureTraits,
+} from '../data/locales/propheciesRituals';
 
 interface ScanFortuneProps {
   bridge: Bridge;
@@ -20,11 +24,19 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
   const [pixels, setPixels] = useState<Uint8ClampedArray | null>(null);
   const [hasSelectedImage, setHasSelectedImage] = useState(false);
   const [imageScanResult, setImageScanResult] = useState<ImageScanResult | null>(null);
+  const [imgScanMeta, setImgScanMeta] = useState<{ mode: number; setIdx: number }>({
+    mode: 0,
+    setIdx: 0,
+  });
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Signature state
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
   const [sigResult, setSigResult] = useState<SignatureResult | null>(null);
+  const [sigMeta, setSigMeta] = useState<{
+    indices: [number, number, number];
+    setIdx: number;
+  } | null>(null);
   const ptsRef = useRef<[number, number, number][]>([]);
   const strokeRef = useRef<number>(-1);
   const drawingRef = useRef<boolean>(false);
@@ -65,6 +77,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
     try {
       const res = bridge.imageScan(pixels, imgMode);
       setImageScanResult(res);
+      setImgScanMeta({ mode: imgMode, setIdx: bridge.getWeeklySetIndex() });
     } catch (err) {
       logger.error('Error in bridge.imageScan:', err);
       onToast(t.commonErrorRetry);
@@ -144,6 +157,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
     ptsRef.current = [];
     strokeRef.current = -1;
     setSigResult(null);
+    setSigMeta(null);
   };
 
   const handleAnalyzeSignature = () => {
@@ -152,13 +166,29 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
       return;
     }
     try {
+      const indices = analyzeSignatureIndices(ptsRef.current);
       const res = bridge.signature(ptsRef.current);
       setSigResult(res);
+      setSigMeta({ indices, setIdx: bridge.getWeeklySetIndex() });
     } catch (err) {
       logger.error('Error in bridge.signature:', err);
       onToast(t.commonErrorRetry);
     }
   };
+
+  const localizedSigTraits =
+    sigResult && sigMeta
+      ? getLocalizedSignatureTraits(sigMeta.indices, sigMeta.setIdx, lang, sigResult.traits)
+      : sigResult?.traits || [];
+  const localizedImageReading = imageScanResult
+    ? getLocalizedImageScanReading(
+        imgScanMeta.mode,
+        imageScanResult.element,
+        imgScanMeta.setIdx,
+        lang,
+        imageScanResult.reading
+      )
+    : '';
 
   return (
     <section id="tab-scan" className="ritual-frameless-stage tab" role="tabpanel">
@@ -208,14 +238,9 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
           {sigResult && (
             <article id="sig-result" className="result" aria-live="polite">
               <h3>{t.scanSigResultTitle}</h3>
-              {sigResult.traits.map((trait, idx) => (
+              {localizedSigTraits.map((trait, idx) => (
                 <p key={idx}>• {trait}</p>
               ))}
-              {lang !== 'th' && (
-                <p className="note" style={{ marginBottom: '0.5rem' }}>
-                  {t.oracleThaiFallbackNote}
-                </p>
-              )}
               <ScoreBars
                 scores={[
                   { key: 'wealth', label: t.scanBarWealth, score: sigResult.scores.wealth },
@@ -291,12 +316,7 @@ export const ScanFortune: React.FC<ScanFortuneProps> = ({ bridge, onToast }) => 
                   element: getLocalizedElementName(imageScanResult.element, lang),
                 })}
               </h3>
-              <p>{imageScanResult.reading}</p>
-              {lang !== 'th' && (
-                <p className="note" style={{ marginBottom: '0.5rem' }}>
-                  {t.oracleThaiFallbackNote}
-                </p>
-              )}
+              <p>{localizedImageReading}</p>
               <ScoreBars
                 scores={[
                   { key: 'wealth', label: t.scanBarWealth, score: imageScanResult.scores.wealth },

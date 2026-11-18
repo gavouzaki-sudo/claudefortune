@@ -9,6 +9,7 @@ import { ambientSoundEngine } from './ambientSoundscapes';
 import { logger } from './logger';
 import { clamp } from './formatters';
 import { getSharedAudioContextSync } from './audioContext';
+import type { SupportedLang } from '../data/locales/types';
 
 export type SpiritualVoicePresetId = 'sinsei' | 'dharma' | 'meditation';
 export type SpeechEngineType = 'google' | 'native';
@@ -57,6 +58,7 @@ export const SPIRITUAL_PRESETS: Record<SpiritualVoicePresetId, SpiritualVoicePre
 export interface SpiritualSpeechState {
   isSpeaking: boolean;
   isPaused: boolean;
+  lang: SupportedLang;
   engineType: SpeechEngineType;
   activePresetId: SpiritualVoicePresetId;
   rateMultiplier: number;
@@ -68,6 +70,7 @@ export interface SpiritualSpeechState {
   availableVoices: SpeechSynthesisVoice[];
   selectedVoiceName: string | null;
   hasThaiVoice: boolean;
+  hasMatchingVoice: boolean;
   isFallbackMelody: boolean;
   isUnsupported: boolean;
   unsupportedMessage?: string;
@@ -86,21 +89,167 @@ export const isMobileDevice = (): boolean => {
   return /iPhone|iPad|iPod|Android|Mobile|Silk|Kindle|BlackBerry/i.test(navigator.userAgent || '');
 };
 
-const isThaiVoice = (v: SpeechSynthesisVoice): boolean => {
-  const lang = (v.lang || '').toLowerCase().replace(/_/g, '-');
-  const name = (v.name || '').toLowerCase();
+export const getTtsQueryLang = (lang: SupportedLang): string => {
+  if (lang === 'en') return 'en';
+  if (lang === 'zh') return 'zh-CN';
+  return 'th';
+};
+
+export const getNativeSpeechLang = (lang: SupportedLang): string => {
+  if (lang === 'en') return 'en-US';
+  if (lang === 'zh') return 'zh-CN';
+  return 'th-TH';
+};
+
+export const doesVoiceMatchLang = (
+  v: { lang?: string; name?: string },
+  targetLang: SupportedLang
+): boolean => {
+  const vLang = (v.lang || '').toLowerCase().replace(/_/g, '-');
+  const vName = (v.name || '').toLowerCase();
+
+  if (targetLang === 'th') {
+    return (
+      vLang.startsWith('th') ||
+      vName.includes('thai') ||
+      vName.includes('ภาษาไทย') ||
+      vName.includes('kanya') ||
+      vName.includes('narisa') ||
+      vName.includes('niwat') ||
+      vName.includes('premwadee')
+    );
+  }
+  if (targetLang === 'en') {
+    return vLang.startsWith('en') || vName.includes('english');
+  }
   return (
-    lang.startsWith('th') ||
-    lang === 'th' ||
-    lang.includes('th-th') ||
-    name.includes('thai') ||
-    name.includes('ภาษาไทย') ||
-    name.includes('kanya') ||
-    name.includes('narisa') ||
-    name.includes('niwat') ||
-    name.includes('premwadee') ||
-    name.includes('siri')
+    vLang.startsWith('zh') ||
+    vLang.startsWith('cmn') ||
+    vLang.startsWith('yue') ||
+    vName.includes('chinese') ||
+    vName.includes('mandarin') ||
+    vName.includes('cantonese') ||
+    vName.includes('中文') ||
+    vName.includes('普通话') ||
+    vName.includes('國語') ||
+    vName.includes('tingting') ||
+    vName.includes('meijia')
   );
+};
+
+const isThaiVoice = (v: SpeechSynthesisVoice): boolean => doesVoiceMatchLang(v, 'th');
+
+export const resolveVoiceForLang = <T extends { lang?: string; name?: string }>(
+  voices: T[],
+  targetLang: SupportedLang,
+  preferredName?: string | null
+): T | undefined => {
+  if (!voices || voices.length === 0) return undefined;
+
+  if (preferredName) {
+    const preferred = voices.find(
+      (v) => v.name === preferredName && doesVoiceMatchLang(v, targetLang)
+    );
+    if (preferred) return preferred;
+  }
+
+  const matching = voices.filter((v) => doesVoiceMatchLang(v, targetLang));
+  if (matching.length === 0) return undefined;
+
+  if (targetLang === 'zh') {
+    return (
+      matching.find((v) => {
+        const l = (v.lang || '').toLowerCase().replace(/_/g, '-');
+        return l === 'zh-cn' || l.startsWith('cmn-hans') || l === 'zh-hans';
+      }) ||
+      matching.find((v) => (v.lang || '').toLowerCase().replace(/_/g, '-').startsWith('zh-tw')) ||
+      matching[0]
+    );
+  }
+
+  if (targetLang === 'en') {
+    return (
+      matching.find((v) => (v.lang || '').toLowerCase().replace(/_/g, '-') === 'en-us') ||
+      matching.find((v) => (v.lang || '').toLowerCase().replace(/_/g, '-') === 'en-gb') ||
+      matching[0]
+    );
+  }
+
+  return (
+    matching.find((v) => (v.lang || '').toLowerCase().replace(/_/g, '-') === 'th-th') ||
+    matching[0]
+  );
+};
+
+export const detectSpeechLangFromText = (
+  text: string,
+  preferredLang: SupportedLang
+): SupportedLang => {
+  const thaiCount = (text.match(/[\u0E00-\u0E7F]/g) || []).length;
+  const cjkCount = (text.match(/[\u4E00-\u9FFF]/g) || []).length;
+  const latinCount = (text.match(/[A-Za-z]/g) || []).length;
+
+  if (preferredLang === 'th' && thaiCount > 0) return 'th';
+  if (preferredLang === 'en' && latinCount > 0 && thaiCount === 0) return 'en';
+  if (preferredLang === 'zh' && cjkCount > 0 && thaiCount === 0) return 'zh';
+
+  if (thaiCount > 0 && cjkCount === 0 && latinCount === 0) return 'th';
+  if (cjkCount > 0 && thaiCount === 0 && latinCount === 0) return 'zh';
+  if (latinCount > 0 && thaiCount === 0 && cjkCount === 0) return 'en';
+
+  if (thaiCount > cjkCount && thaiCount > latinCount) return 'th';
+  if (cjkCount > thaiCount && cjkCount > 0) return 'zh';
+  if (latinCount > thaiCount && latinCount > cjkCount) return 'en';
+
+  return preferredLang;
+};
+
+export const sanitizeSpeechText = (text: string): string => {
+  return text
+    .replace(/^\s*#{1,6}\s*/gm, '')
+    .replace(/[*_~`]/g, '')
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F\u200D]/gu, '')
+    .replace(/\s*[·•—–|]\s*/g, ', ')
+    .replace(/\s+\/\s+/g, ', ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+};
+
+export const splitSpeechLines = (text: string, lang: SupportedLang = 'th'): string[] => {
+  const rawLines = text
+    .split('\n')
+    .map((line) => sanitizeSpeechText(line))
+    .filter((line) => line.length > 0 && !line.startsWith('---'));
+
+  const chunks: string[] = [];
+  const maxLen = lang === 'zh' ? 75 : 170;
+  const minBreak = lang === 'zh' ? 24 : 60;
+  const boundaryChars = new Set(['。', '！', '？', '；', '，', '、', '.', '!', '?', ';', ',', ' ']);
+
+  for (const line of rawLines) {
+    let rest = line;
+    while (rest.length > maxLen) {
+      let cut = -1;
+      for (let i = maxLen; i >= minBreak; i--) {
+        if (boundaryChars.has(rest[i])) {
+          cut = i + (rest[i] === ' ' ? 0 : 1);
+          break;
+        }
+      }
+      if (cut <= 0) {
+        cut = maxLen;
+      }
+      const chunk = rest.slice(0, cut).trim();
+      if (chunk.length > 0) {
+        chunks.push(chunk);
+      }
+      rest = rest.slice(cut).trim();
+    }
+    if (rest.length > 0) {
+      chunks.push(rest);
+    }
+  }
+  return chunks;
 };
 
 class SpiritualSpeechEngine {
@@ -110,7 +259,8 @@ class SpiritualSpeechEngine {
   private state: SpiritualSpeechState = {
     isSpeaking: false,
     isPaused: false,
-    // Google Translate TTS is default for natural Thai tones and seamless cadence
+    lang: 'th',
+    // Google Translate TTS is default for natural pronunciation and seamless cadence
     engineType: 'google',
     activePresetId: 'sinsei',
     rateMultiplier: 1.0,
@@ -122,12 +272,14 @@ class SpiritualSpeechEngine {
     availableVoices: [],
     selectedVoiceName: null,
     hasThaiVoice: false,
+    hasMatchingVoice: false,
     isFallbackMelody: false,
     isUnsupported: false,
     unsupportedMessage: undefined,
   };
 
   private textLines: string[] = [];
+  private activeSpeechLang: SupportedLang = 'th';
   private listeners = new Set<(state: SpiritualSpeechState) => void>();
   private noticeHandlers = new Set<(msg: string) => void>();
   private speechTimeout: number | null = null;
@@ -192,11 +344,15 @@ class SpiritualSpeechEngine {
 
       this.state.availableVoices = voices;
       const thaiVoice = voices.find(isThaiVoice);
+      const matchingVoice = resolveVoiceForLang(
+        voices,
+        this.state.lang,
+        this.state.selectedVoiceName
+      );
 
       this.state.hasThaiVoice = !!thaiVoice;
-      if (!this.state.selectedVoiceName && thaiVoice) {
-        this.state.selectedVoiceName = thaiVoice.name;
-      }
+      this.state.hasMatchingVoice = !!matchingVoice;
+      this.state.selectedVoiceName = matchingVoice ? matchingVoice.name : null;
       this.notify();
     } catch (err) {
       logger.warn('Failed to load speech synthesis voices:', err);
@@ -273,6 +429,27 @@ class SpiritualSpeechEngine {
   }
 
   /**
+   * Synchronize active speech language ('th' | 'en' | 'zh'), stopping mismatched playback
+   * and refreshing matching native voice selection.
+   */
+  setLanguage(lang: SupportedLang): void {
+    if (this.state.lang === lang) return;
+    if (this.state.isSpeaking || this.state.isPaused) {
+      this.stop();
+    }
+    this.state.lang = lang;
+    this.activeSpeechLang = lang;
+    const matched = resolveVoiceForLang(
+      this.state.availableVoices,
+      lang,
+      this.state.selectedVoiceName
+    );
+    this.state.hasMatchingVoice = !!matched;
+    this.state.selectedVoiceName = matched ? matched.name : null;
+    this.notify();
+  }
+
+  /**
    * Switch speech engine between 'google' (Google Translate TTS) and 'native' (Device Web Speech API)
    */
   setEngineType(engine: SpeechEngineType): void {
@@ -281,8 +458,14 @@ class SpiritualSpeechEngine {
     if (this.state.isSpeaking && this.state.currentText && !this.state.isFallbackMelody) {
       const text = this.state.currentText;
       const curLine = this.state.currentLineIndex;
+      const activeLang = this.activeSpeechLang;
       this.stop();
-      this.speak(text, { startLine: Math.max(0, curLine), withChime: false, preservePreset: true });
+      this.speak(text, {
+        startLine: Math.max(0, curLine),
+        withChime: false,
+        preservePreset: true,
+        lang: activeLang,
+      });
     }
   }
 
@@ -292,8 +475,14 @@ class SpiritualSpeechEngine {
     if (this.state.isSpeaking && this.state.currentText && !this.state.isFallbackMelody) {
       const text = this.state.currentText;
       const curLine = this.state.currentLineIndex;
+      const activeLang = this.activeSpeechLang;
       this.stop();
-      this.speak(text, { startLine: Math.max(0, curLine), withChime: false, preservePreset: true });
+      this.speak(text, {
+        startLine: Math.max(0, curLine),
+        withChime: false,
+        preservePreset: true,
+        lang: activeLang,
+      });
     }
   }
 
@@ -305,8 +494,14 @@ class SpiritualSpeechEngine {
     if (this.state.isSpeaking && this.state.currentText) {
       const text = this.state.currentText;
       const curLine = this.state.currentLineIndex;
+      const activeLang = this.activeSpeechLang;
       this.stop();
-      this.speak(text, { startLine: Math.max(0, curLine), withChime: false, preservePreset: true });
+      this.speak(text, {
+        startLine: Math.max(0, curLine),
+        withChime: false,
+        preservePreset: true,
+        lang: activeLang,
+      });
     }
   }
 
@@ -349,29 +544,8 @@ class SpiritualSpeechEngine {
     }
   }
 
-  private prepareLines(text: string): string[] {
-    const rawLines = text
-      .split('\n')
-      .map((line) => line.replace(/[#*_~`]/g, '').trim())
-      .filter((line) => line.length > 0 && !line.startsWith('---'));
-
-    const chunks: string[] = [];
-    const MAX_LEN = 180;
-    for (const line of rawLines) {
-      let rest = line;
-      while (rest.length > MAX_LEN) {
-        let cut = rest.lastIndexOf(' ', MAX_LEN);
-        if (cut < 60) {
-          cut = MAX_LEN;
-        }
-        chunks.push(rest.slice(0, cut).trim());
-        rest = rest.slice(cut).trim();
-      }
-      if (rest.length > 0) {
-        chunks.push(rest);
-      }
-    }
-    return chunks;
+  private prepareLines(text: string, lang: SupportedLang = this.activeSpeechLang): string[] {
+    return splitSpeechLines(text, lang);
   }
 
   /**
@@ -380,7 +554,12 @@ class SpiritualSpeechEngine {
    */
   speak(
     rawText: string,
-    options: { startLine?: number; withChime?: boolean; preservePreset?: boolean } = {}
+    options: {
+      startLine?: number;
+      withChime?: boolean;
+      preservePreset?: boolean;
+      lang?: SupportedLang;
+    } = {}
   ): void {
     if (typeof window === 'undefined') return;
 
@@ -394,6 +573,13 @@ class SpiritualSpeechEngine {
     this.state.isUnsupported = false;
     this.state.unsupportedMessage = undefined;
 
+    const requestedLang = options.lang ?? this.state.lang;
+    if (options.lang && options.lang !== this.state.lang) {
+      this.state.lang = options.lang;
+    }
+    const effectiveLang = detectSpeechLangFromText(rawText, requestedLang);
+    this.activeSpeechLang = effectiveLang;
+
     // 1. Play temple bell chime synchronously to unlock Web Audio context on mobile
     if (options.withChime !== false) {
       this.playTempleChime();
@@ -405,7 +591,7 @@ class SpiritualSpeechEngine {
       this.state.activePresetId = presetKeys[Math.floor(Math.random() * presetKeys.length)];
     }
 
-    this.textLines = this.prepareLines(rawText);
+    this.textLines = this.prepareLines(rawText, effectiveLang);
     this.state.currentText = rawText;
     this.state.totalLines = this.textLines.length;
     const startIdx = Math.min(options.startLine ?? 0, Math.max(0, this.textLines.length - 1));
@@ -477,29 +663,28 @@ class SpiritualSpeechEngine {
       utter.rate = clamp(baseRate * speedFactor, 0.7, 1.5);
       utter.pitch = clamp(basePitch * this.state.pitchMultiplier, 0.8, 1.25);
 
-      // Voice resolution: always specify 'th-TH' for standard Thai reading
-      let voiceToUse: SpeechSynthesisVoice | undefined;
-      if (this.state.selectedVoiceName) {
-        voiceToUse = this.state.availableVoices.find((v) => v.name === this.state.selectedVoiceName);
-      }
-      if (!voiceToUse) {
-        voiceToUse = this.state.availableVoices.find(isThaiVoice);
-      }
+      // Voice resolution: match active line/speech language strictly ('th-TH', 'en-US', 'zh-CN')
+      const lineLang = detectSpeechLangFromText(lineText, this.activeSpeechLang);
+      const defaultNativeLang = getNativeSpeechLang(lineLang);
+      let voiceToUse = resolveVoiceForLang(
+        this.state.availableVoices,
+        lineLang,
+        this.state.selectedVoiceName
+      );
       if (!voiceToUse && synth) {
         const curVoices = synth.getVoices() || [];
-        voiceToUse = curVoices.find(isThaiVoice);
-        if (voiceToUse) {
+        if (curVoices.length > 0) {
           this.state.availableVoices = curVoices;
-          this.state.hasThaiVoice = true;
-          this.state.selectedVoiceName = voiceToUse.name;
+          this.state.hasThaiVoice = curVoices.some(isThaiVoice);
+          voiceToUse = resolveVoiceForLang(curVoices, lineLang, this.state.selectedVoiceName);
         }
       }
 
       if (voiceToUse) {
         utter.voice = voiceToUse;
-        utter.lang = voiceToUse.lang || 'th-TH';
+        utter.lang = voiceToUse.lang || defaultNativeLang;
       } else {
-        utter.lang = 'th-TH';
+        utter.lang = defaultNativeLang;
       }
 
       // Memory retention to prevent mobile garbage collection
@@ -592,16 +777,19 @@ class SpiritualSpeechEngine {
     this.notify();
 
     const lineText = this.textLines[index];
-    const cleanText = (lineText || '').replace(/[#*_~`]/g, '').trim().slice(0, 180);
+    const lineLang = detectSpeechLangFromText(lineText || '', this.activeSpeechLang);
+    const maxChunk = lineLang === 'zh' ? 120 : 180;
+    const cleanText = sanitizeSpeechText(lineText || '').slice(0, maxChunk);
     if (!cleanText) {
       this.speakWithAudioTTS(index + 1);
       return;
     }
 
-    // Google Translate TTS stream: clear Thai articulation with tones and correct vowel lengths
+    // Google Translate TTS stream matched to active language ('th' | 'en' | 'zh-CN')
+    const tl = getTtsQueryLang(lineLang);
     const query = encodeURIComponent(cleanText);
-    const directUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q=${query}`;
-    const proxyUrl = `/api/tts?ie=UTF-8&client=tw-ob&tl=th&q=${query}`;
+    const directUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${tl}&q=${query}`;
+    const proxyUrl = `/api/tts?ie=UTF-8&client=tw-ob&tl=${tl}&q=${query}`;
     const ttsUrl = tryProxy ? proxyUrl : directUrl;
 
     try {

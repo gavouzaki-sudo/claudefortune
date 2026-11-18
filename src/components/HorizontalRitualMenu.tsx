@@ -448,14 +448,14 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
   }, []);
 
   return (
-    <nav className="ritual-carousel-nav" aria-label="แถบเลือกพิธีกรรมแนวนอน">
+    <nav className="ritual-carousel-nav" aria-label={t.navMenuAria}>
       {/* Scroll Left Button */}
       <button
         type="button"
         className="ritual-nav-arrow arrow-left"
         onClick={() => handleArrowScroll('left')}
-        aria-label="เลื่อนพิธีกรรมไปทางซ้าย"
-        title="เลื่อนไปทางซ้าย"
+        aria-label={t.navScrollLeftAria}
+        title={t.navScrollLeftTitle}
       >
         <span aria-hidden="true">◀</span>
       </button>
@@ -466,7 +466,7 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
         className="ritual-carousel-track"
         tabIndex={0}
         role="tablist"
-        aria-label="รายชื่อพิธีกรรมหมุนเวียน"
+        aria-label={t.navListAria}
         onScroll={handleScroll}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -496,8 +496,8 @@ export const HorizontalRitualMenu: React.FC<HorizontalRitualMenuProps> = ({
         type="button"
         className="ritual-nav-arrow arrow-right"
         onClick={() => handleArrowScroll('right')}
-        aria-label="เลื่อนพิธีกรรมไปทางขวา"
-        title="เลื่อนไปทางขวา"
+        aria-label={t.navScrollRightAria}
+        title={t.navScrollRightTitle}
       >
         <span aria-hidden="true">▶</span>
       </button>

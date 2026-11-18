@@ -121,6 +121,11 @@ const AppContent: React.FC = () => {
     return () => unsub();
   }, [showToast]);
 
+  // Keep speech synthesis engine aligned with selected app language
+  useEffect(() => {
+    spiritualSpeechEngine.setLanguage(lang);
+  }, [lang]);
+
   const handleOpenCard = useCallback((data: CardData) => {
     const activeSys = session ? ZODIAC_SYSTEMS.find((s) => s.id === session.systemId) : undefined;
     const activeItem = activeSys && session ? activeSys.items[session.zodiac] : undefined;

@@ -10,6 +10,11 @@ import { logger } from '../utils/logger';
 import { pad2 } from '../utils/formatters';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTarotTitle } from '../data/ritualProphecies';
+import {
+  getLocalizedTarotMeaning,
+  getTarotTtsName,
+} from '../data/locales/propheciesDivination';
+import { getLocalizedFestivalBlessing } from '../data/locales/propheciesRituals';
 
 interface CoffinCardProps {
   bridge: Bridge;
@@ -26,6 +31,7 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
   const [coffinOpen, setCoffinOpen] = useState(false);
   const [coffinCard, setCoffinCard] = useState<TarotCard | null>(null);
   const [blessing, setBlessing] = useState<BlessingResult | null>(null);
+  const [coffinSetIdx, setCoffinSetIdx] = useState<number>(() => bridge.getWeeklySetIndex());
   const [isLoading, setIsLoading] = useState(false);
   const [isJournalSaved, setIsJournalSaved] = useState(false);
   const isMountedRef = useRef(true);
@@ -80,6 +86,7 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
       const tarot = bridge.drawTarot(1);
       const card = tarot.cards[0];
       setCoffinCard(card);
+      setCoffinSetIdx(bridge.getWeeklySetIndex());
 
       const b = bridge.blessing(2);
       setBlessing(b);
@@ -94,6 +101,16 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
     }
   };
 
+  const localizedMeaning = coffinCard
+    ? getLocalizedTarotMeaning(coffinCard.id, coffinCard.reversed, coffinSetIdx, lang, coffinCard.meaning)
+    : '';
+  const localizedBlessing = blessing
+    ? getLocalizedFestivalBlessing(2, coffinSetIdx, lang, {
+        title: blessing.title,
+        text: blessing.text,
+      })
+    : null;
+
   const buildAndSaveCoffinReading = (): CardData | null => {
     if (!coffinCard) return null;
 
@@ -105,7 +122,7 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
     );
 
     const { cardData, details } = buildTarotCardData(
-      [coffinCard],
+      [{ ...coffinCard, meaning: localizedMeaning }],
       1,
       TAROT_GLYPHS,
       { 1: [t.coffinPosTitle.replace(/✨/g, '').trim()] },
@@ -118,7 +135,7 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
       saveJournalEntry({
         type: 'tarot',
         title: cardData.title,
-        summary: `${localizedTitle} (${orientText}) · ${coffinCard.meaning}`,
+        summary: `${localizedTitle} (${orientText}) · ${localizedMeaning}`,
         details,
       });
       setIsJournalSaved(true);
@@ -143,6 +160,9 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
 
   const localizedCardName = coffinCard
     ? getLocalizedTarotTitle(coffinCard.id, coffinCard.name, coffinCard.en, lang)
+    : '';
+  const ttsCardName = coffinCard
+    ? getTarotTtsName(coffinCard.id, coffinCard.name, coffinCard.en, lang)
     : '';
 
   return (
@@ -200,7 +220,7 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
                     <div className="glyph">{TAROT_GLYPHS[coffinCard.id] || '🎴'}</div>
                     <div>
                       <div className="nm">{localizedCardName}</div>
-                      <div className="en">{coffinCard.en}</div>
+                      {lang !== 'en' && <div className="en">{coffinCard.en}</div>}
                     </div>
                   </div>
                 </div>
@@ -230,10 +250,10 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
                   )}
                 </div>
                 <div style={{ fontSize: '0.88rem', lineHeight: '1.5', color: '#e0d8cc' }}>
-                  {coffinCard.meaning}
+                  {localizedMeaning}
                 </div>
 
-                {blessing && (
+                {blessing && localizedBlessing && (
                   <div
                     style={{
                       marginTop: '0.75rem',
@@ -244,21 +264,15 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
                     }}
                   >
                     <div style={{ fontWeight: 600, marginBottom: '0.2rem' }}>
-                      🙏 {blessing.title || t.coffinBlessingDefaultTitle}
+                      🙏 {localizedBlessing.title || t.coffinBlessingDefaultTitle}
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.85)' }}>{blessing.text}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.85)' }}>{localizedBlessing.text}</div>
                     {blessing.lucky && (
                       <div style={{ marginTop: '0.3rem', fontSize: '0.78rem', color: '#fdd835' }}>
                         {t.coffinLuckyPrefix} <strong>{blessing.lucky}</strong>
                       </div>
                     )}
                   </div>
-                )}
-
-                {lang !== 'th' && (
-                  <p className="note" style={{ marginTop: '0.55rem', marginBottom: 0 }}>
-                    {t.oracleThaiFallbackNote}
-                  </p>
                 )}
               </div>
             </div>
@@ -307,10 +321,10 @@ export const CoffinCard: React.FC<CoffinCardProps> = ({
               <SpiritualTTSPlayer
                 textToRead={[
                   t.coffinTitle,
-                  `${localizedCardName} (${coffinCard.en})`,
+                  ttsCardName,
                   coffinCard.reversed ? t.tarotReversed : t.tarotUpright,
-                  coffinCard.meaning,
-                  blessing?.text || '',
+                  localizedMeaning,
+                  localizedBlessing?.text || '',
                   blessing?.lucky ? `${t.coffinLuckyPrefix} ${blessing.lucky}` : '',
                 ]
                   .filter(Boolean)
